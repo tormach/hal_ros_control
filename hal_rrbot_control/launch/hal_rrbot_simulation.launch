@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- This .launch file replicates the rrbot_control package's
+       rrbot_simulation.launch file, but replaces the
+       rrbot_hardware_interface simulator node with the HAL hardware
+       interface. -->
+
+  <!-- HAL debug output -->
+  <!-- - Output HAL debug messages to screen (console) -->
+  <arg name="hal_debug_output" default="false" />
+  <!-- - Set HAL debug level, 0-5 -->
+  <arg name="hal_debug_level" default="1" />
+
+  <group ns="rrbot">		<!-- Same ns as `rrbot_control` package -->
+
+    <!-- Load example URDF from rrbot_description package -->
+    <param
+	name="robot_description"
+	command="$(find xacro)/xacro --inorder
+		 '$(find rrbot_description)/urdf/rrbot.xacro'"
+	/>
+
+    <!-- Load all settings into ROS parameter server -->
+    <!-- - Joint parameters from rrbot_control package -->
+    <rosparam
+	file="$(find ros_control_boilerplate)/rrbot_control/config/rrbot_controllers.yaml"
+	command="load"/>
+    <!-- - HAL configuration params -->
+    <rosparam
+	command="load"
+	file="$(find hal_rrbot_control)/config/hal_hw_interface.yaml"
+	/>
+    <!-- - HAL file directory param -->
+    <param
+	name="hal_mgr/hal_file_dir"
+	value="$(find hal_rrbot_control)/halfiles"
+	/>
+    <!-- FIXME:  can substitution work here?  Combine previous elements into one
+    <rosparam
+	command="load"
+	file="$(find hal_rrbot_control)/config/hal_hw_interface.yaml"
+	subst_value="true"
+	/>
+    -->
+
+    <!-- Launch HAL ROS hardware interface and manager node -->
+    <include
+	file="$(find hal_hw_interface)/launch/hal_hw_interface.launch"
+	pass_all_args="true"
+	/>
+
+    <!-- Launch controller manager -->
+    <node
+    	name="ros_control_controller_manager"
+    	pkg="controller_manager"
+    	type="controller_manager"
+    	respawn="false"
+    	output="screen"
+    	args="spawn joint_state_controller position_trajectory_controller" />
+
+    <!-- Convert joint states to /tf tranforms -->
+    <node
+    	name="robot_state_publisher"
+    	pkg="robot_state_publisher"
+    	type="robot_state_publisher"
+    	/>
+
+  </group>
+
+</launch>

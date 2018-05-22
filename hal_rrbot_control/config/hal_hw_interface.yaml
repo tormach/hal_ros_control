@@ -1,0 +1,16 @@
+hal_mgr:
+  hal_config:
+    # Load a HAL file that inits a thread
+    - cmd: load_hal_file
+      fname: pre.hal
+
+    # Load the hal_hw_interface RT component
+    - cmd: load_robot_hw
+      thread: robot_hw_thread
+
+    # Load a HAL file that finishes HAL setup
+    - cmd: load_hal_file
+      fname: post.hal
+
+  # FIXME:  can this be substituted?
+  #hal_file_dir: $(find hal_rrbot_control)/halfiles
