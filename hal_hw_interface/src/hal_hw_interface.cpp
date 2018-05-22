@@ -13,30 +13,30 @@ HalHWInterface::HalHWInterface(
 
 void HalHWInterface::init(void (*funct)(void*, long))
 {
-  HAL_ROS_LOG_INFO(CNAME, "%s: Initializing HAL hardware interface\n", CNAME);
+  HAL_ROS_LOG_INFO(CNAME, "%s: Initializing HAL hardware interface", CNAME);
 
   // Call boilerplate init() function
   ros_control_boilerplate::GenericHWInterface::init();
 
-  HAL_ROS_LOG_INFO(CNAME, "%s: Initialized boilerplate\n", CNAME);
+  HAL_ROS_LOG_INFO(CNAME, "%s: Initialized boilerplate", CNAME);
 
   // Initialize component
   comp_id_ = hal_init(CNAME);
   if (comp_id_ < 0)
   {
-    HAL_ROS_LOG_ERR(CNAME, "%s:  ERROR: Component creation ABORTED\n", CNAME);
+    HAL_ROS_LOG_ERR(CNAME, "%s:  ERROR: Component creation ABORTED", CNAME);
     //return false; // FIXME
     return;
   }
 
-  HAL_ROS_LOG_INFO(CNAME, "%s: Initialized HAL component\n", CNAME);
+  HAL_ROS_LOG_INFO(CNAME, "%s: Initialized HAL component", CNAME);
 
   // Initialize HAL pins for each joint
   for (std::size_t ix = 0; ix < num_joints_; ix++)
   {
     // init_joint(ix);
     HAL_ROS_LOG_INFO(
-      CNAME, "%s: Init joint #%zu %s\n", CNAME, ix, joint_names_[ix].c_str());
+      CNAME, "%s: Init joint #%zu %s", CNAME, ix, joint_names_[ix].c_str());
 
     if (!create_float_pin(ix, &joint_pos_cmd_ptrs_, HAL_OUT, "pos-cmd") ||
         !create_float_pin(ix, &joint_vel_cmd_ptrs_, HAL_OUT, "vel-cmd") ||
@@ -46,28 +46,28 @@ void HalHWInterface::init(void (*funct)(void*, long))
         !create_float_pin(ix, &joint_eff_fb_ptrs_, HAL_IN, "eff-fb"))
     {
       HAL_ROS_LOG_ERR(
-        CNAME, "%s: Failed to initialize joint %zu %s.%s\n",
+        CNAME, "%s: Failed to initialize joint %zu %s.%s",
         CNAME, ix, CNAME, joint_names_[ix].c_str());
       //return false; // FIXME
       return;
     }
   }
-  HAL_ROS_LOG_INFO(CNAME, "%s:  Initialized HAL pins\n", CNAME);
+  HAL_ROS_LOG_INFO(CNAME, "%s:  Initialized HAL pins", CNAME);
 
   // Export the function
   if (hal_export_functf(funct, this, 1, 0, comp_id_, "%s.funct", CNAME) < 0)
   {
-    HAL_ROS_LOG_INFO(CNAME, "%s: ERROR: hal_export_functf failed\n", CNAME);
+    HAL_ROS_LOG_INFO(CNAME, "%s: ERROR: hal_export_functf failed", CNAME);
     hal_exit(comp_id_);
     //return false; // FIXME
     return;
   }
-  HAL_ROS_LOG_INFO(CNAME, "%s:  Exported HAL function\n", CNAME);
+  HAL_ROS_LOG_INFO(CNAME, "%s:  Exported HAL function", CNAME);
 
   // Mark component ready
   hal_ready(comp_id_);
 
-  HAL_ROS_LOG_INFO(CNAME, "%s:  HAL component ready!\n", CNAME);
+  HAL_ROS_LOG_INFO(CNAME, "%s:  HAL component ready!", CNAME);
 
   //return true; // FIXME
 } // init()
@@ -80,26 +80,26 @@ bool HalHWInterface::create_float_pin(
   if (ptrs->size() != ix)
   {
     HAL_ROS_LOG_ERR(
-      CNAME, "%s: Size of pin storage not consistent with ID\n", CNAME);
+      CNAME, "%s: Size of pin storage not consistent with ID", CNAME);
     return false;
   }
   // Allocate space
   ptrs->push_back((hal_float_t**) hal_malloc(sizeof(hal_float_t*)));
   if (ptrs->at(ix) == NULL) {
-    HAL_ROS_LOG_ERR(CNAME, "%s: Allocate HAL pin failed\n", CNAME);
+    HAL_ROS_LOG_ERR(CNAME, "%s: Allocate HAL pin failed", CNAME);
     return false;
   }
   if (hal_pin_float_newf(dir, ptrs->at(ix), comp_id_,
                          "%s.%s.%s", CNAME, joint_names_[ix].c_str(), name))
   {
     HAL_ROS_LOG_INFO(
-      CNAME, "%s: New HAL pin %s.%s.%s failed\n",
+      CNAME, "%s: New HAL pin %s.%s.%s failed",
       CNAME, CNAME, joint_names_[ix].c_str(), name);
     return false;
   }
 
   HAL_ROS_LOG_INFO(
-    CNAME, "%s: New HAL pin %s.%s.%s succeeded; addr %p\n",
+    CNAME, "%s: New HAL pin %s.%s.%s succeeded; addr %p",
     CNAME, CNAME, joint_names_[ix].c_str(), name, ptrs->at(ix));
   return true;
 }
@@ -141,9 +141,9 @@ void HalHWInterface::shutdown()
 {
   if (! comp_id_)
   {
-    HAL_ROS_LOG_ERR(CNAME, "%s: HAL already shut down\n", CNAME);
+    HAL_ROS_LOG_ERR(CNAME, "%s: HAL already shut down", CNAME);
   } else {
-    HAL_ROS_LOG_INFO(CNAME, "%s: HAL shutting down\n", CNAME);
+    HAL_ROS_LOG_INFO(CNAME, "%s: HAL shutting down", CNAME);
     hal_exit(comp_id_);
     comp_id_ = 0;
   }

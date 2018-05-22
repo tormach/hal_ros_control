@@ -19,7 +19,7 @@ HalRosControlLoop::HalRosControlLoop(ros::NodeHandle& nh)
   std::string ros_master_uri = getenv( "ROS_MASTER_URI" );
 
   HAL_ROS_LOG_INFO(
-    CNAME, "%s: Initialized ROS node and spinner; ROS_MASTER_URI = %s\n",
+    CNAME, "%s: Initialized ROS node and spinner; ROS_MASTER_URI = %s",
     ros_master_uri.c_str(), CNAME);
 
   // HW interface
@@ -27,7 +27,7 @@ HalRosControlLoop::HalRosControlLoop(ros::NodeHandle& nh)
     new hal_hw_interface::HalHWInterface(nh_));
 
   HAL_ROS_LOG_INFO(
-    CNAME, "%s: Initialized HAL hardware interface\n", CNAME);
+    CNAME, "%s: Initialized HAL hardware interface", CNAME);
 
   // ROS callback thread
   nh_.setCallbackQueue(&non_rt_ros_queue_);
@@ -36,7 +36,7 @@ HalRosControlLoop::HalRosControlLoop(ros::NodeHandle& nh)
       boost::bind(&HalRosControlLoop::serviceNonRtRosQueue, this));
 
   HAL_ROS_LOG_INFO(
-    CNAME, "%s: Done initializing ROS callback thread\n", CNAME);
+    CNAME, "%s: Done initializing ROS callback thread", CNAME);
 
   // Controller
   controller_manager_.reset(
@@ -44,13 +44,13 @@ HalRosControlLoop::HalRosControlLoop(ros::NodeHandle& nh)
       hardware_interface_.get(), nh_));
 
   HAL_ROS_LOG_INFO(
-    CNAME, "%s: Done initializing ROS controller manager\n", CNAME);
+    CNAME, "%s: Done initializing ROS controller manager", CNAME);
 
   // Init HAL hardware interface
   hardware_interface_->init(&funct);
 
   HAL_ROS_LOG_INFO(
-    CNAME, "%s: Done initializing HAL hardware interface\n", CNAME);
+    CNAME, "%s: Done initializing HAL hardware interface", CNAME);
 
   HAL_ROS_LOG_INFO(
     CNAME, "HAL control loop ready.");
