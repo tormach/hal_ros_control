@@ -73,7 +73,7 @@ void HalHWInterface::init(void (*funct)(void*, long))
 } // init()
 
 bool HalHWInterface::create_float_pin(
-  const std::size_t ix, std::vector<hal_float_t**> *ptrs,
+  const std::size_t ix, std::vector<double**> *ptrs,
   hal_pin_dir_t dir, const char* name)
 {
   // Sanity check vector length

@@ -44,7 +44,7 @@ namespace hal_hw_interface
      */
     bool create_float_pin(
       const std::size_t ix,
-      std::vector<hal_float_t**> *ptrs,
+      std::vector<double**> *ptrs,
       hal_pin_dir_t dir,
       const char* func);
 
@@ -82,13 +82,13 @@ namespace hal_hw_interface
 
     // Joints:  HAL storage
     // - Commands
-    std::vector<hal_float_t**> joint_pos_cmd_ptrs_;
-    std::vector<hal_float_t**> joint_vel_cmd_ptrs_;
-    std::vector<hal_float_t**> joint_eff_cmd_ptrs_;
+    std::vector<double**> joint_pos_cmd_ptrs_;
+    std::vector<double**> joint_vel_cmd_ptrs_;
+    std::vector<double**> joint_eff_cmd_ptrs_;
     // - States
-    std::vector<hal_float_t**> joint_pos_fb_ptrs_;
-    std::vector<hal_float_t**> joint_vel_fb_ptrs_;
-    std::vector<hal_float_t**> joint_eff_fb_ptrs_;
+    std::vector<double**> joint_pos_fb_ptrs_;
+    std::vector<double**> joint_vel_fb_ptrs_;
+    std::vector<double**> joint_eff_fb_ptrs_;
 
 
   }; // HalHWInterface
