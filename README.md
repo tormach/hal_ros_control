@@ -75,11 +75,6 @@ The rviz and simulated trajectories are launched identically to the
 
 ## TODO
 
-- Define separate log messages
-  - Separate log statements saying the same thing for ROS and HAL is
-    ugly
-  - However, it's necessary, because the messages don't come out in
-    order, making coordination issues difficult to solve
 - Shutdown is done poorly
   - The comp creates two threads in `rtapi_app`; these are probably
     not shut down correctly.  (Could these be registered as userspace
