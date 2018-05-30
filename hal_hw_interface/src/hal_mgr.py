@@ -34,7 +34,7 @@ try:
     rospy.init_node(NAME, anonymous=True)
     # Call end_session() on ROS shutdown; don't have the launcher
     # register its own exit handler
-    rospy.on_shutdown(launcher.end_session)
+    rospy.on_shutdown(lambda: shutdown('Graceful shutdown via ROS'))
     rate = rospy.Rate(1) # 1hz
     rospy.loginfo("hal_mgr:  Initialized node")
     
@@ -53,6 +53,7 @@ try:
         shutdown("%s has no 'hal_comp' key" % NAME, 1)
 
     # Set up HAL
+    launcher.cleanup_session()  # kill any running Machinekit instances
     launcher.start_realtime()
     if not rtapi.__rtapicmd:
         rtapi.init_RTAPI()
@@ -101,9 +102,9 @@ try:
         launcher.check_processes()
         rate.sleep()
 
-except subprocess.CalledProcessError, e:
+except subprocess.CalledProcessError as e:
     shutdown("Process error:  %s" % e, 1)
-except rospy.ROSInterruptException, e:
+except rospy.ROSInterruptException as e:
     shutdown("Interrupt:  %s" % e, 0)
 
 shutdown("Shutting down", 0)
