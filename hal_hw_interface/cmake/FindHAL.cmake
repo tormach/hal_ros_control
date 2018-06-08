@@ -17,9 +17,12 @@
 #
 ###############################################################################
 
+set(MACHINEKIT_RIP_PATH $ENV{EMC2_HOME} CACHE STRING "")
+
 find_path(
   HAL_INCLUDE_PATH hal.h
   PATH_SUFFIXES linuxcnc
+  PATHS ${MACHINEKIT_RIP_PATH}/include
   )
 if(HAL_INCLUDE_PATH)
   message(STATUS "Found HAL includes:  ${HAL_INCLUDE_PATH}")
