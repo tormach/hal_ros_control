@@ -18,17 +18,18 @@ The hardware interface is a subclass of Dave Coleman's
 `ros_control_boilerplate` hardware interface.  The
 `ros_control_boilerplate` control loop was too different to make sense
 to subclass, so it was rewritten from scratch, somewhat following the
-[`rtt_ros_control_example`][rtt_ros_control_example].  The C++ HAL
-integration was done following examples by Bas de Bruijn and Mick
-Grant.  The `hal_mgr` ROS node, which starts up the RTAPI and HAL
-apparatus, was inspired by Alexander Roessler's
-[`python-hal-seed`][python-hal-seed].
+[`rtt_ros_control_example`][rtt_ros_control_example] and related
+[discussion][ros_control-130].  The C++ HAL integration was done
+following examples by Bas de Bruijn and Mick Grant.  The `hal_mgr` ROS
+node, which starts up the RTAPI and HAL apparatus, was inspired by
+Alexander Roessler's [`python-hal-seed`][python-hal-seed].
 
 Coming soon:  A HAL-ROS I/O interface.
 
 [machinekit]:  http://machinekit.io
 [ros_control_boilerplate]: https://github.com/davetcoleman/ros_control_boilerplate
 [rtt_ros_control_example]: https://github.com/skohlbr/rtt_ros_control_example
+[ros_control-130]: https://github.com/ros-controls/ros_control/issues/130
 [python-hal-seed]: https://github.com/machinekoder/python-hal-seed
 
 ## Dependencies
@@ -94,4 +95,3 @@ The rviz and simulated trajectories are launched identically to the
     packages
     - If several HAL types are implemented, these should also become
       templates
-
