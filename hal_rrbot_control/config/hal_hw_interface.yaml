@@ -11,6 +11,3 @@ hal_mgr:
     # Load a HAL file that finishes HAL setup
     - cmd: load_hal_file
       fname: post.hal
-
-  # FIXME:  can this be substituted?
-  #hal_file_dir: $(find hal_rrbot_control)/halfiles
