@@ -1,0 +1,43 @@
+hal_io:
+
+  # I/O main loop publish rate in Hz
+  update_rate: 10
+
+  # pub:  a hash of input (published) pin name keys to HAL pin type
+  # values
+  # - HAL pin types are BIT, FLOAT, S32, U32
+  pub:
+    # float_out:  The published sinewave signal:  1Hz, amplitude -10..10
+    float_out: FLOAT
+    # bool_out:  TRUE when sinewave > 0
+    bool_out: BIT
+    # int_out:  Integer part of sinewave
+    int_out: S32
+    # uint_out:  Unsigned integer part of sinewave
+    uint_out: U32
+
+  # sub:  a hash of output (subscribed) pin name keys to [ HAL pin
+  # type, ROS topics ] values
+  sub:
+    # These pins correspond to the output pins
+    float_in:
+      - FLOAT
+      - hal_io/float_out
+    bool_in:
+      - BIT
+      - hal_io/bool_out
+    int_in:
+      - S32
+      - hal_io/int_out
+    uint_in:
+      - U32
+      - hal_io/uint_out
+
+hal_mgr:
+  hal_config:
+    # Load the hal_io_publisher
+    - cmd: load_hal_io
+
+    # Load the demo HAL file
+    - cmd: load_hal_file
+      fname: hal_io.hal

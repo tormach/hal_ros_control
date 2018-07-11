@@ -1,0 +1,146 @@
+#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import Bool, Float64, UInt32, Int32
+import hal
+
+class HalIOException(RuntimeError):
+    pass
+
+class HalIO(object):
+    cname = 'hal_io'
+    pin_type_map = dict(
+        BIT = hal.HAL_BIT,
+        FLOAT = hal.HAL_FLOAT,
+        U32 = hal.HAL_U32,
+        S32 = hal.HAL_S32,
+        )
+    msg_type_map = dict(
+        BIT = Bool,
+        FLOAT = Float64,
+        U32 = UInt32,
+        S32 = Int32,
+        )
+
+    def __init__(self):
+        rospy.loginfo("Initializing '%s' component" % self.cname)
+
+        # Create ROS node
+        rospy.init_node(self.cname)
+
+        # Publisher update rate in Hz
+        self.update_rate = rospy.get_param('%s/update_rate' % self.cname, 10)
+        self.rate = rospy.Rate(self.update_rate)
+        rospy.loginfo("Publish update rate = %.1f" % self.update_rate)
+
+        # Load pin configuration from ROS param server
+        self.pub_config = rospy.get_param('%s/pub' % self.cname, dict())
+        self.sub_config = rospy.get_param('%s/sub' % self.cname, dict())
+        if not self.pub_config and not self.sub_config:
+            raise HalIOException(
+                'No pub or sub pins defined in parameter "%s"' % self.cname)
+
+        # Init HAL component and pin data dict
+        self.comp = hal.component(self.cname)
+        self.pins = dict()
+
+        # Init HAL pins and ROS publishers/subscribers
+        for config, is_pub in ((self.pub_config, True),
+                               (self.sub_config, False)):
+            for pin_name, pin_data in config.items():
+                pin = self.pins[pin_name] = dict(is_pub=is_pub, name=pin_name)
+
+                if pin['is_pub']:
+                    pin['type_str'] = pin_data
+                    pin['ros_topic'] = '%s/%s' % (self.cname, pin_name)
+                else:
+                    pin['type_str'] = pin_data[0]
+                    pin['ros_topic'] = pin_data[1]
+
+                # Init pin data
+                if pin['type_str'].upper() not in self.pin_type_map:
+                    raise HalIOException(
+                        'Unknown type "%s" for pin "%s"' %
+                        (pin['type_str'], pin_name))
+                rospy.loginfo(
+                    'Creating %s pin "%s" type "%s"' %
+                    ('input' if pin['is_pub'] else 'output',
+                     pin_name, pin['type_str']))
+
+                # Compute parameters
+                pin['pin_type'] = self.pin_type_map[pin['type_str']]
+                pin['pin_dir'] = hal.HAL_IN if pin['is_pub'] else hal.HAL_OUT
+                pin['msg_type'] = self.msg_type_map[pin['type_str']]
+
+                # Create HAL pin
+                self.comp.newpin(pin_name, pin['pin_type'], pin['pin_dir'])
+
+                # Set up publishers
+                if pin['is_pub']:
+                    rospy.loginfo(
+                        'Creating publisher on topic "%s"' % pin['ros_topic'])
+                    pin['pub'] = rospy.Publisher(
+                        # set queue_size to always have freshest value
+                        pin['ros_topic'], pin['msg_type'], queue_size=1)
+
+                # Set up subscribers
+                if not pin['is_pub']:
+                    rospy.loginfo(
+                        'Creating subscriber on topic "%s", msg type "%s"' %
+                        (pin['ros_topic'], pin['msg_type']))
+                    pin['sub'] = rospy.Subscriber(
+                        pin['ros_topic'], pin['msg_type'],
+                        self.subscriber_cb, pin)
+
+        # Finish initialization
+        self.comp.ready()
+        rospy.loginfo(
+            "User component '%s' ready" % self.cname)
+
+    def subscriber_cb(self, msg, pin):
+        # Sanity check
+        if type(msg) is not pin['msg_type']:
+            raise HalIOException(
+                "subscriber_cb:  Received incorrect message type '%s' for "
+                "pin '%s' of msg type '%s'" %
+                (type(msg), pin['name'], pin['msg_type']))
+
+        # Set pin value from message data
+        # rospy.logdebug(
+        #     "subscriber_cb:  Setting pin '%s' to '%s' from msg type '%s'" %
+        #     (pin['name'], msg.data, type(msg)))
+        self.comp[pin['name']] = msg.data
+
+    def publish_pins(self):
+        for pin_name, pin in self.pins.items():
+            # Skip subscriber (output) pins
+            if not pin['is_pub']:  continue
+
+            # Publish pin values
+            # rospy.logdebug(
+            #     "publish_pins:  Publishing pin '%s' value '%s'" %
+            #     (pin_name, self.comp[pin_name]))
+            pin['pub'].publish(self.comp[pin_name])
+
+    def run(self):
+        # Loop until shutdown, publishing pins and sleeping
+        while not rospy.is_shutdown():
+            self.publish_pins()
+            self.rate.sleep()
+
+if __name__ == '__main__':
+    # Create and name node
+    io_loop = HalIO()
+    try:
+        io_loop.run()
+    except rospy.ROSInterruptException:
+        pass
+    except HalIOException as e:
+        rospy.logfatal(e.message)
+
+# Because file has no .py extension, emacs pics up indent_size = 2
+# from .editorconfig
+#
+# Local Variables:
+# python-indent-offset: 4
+# End:

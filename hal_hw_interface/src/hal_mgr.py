@@ -10,8 +10,10 @@ import rospy
 
 MAIN_HAL = 'main.py'
 NAME = 'hal_mgr'
+HAL_IO = 'hal_io'
+SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 
-os.chdir(os.path.dirname(os.path.realpath(__file__)))
+os.chdir(SCRIPT_DIR)
 
 debug = int(os.environ.get('DEBUG',0))
 launcher.set_debug_level(debug)
@@ -37,7 +39,7 @@ try:
     rospy.on_shutdown(lambda: shutdown('Graceful shutdown via ROS'))
     rate = rospy.Rate(1) # 1hz
     rospy.loginfo("hal_mgr:  Initialized node")
-    
+
     # Get parameters
     if not rospy.has_param(NAME):
         shutdown("No parameters set for '%s'" % NAME, 1)
@@ -61,6 +63,7 @@ try:
 
     # Load HAL configuration
     robot_hw_loaded = False
+    hal_io_loaded = False
     for a in hal_mgr_config['hal_config']:
         if 'cmd' not in a:
             shutdown("%s entry has no 'cmd' key" % NAME, 1)
@@ -94,6 +97,18 @@ try:
             hal.addf("%s.funct" % comp.name, a['thread'])
             rospy.loginfo("hal_mgr:  Loading RT comp '%s' complete" %
                           hal_mgr_config['hal_comp'])
+        elif a['cmd'] == 'load_hal_io':
+            if hal_io_loaded:
+                shutdown(
+                    "%s duplicate 'load_hal_io' command" % NAME, 1)
+            hal_io_loaded = True
+            hal_io_path = os.path.join(SCRIPT_DIR, HAL_IO)
+            rospy.loginfo("hal_mgr:  Loading user comp '%s'" %
+                          hal_io_path)
+            from pprint import pformat
+            comp = hal.loadusr(hal_io_path, wait_name=HAL_IO)
+            rospy.loginfo("hal_mgr:  Loading user comp '%s' complete" %
+                          HAL_IO)
         else:
             shutdown("%s invalid command '%s'" % (NAME, a['cmd']), 1)
 
