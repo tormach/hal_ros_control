@@ -1,38 +1,48 @@
 # ROS HAL interface
 
-This package provides interfaces to [Machinekit][machinekit] HAL.  The
-`hal_hw_interface` HAL RT component extends
-[`ros_control_boilerplate`][ros_control_boilerplate] to control robot
-joints in HAL.  The `hal_io_publisher` HAL user component publishes
-robot I/O pins from HAL to ROS using `std_msgs`.
+This package provides interfaces to [Machinekit][machinekit] HAL from
+ROS.  It is expected to realize these benefits:
+
+- Bring real-time control to ROS with Machinekit RTAPI
+- Run on inexpensive PC and ARM hardware
+- Enable setting up many robot hardware interfaces with configuration
+  only, no programming
+- Leverage Machinekit's wide variety of real-time components:
+  - Hardware drivers:  EtherCAT, BeagleBone GPIO, Mesa Electronics
+    AnythingI/O FPGA cards, PC parallel port
+  - Motor control:  quadrature encoders, step/direction, PWM
+    generators, PID controllers
+  - Arithmetic:  limit position/velocity/acceleration, scale/offset,
+    low-pass filter, derivative/integral, multiplexer
+  - Logic:  and/or/xor/not, look-up tables, debouncer, flip-flop
+  - And many more, plus simple tools to write custom components in C
+
+This package provides two main HAL components for interfacing with
+ROS, plus infrastructure to configure and run the system.  The
+`hal_hw_interface` HAL RT component enables robot joint control by
+extending [`ros_control_boilerplate`][ros_control_boilerplate].  The
+`hal_io` user component (non-real-time) enables simple robot I/O by
+connecting HAL input and output pins with `std_msgs` publishers and
+subscribers, respectively.
 
 [machinekit]:  http://machinekit.io
 [ros_control_boilerplate]: https://github.com/davetcoleman/ros_control_boilerplate
 
-## `hal_hw_interface`
+## The `hal_hw_interface` real-time component
 
-A ROS `hardware_interface::RobotHW` implementation for running robot
-hardware with Machinekit HAL in a real-time thread.
+The `hal_hw_interface` HAL component is a ROS
+`hardware_interface::RobotHW` implementation for controlling robot
+joints in a real-time context.
 
-This ROS package adds the following capabilities to Dave Coleman's
-`ros_control_boilerplate`:
-
-- Brings real-time control to ROS with Machinekit RTAPI
-- Runs on inexpensive PC and ARM hardware
-- Many robot hardware interfaces possible with configuration only, no
-  programming
-- Use Machinekit's wide variety of hardware drivers:  EtherCAT,
-  GPIO step/direction, Mesa AnythingI/O FPGA, and more
-
-The hardware interface is a subclass of the `ros_control_boilerplate`
-hardware interface.  The `ros_control_boilerplate` control loop was
-too different to make sense to subclass, so it was rewritten from
-scratch, somewhat following the
+The hardware interface is a subclass of Dave Coleman's
+`ros_control_boilerplate` hardware interface.  The C++ HAL integration
+was done following examples by Bas de Bruijn and Mick Grant of the
+Machinekit project.  The control loop runs in a HAL thread, and its
+design is inspired by the
 [`rtt_ros_control_example`][rtt_ros_control_example] and related
-[discussion][ros_control-130].  The C++ HAL integration was done
-following examples by Bas de Bruijn and Mick Grant.  The `hal_mgr` ROS
-node, which starts up the RTAPI and HAL apparatus, was inspired by
-Alexander Roessler's [`python-hal-seed`][python-hal-seed].
+[discussion][ros_control-130].  The `hal_mgr` ROS node, which starts
+up the RTAPI and HAL apparatus, is based on Alexander Roessler's
+[`python-hal-seed`][python-hal-seed].
 
 [rtt_ros_control_example]: https://github.com/skohlbr/rtt_ros_control_example
 [ros_control-130]: https://github.com/ros-controls/ros_control/issues/130
@@ -48,30 +58,28 @@ and `UInt32` messages from ROS `std_msgs`.
 
 ## Dependencies
 
-The `hal_io_publisher` has two main dependencies:
-- [Machinekit][machinekit]:  Follow the directions to install from
-  packages or source on a PC.
-- A real-time kernel is required for low-latency control; see the
-  `linux-image-rt-*` packages available on Debian.
+- [Machinekit][machinekit]
+  - Required by all components
+  - Install Machinekit from packages or
+    source on a PC by following instructions on that site.
+- A real-time kernel, either RT_PREEMPT or Xenomai
+  - Required by Machinekit for low-latency control
+  - See the `linux-image-rt-*` packages available in Debian Stretch.
+- [`ros_control_boilerplate`][ros_control_boilerplate]
+  - Required by the `hal_hw_interface`
+  - This may be installed in package form.
+- The `rrbot_description` package from `gazebo_ros_demos`
+  - Required by `ros_control_boilerplate` to run the
+  `hal_rrbot_control` demo
+  - Follow the notes in the `ros_control_boilerplate/README.md` to
+    install this.
 
-The `hal_hw_interface` package adds an additional dependency:
-- [`ros_control_boilerplate`][ros_control_boilerplate]:  This may be
-  installed in package form.
-
-The `hal_rrbot_control` demo has two additional dependencies:
-- The demo depends on the `rrbot_control` package.  Check out the
-  source of `ros_control_boilerplate` into the catkin workspace, since
-  `rrbot_control` is not not included in the packaging.
-- Similarly, follow the notes in the
-  `ros_control_boilerplate/README.md` for installing the
-  `rrbot_description` package sources in the workspace.
-
-## Run the Demos
+## Run the demos
 
 The `hal_rrbot_control` package contains two demos:  one for
 `hal_hw_interface` and one for `hal_io`.
 
-### `hal_hw_interface` Demo
+### `hal_hw_interface` demo
 
 This demo runs the `ros_control_boilerplate` "RRBot" two joint
 revolute-revolute robot demo with HAL.  It is meant to show how simple
