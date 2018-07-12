@@ -23,7 +23,7 @@
     <!-- Load all settings into ROS parameter server -->
     <!-- - Joint parameters from rrbot_control package -->
     <rosparam
-	      file="$(find ros_control_boilerplate)/rrbot_control/config/rrbot_controllers.yaml"
+	      file="$(find hal_rrbot_control)/config/rrbot_controllers.yaml"
 	      command="load"
         />
     <!-- - HAL configuration params -->

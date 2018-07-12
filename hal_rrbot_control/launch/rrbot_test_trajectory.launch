@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- This file was copied directly from ros_control_boilerplate -->
+  <!-- It is only changed as indicated below in comments -->
+
+  <!-- GDB functionality -->
+  <arg name="debug" default="false" />
+  <arg unless="$(arg debug)" name="launch_prefix" value="" />
+  <arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
+
+  <group ns="rrbot">
+
+    <!-- Load hardware interface -->
+    <node name="test_trajectory" pkg="ros_control_boilerplate" type="test_trajectory"
+          output="screen" launch-prefix="$(arg launch_prefix)">
+      <param name="action_topic" value="/rrbot/position_trajectory_controller/follow_joint_trajectory/"/>
+      <!-- This line is changed to pick up the local file, since the
+           ros_control_boilerplate version isn't installed -->
+      <!-- <rosparam file="$(find ros_control_boilerplate)/rrbot_control/config/rrbot_controllers.yaml" command="load"/> -->
+      <rosparam file="$(find hal_rrbot_control)/config/rrbot_controllers.yaml"
+                command="load"/>
+    </node>
+
+  </group>
+
+</launch>
