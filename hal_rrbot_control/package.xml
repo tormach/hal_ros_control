@@ -11,7 +11,6 @@
   <author email="john@zultron.com">John Morris</author>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>hal_hw_interface</build_depend>
 
   <run_depend>hal_hw_interface</run_depend>
   <run_depend>rrbot_control</run_depend>

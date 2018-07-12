@@ -2,13 +2,14 @@ cmake_minimum_required(VERSION 2.8.3)
 project(hal_hw_interface)
 
 # C++ 11
-set(CMAKE_CXX_FLAGS "-std=c++11 -Wall ${CMAKE_CXX_FLAGS}")
+add_compile_options(-std=c++11 -Wall)
 
 # Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
-  ros_control_boilerplate
   controller_manager
+  ros_control_boilerplate
   roscpp
+  rospy
 )
 
 # This package
@@ -17,8 +18,8 @@ catkin_package(
   include
 
   CATKIN_DEPENDS
-  ros_control_boilerplate
   controller_manager
+  ros_control_boilerplate
   roscpp
   rospy
 
@@ -45,13 +46,9 @@ install(
 
 # Launch file
 # - Add library path to help locate HAL comp
-CONFIGURE_FILE(
-  ${CMAKE_CURRENT_SOURCE_DIR}/launch/hal_hw_interface.in.launch
-  ${CMAKE_CURRENT_SOURCE_DIR}/launch/hal_hw_interface.launch @ONLY)
-# - Install
-install(FILES
-  launch/hal_hw_interface.launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/launch/${PROJECT_NAME}.in.launch
+  ${CMAKE_CURRENT_SOURCE_DIR}/launch/${PROJECT_NAME}.launch @ONLY)
 
 #######################
 # HAL component build definitions
@@ -59,8 +56,8 @@ install(FILES
 # Build HAL component
 add_library(
   ${PROJECT_NAME} MODULE
-  src/hal_hw_interface.cpp
   src/hal_control_loop.cpp
+  src/${PROJECT_NAME}.cpp
 )
 
 # CFLAGS
@@ -81,3 +78,31 @@ set_target_properties(
   ${PROJECT_NAME} PROPERTIES
   PREFIX ""
   )
+
+#######################
+# Install
+
+# Install libraries
+install(
+  TARGETS ${PROJECT_NAME}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  )
+
+# Install python executables
+catkin_install_python(
+  PROGRAMS
+  src/hal_mgr.py
+  src/hal_io
+
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  )
+
+# Install header files
+install(
+  DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+
+# Install launch files
+install(
+  FILES launch/${PROJECT_NAME}.launch
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

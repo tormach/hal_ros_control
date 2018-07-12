@@ -2,7 +2,9 @@
 <package>
   <name>hal_hw_interface</name>
   <version>0.0.0</version>
-  <description>The hal_hw_interface package</description>
+  <description>
+    Machinekit HAL interface to robot hardware and I/O
+  </description>
 
   <maintainer email="john@zultron.com">John Morris</maintainer>
 
