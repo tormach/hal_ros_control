@@ -2,7 +2,10 @@
 # hal_robot_io_publisher with BIT, S32, U32 and FLOAT pins (with
 # conversion as needed).
 
-# 10Hz thread (matches publisher)
+# Load hal_io user component
+loadusr -W hal_io
+
+# 10Hz thread (matches hal_io publisher rate)
 newthread robot_hw_thread 100000000 fp
 
 # The sine wave input signal

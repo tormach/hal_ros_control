@@ -47,12 +47,12 @@ try:
         hal_mgr_config = rospy.get_param(NAME)
     except KeyError:
         shutdown("No keys defined at %s" % NAME, 1)
-    if 'hal_config' not in hal_mgr_config:
-        shutdown("%s has no 'hal_config' key" % NAME, 1)
+    if 'hal_files' not in hal_mgr_config:
+        shutdown("%s has no 'hal_files' key" % NAME, 1)
     if 'hal_file_dir' not in hal_mgr_config:
         shutdown("%s has no 'hal_file_dir' key" % NAME, 1)
-    if 'hal_comp' not in hal_mgr_config:
-        shutdown("%s has no 'hal_comp' key" % NAME, 1)
+    if 'LIBDIR' not in os.environ:
+        shutdown("No 'LIBDIR' environment variable defined", 1)
 
     # Set up HAL
     launcher.cleanup_session()  # kill any running Machinekit instances
@@ -64,55 +64,18 @@ try:
     # Load HAL configuration
     robot_hw_loaded = False
     hal_io_loaded = False
-    for a in hal_mgr_config['hal_config']:
-        if 'cmd' not in a:
-            shutdown("%s entry has no 'cmd' key" % NAME, 1)
-        if a['cmd'] == 'load_hal_file':
-            if 'fname' not in a:
-                shutdown(
-                    "%s 'load_hal_file' command has no 'fname' key" % NAME, 1)
-            rospy.loginfo("hal_mgr:  Loading hal file '%s'" % a['fname'])
-            launcher.load_hal_file(
-                os.path.join(hal_mgr_config['hal_file_dir'], a['fname']))
-            rospy.loginfo("hal_mgr:  Loading hal file '%s' complete" %
-                          a['fname'])
-        elif a['cmd'] == 'load_hal_hw_interface':
-            if robot_hw_loaded:
-                shutdown(
-                    "%s duplicate 'load_hal_hw_interface' command" % NAME, 1)
-            robot_hw_loaded = True
-            if 'thread' not in a:
-                shutdown(
-                    "%s 'load_hal_hw_interface' command missing "
-                    "'thread' key" % NAME, 1)
-            if "ROS_MASTER_URI" in os.environ:
-                # This is probably the wrong way to set the master URI...
-                os.environ["ROS_MASTER_URI"] = (
-                    "http://%s/" % rospy.get_master().target._ServerProxy__host)
-            rospy.loginfo(
-                "hal_mgr:  Loading RT comp '%s', ROS_MASTER_URI '%s'" %
-                (hal_mgr_config['hal_comp'], os.environ["ROS_MASTER_URI"]))
-            comp = rtapi.loadrt(hal_mgr_config['hal_comp'])
-            rospy.loginfo("hal_mgr:  Adding RT function to thread '%s'" %
-                          a['thread'])
-            hal.addf("%s.funct" % comp.name, a['thread'])
-            rospy.loginfo("hal_mgr:  Loading RT comp '%s' complete" %
-                          hal_mgr_config['hal_comp'])
-        elif a['cmd'] == 'load_hal_io':
-            if hal_io_loaded:
-                shutdown(
-                    "%s duplicate 'load_hal_io' command" % NAME, 1)
-            hal_io_loaded = True
-            hal_io_path = os.path.join(SCRIPT_DIR, HAL_IO)
-            rospy.loginfo("hal_mgr:  Loading user comp '%s'" %
-                          hal_io_path)
-            from pprint import pformat
-            comp = hal.loadusr(hal_io_path, wait_name=HAL_IO)
-            rospy.loginfo("hal_mgr:  Loading user comp '%s' complete" %
-                          HAL_IO)
-        else:
-            shutdown("%s invalid command '%s'" % (NAME, a['cmd']), 1)
+    os.environ['PATH'] += (":%s" % SCRIPT_DIR) # Help HAL find hal_io comp
+    for fname in hal_mgr_config['hal_files']:
+        fpath = os.path.join(hal_mgr_config['hal_file_dir'], fname)
+        if not os.path.exists(fpath):
+            shutdown("No file '%s' in directory '%s'" %
+                     (fname, hal_mgr_config['hal_file_dir']))
+        rospy.loginfo("hal_mgr:  Loading hal file '%s'" % fname)
+        launcher.load_hal_file(fpath)
+        rospy.loginfo("hal_mgr:  Loading hal file '%s' complete" %
+                      fpath)
 
+    # Spin until ROS shutdown event
     rospy.loginfo("ROS node and HAL started successfully")
     while not rospy.is_shutdown():
         launcher.check_processes()

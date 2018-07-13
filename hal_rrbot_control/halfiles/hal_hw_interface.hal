@@ -1,3 +1,10 @@
+# 100Hz thread
+newthread robot_hw_thread 10000000 fp
+
+# Load the hal_hw_interface component
+loadrt $(LIBDIR)/hal_hw_interface
+addf hal_hw_interface robot_hw_thread
+
 # Connect position command to feedback via limit3 comp to simulate
 # joints obeying physics
 loadrt limit3 names=joint1-pos,joint2-pos

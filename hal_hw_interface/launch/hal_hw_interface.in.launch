@@ -10,13 +10,6 @@
   <env name="SYSLOG_TO_STDERR"     if="$(arg hal_debug_output)" value="1"/>
   <env name="SYSLOG_TO_STDERR" unless="$(arg hal_debug_output)" value=""/>
 
-  <!-- Tell the python script where the comp.so file is; this has to
-       be supplied by the build system -->
-  <param
-      name="hal_mgr/hal_comp"
-      value="@CMAKE_LIBRARY_OUTPUT_DIRECTORY@/hal_hw_interface"
-      />
-
   <!-- HAL manager node:  launch realtime environment -->
   <node
       name="hal_mgr"
@@ -25,5 +18,9 @@
       output="screen"
       required="true"
       >
+    <env
+        name="LIBDIR"
+        value="@CMAKE_LIBRARY_OUTPUT_DIRECTORY@"
+        />
   </node>
 </launch>

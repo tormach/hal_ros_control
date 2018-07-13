@@ -34,10 +34,6 @@ hal_io:
       - hal_io/uint_out
 
 hal_mgr:
-  hal_config:
-    # Load the hal_io_publisher
-    - cmd: load_hal_io
-
-    # Load the demo HAL file
-    - cmd: load_hal_file
-      fname: hal_io.hal
+  hal_files:
+    # Load a HAL file that inits a thread
+    - hal_io.hal

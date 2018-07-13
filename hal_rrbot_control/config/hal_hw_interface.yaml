@@ -1,13 +1,4 @@
 hal_mgr:
-  hal_config:
+  hal_files:
     # Load a HAL file that inits a thread
-    - cmd: load_hal_file
-      fname: hal_hw_interface_pre.hal
-
-    # Load the hal_hw_interface RT component
-    - cmd: load_hal_hw_interface
-      thread: robot_hw_thread
-
-    # Load a HAL file that finishes HAL setup
-    - cmd: load_hal_file
-      fname: hal_hw_interface_post.hal
+    - hal_hw_interface.hal

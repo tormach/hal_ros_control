@@ -1,2 +1,0 @@
-# 100Hz thread
-newthread robot_hw_thread 10000000 fp
