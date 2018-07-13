@@ -76,14 +76,15 @@ try:
                 os.path.join(hal_mgr_config['hal_file_dir'], a['fname']))
             rospy.loginfo("hal_mgr:  Loading hal file '%s' complete" %
                           a['fname'])
-        elif a['cmd'] == 'load_robot_hw':
+        elif a['cmd'] == 'load_hal_hw_interface':
             if robot_hw_loaded:
                 shutdown(
-                    "%s duplicate 'load_robot_hw' command" % NAME, 1)
+                    "%s duplicate 'load_hal_hw_interface' command" % NAME, 1)
             robot_hw_loaded = True
             if 'thread' not in a:
                 shutdown(
-                    "%s 'load_robot_hw' command has no 'thread' key" % NAME, 1)
+                    "%s 'load_hal_hw_interface' command missing "
+                    "'thread' key" % NAME, 1)
             if "ROS_MASTER_URI" in os.environ:
                 # This is probably the wrong way to set the master URI...
                 os.environ["ROS_MASTER_URI"] = (

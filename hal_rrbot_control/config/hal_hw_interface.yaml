@@ -5,7 +5,7 @@ hal_mgr:
       fname: hal_hw_interface_pre.hal
 
     # Load the hal_hw_interface RT component
-    - cmd: load_robot_hw
+    - cmd: load_hal_hw_interface
       thread: robot_hw_thread
 
     # Load a HAL file that finishes HAL setup
