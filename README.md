@@ -74,6 +74,7 @@ and `UInt32` messages from ROS `std_msgs`.
   - Follow the notes in the `ros_control_boilerplate/README.md` to
     install this.
 
+-----
 ## Run the demos
 
 The `hal_rrbot_control` package contains two demos:  one for
@@ -131,6 +132,84 @@ Run `rqt_plot` to visualize the ROS messages:
 
     rqt_plot /rrbot/hal_io/bool_out:float_out:int_out:uint_out
 
+-----
+## Configuration
+
+To configure the `hal_hw_interface` and `hal_io` components, use the
+sample configuration  in the `hal_rrbot_control` package as a
+starting point.
+
+### `hal_mgr` configuration
+
+The `hal_mgr.py` python script is launched as a ROS node, and performs
+simple management of the HAL life cycle:
+
+- At startup,
+  - Start the RTAPI real time services
+  - Load a HAL configuration from a list of HAL files
+- While running, spin until receiving a shutdown signal from ROS
+- On shutdown, stop HAL and RTAPI and exit
+
+The HAL configuration is specified as a list of HAL files to load from
+the `halfiles` directory in the `hal_mgr/hal_files` ROS parameter.
+The files may be either legacy `.hal` files or python scripts.
+
+See the `config/hal_hw_interface.yaml` and `config/hal_io.yaml` files
+in `hal_rrbot_control` for typical configuration examples.
+
+### `hal_hw_interface` configuration
+
+A `hal_hw_interface` configuration builds on an existing
+`ros_control_boilerplate` configuration.  The
+`ros_control_boilerplate` configuration file,
+`rrbot_controllers.yaml`, defines joints and controllers; the
+`generic_hw_control_loop` section is unneeded, since the control loop
+runs in a HAL thread.
+
+The `config/hal_hw_interface.yaml` ROS parameter file loads the
+`halfiles/hal_hardware_interface.hal` file.  That file defines a new
+HAL thread, loads the `hal_hw_interface` component, and adds it to the
+thread.  It then sets up `limit3` components for each joint to limit
+position, velocity and acceleration, and connects them to the
+`hal_hw_interface` command and feedback signals.
+
+Because the `hal_hw_interface` component is installed outside the
+standard HAL component directory, its full path must be provided using
+the `$LIBDIR` environment variable:  `loadrt
+$(LIBDIR)/hal_hw_interface`.
+
+When the `hal_hw_interface` component loads, it creates six HAL pins
+for each joint:  three command output pins and three feedback input
+pins for each of position, velocity and effort.  On the ROS side, it
+sets up the hardware interface and controller manager.  The HAL file
+adds its ros_control `update()` function to a real-time HAL thread,
+and once the thread is started, the function runs in a low-latency
+loop at the frequency configured for the thread.
+
+### `hal_io` configuration
+
+The `hal_io` user (non-real-time) component loads its configuration
+from the ROS parameter server.  See the example `config/hal_io.yaml`
+configuration file.  It supports the four HAL data types:  `FLOAT`,
+`S32`, `U32` and `BIT`, connecting them to ROS [`std_msgs`][std_msgs]
+`Float64`, `Int32`, `UInt32` and `Bool` messages, respectively.  The
+configuration has three main parameters:
+
+- `hal_io/update_rate`:  The main loop publisher update frequency in
+  Hz (float)
+- `hal_io/input`:  A dictionary of pin-name keys to HAL input pin type
+  values; e.g. `{ "door_open" : "BIT" }` creates a HAL input pin
+  `hal_io.door_open`, and publishes `Bool` messages to the topic
+  `hal_io/door_open` at the `update_rate` frequency
+- `hal_io/output`:  A dictionary of pin-name keys to lists of (type,
+  topic) values; e.g. `{ "request_tool_num" : [ "U32",
+  "robot_io/request_tool_num"] }` creates a HAL output pin
+  `hal_io.request_tool_num` and sets its value from `UInt32` messages
+  subscribed to from the topic `robot_io/request_tool_num`
+
+[std_msgs]: http://wiki.ros.org/std_msgs
+
+-----
 ## TODO
 
 - Shutdown is done poorly
