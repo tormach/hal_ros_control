@@ -38,7 +38,7 @@ namespace hal_hw_interface
      */
     void shutdown();
 
-  
+
   protected:
 
     /**
@@ -57,7 +57,7 @@ namespace hal_hw_interface
     ros::CallbackQueue non_rt_ros_queue_;
 
     /////// RT pieces ///////
-    
+
     /**
      * \brief The HAL hardware interface
      */
