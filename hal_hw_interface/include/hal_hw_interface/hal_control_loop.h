@@ -70,6 +70,11 @@ namespace hal_hw_interface
     boost::shared_ptr<controller_manager::ControllerManager>
       controller_manager_;
 
+    /**
+     * \brief Flag indicating node is shut down
+     */
+    bool node_is_shutdown;
+
   }; // class
 
 

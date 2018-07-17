@@ -10,6 +10,7 @@ namespace hal_hw_interface
 {
 
 HalRosControlLoop::HalRosControlLoop()
+: node_is_shutdown(0)
 {
   // ROS node handle
   nh_.reset(new ros::NodeHandle(""));
@@ -69,6 +70,13 @@ void HalRosControlLoop::serviceNonRtRosQueue()
 
 void HalRosControlLoop::shutdown()
 {
+  // Only run once
+  if (node_is_shutdown) {
+    HAL_ROS_LOG_INFO(
+      CNAME, "%s: shutdown() called again", CNAME);
+    return;
+  }
+  node_is_shutdown = 1;
 
   // Shut down ROS node
   HAL_ROS_LOG_INFO(
