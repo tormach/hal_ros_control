@@ -33,7 +33,7 @@ if 'MACHINEKIT_INI' not in os.environ:  # export for package installs
 
 try:
     # Set up ROS node
-    rospy.init_node(NAME, anonymous=True)
+    rospy.init_node(NAME)
     # Call end_session() on ROS shutdown; don't have the launcher
     # register its own exit handler
     rospy.on_shutdown(lambda: shutdown('Graceful shutdown via ROS'))
