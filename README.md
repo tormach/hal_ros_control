@@ -208,15 +208,3 @@ configuration has three main parameters:
   subscribed to from the topic `robot_io/request_tool_num`
 
 [std_msgs]: http://wiki.ros.org/std_msgs
-
------
-## TODO
-
-- Shutdown is done poorly
-  - The comp creates two threads in `rtapi_app`; these are probably
-    not shut down correctly.  (Could these be registered as userspace
-    threads?)
-  - The exit handler might need looking at:  currently uses the
-    `rtapi_app` handler; should it be updated to help with this comp?
-  - Normal shutdown is poor; worse is incomplete start-up
-    - E.g. try a bogus config file

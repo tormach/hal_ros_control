@@ -9,9 +9,11 @@ extern "C" void funct(void *arg, long period);
 namespace hal_hw_interface
 {
 
-HalRosControlLoop::HalRosControlLoop(ros::NodeHandle& nh)
-: nh_(nh)
+HalRosControlLoop::HalRosControlLoop()
 {
+  // ROS node handle
+  nh_.reset(new ros::NodeHandle(""));
+
   // Run ROS loop in a separate thread
   ros::AsyncSpinner spinner(2);
   spinner.start();
@@ -24,13 +26,13 @@ HalRosControlLoop::HalRosControlLoop(ros::NodeHandle& nh)
 
   // HW interface
   hardware_interface_.reset(
-    new hal_hw_interface::HalHWInterface(nh_));
+    new hal_hw_interface::HalHWInterface(*nh_));
 
   HAL_ROS_LOG_INFO(
     CNAME, "%s: Initialized HAL hardware interface", CNAME);
 
   // ROS callback thread
-  nh_.setCallbackQueue(&non_rt_ros_queue_);
+  nh_->setCallbackQueue(&non_rt_ros_queue_);
   non_rt_ros_queue_thread_ =
     boost::thread(
       boost::bind(&HalRosControlLoop::serviceNonRtRosQueue, this));
@@ -41,7 +43,7 @@ HalRosControlLoop::HalRosControlLoop(ros::NodeHandle& nh)
   // Controller
   controller_manager_.reset(
     new controller_manager::ControllerManager(
-      hardware_interface_.get(), nh_));
+      hardware_interface_.get(), *nh_));
 
   HAL_ROS_LOG_INFO(
     CNAME, "%s: Done initializing ROS controller manager", CNAME);
@@ -61,19 +63,33 @@ void HalRosControlLoop::serviceNonRtRosQueue()
 {
   static const double timeout = 0.001;
 
-  while (this->nh_.ok())
+  while (this->nh_->ok())
     this->non_rt_ros_queue_.callAvailable(ros::WallDuration(timeout));
 }
 
 void HalRosControlLoop::shutdown()
 {
-  // Shut down HAL, if possible
-  hardware_interface_->shutdown();
 
   // Shut down ROS node
-  nh_.shutdown();
+  HAL_ROS_LOG_INFO(
+    CNAME, "%s:  Shutting down ROS node", CNAME);
+  nh_->shutdown();
+  HAL_ROS_LOG_INFO(
+    CNAME, "%s:  Shutting down ROS cb thread", CNAME);
   non_rt_ros_queue_thread_.join();
-  ros::shutdown();
+
+  // Shut down HAL
+  HAL_ROS_LOG_INFO(
+    CNAME, "%s:  Shutting down HAL", CNAME);
+  hardware_interface_->shutdown();
+
+  // Reset shared pointers
+  controller_manager_.reset();
+  hardware_interface_.reset();
+  nh_.reset();
+
+  HAL_ROS_LOG_INFO(
+    CNAME, "%s:  Shut down complete", CNAME);
 }
 
 HalRosControlLoop::~HalRosControlLoop()
@@ -108,12 +124,9 @@ extern "C" {
     };
     ros::init(remappings, CNAME, ros::init_options::NoSigintHandler);
 
-    // ROS node handle
-    ros::NodeHandle nh_;    
-
     // Create HAL controller and hardware interface
     control_loop_.reset(
-      new hal_hw_interface::HalRosControlLoop(nh_));
+      new hal_hw_interface::HalRosControlLoop());
 
     return 0;
   }

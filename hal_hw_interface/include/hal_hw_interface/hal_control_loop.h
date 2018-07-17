@@ -18,7 +18,7 @@ namespace hal_hw_interface
      * \param nh - Node handle for topics.
      * \param hardware_interface - Hardware interface object
      */
-    HalRosControlLoop(ros::NodeHandle& nh);
+    HalRosControlLoop();
 
     /**
      * \brief Destructor
@@ -44,7 +44,7 @@ namespace hal_hw_interface
     /**
      * \brief The ROS node handle
      */
-    ros::NodeHandle nh_;
+    boost::shared_ptr<ros::NodeHandle> nh_;
 
     /////// Non-RT CB thread pieces ///////
     /**
