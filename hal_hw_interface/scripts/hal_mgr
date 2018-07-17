@@ -64,8 +64,6 @@ try:
     # Set up HAL
     launcher.cleanup_session()  # kill any running Machinekit instances
     launcher.start_realtime()
-    if not rtapi.__rtapicmd:
-        rtapi.init_RTAPI()
     rospy.loginfo("hal_mgr:  Started realtime")
 
     # Load HAL configuration
