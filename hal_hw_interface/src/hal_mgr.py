@@ -40,6 +40,15 @@ try:
     rate = rospy.Rate(1) # 1hz
     rospy.loginfo("hal_mgr:  Initialized node")
 
+    # Find the hal_hw_interface comp's directory in LD_LIBRARY_PATH and put it
+    # into $COMP_DIR
+    comp_dir = ""
+    for path in os.environ.get('LD_LIBRARY_PATH','').split(':'):
+        if os.path.exists(os.path.join(path, 'hal_hw_interface.so')):
+            comp_dir = path
+    os.environ['COMP_DIR'] = comp_dir
+    rospy.loginfo("hal_mgr:  COMP_DIR set to '%s'" % comp_dir)
+
     # Get parameters
     if not rospy.has_param(NAME):
         shutdown("No parameters set for '%s'" % NAME, 1)
@@ -51,8 +60,6 @@ try:
         shutdown("%s has no 'hal_files' key" % NAME, 1)
     if 'hal_file_dir' not in hal_mgr_config:
         shutdown("%s has no 'hal_file_dir' key" % NAME, 1)
-    if 'LIBDIR' not in os.environ:
-        shutdown("No 'LIBDIR' environment variable defined", 1)
 
     # Set up HAL
     launcher.cleanup_session()  # kill any running Machinekit instances

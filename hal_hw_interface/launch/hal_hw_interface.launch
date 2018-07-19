@@ -17,10 +17,5 @@
       type="hal_mgr.py"
       output="screen"
       required="true"
-      >
-    <env
-        name="LIBDIR"
-        value="@CMAKE_LIBRARY_OUTPUT_DIRECTORY@"
-        />
-  </node>
+      />
 </launch>

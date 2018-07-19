@@ -175,8 +175,8 @@ position, velocity and acceleration, and connects them to the
 
 Because the `hal_hw_interface` component is installed outside the
 standard HAL component directory, its full path must be provided using
-the `$LIBDIR` environment variable:  `loadrt
-$(LIBDIR)/hal_hw_interface`.
+the `$COMP_DIR` environment variable:  `loadrt
+$(COMP_DIR)/hal_hw_interface`.
 
 When the `hal_hw_interface` component loads, it creates six HAL pins
 for each joint:  three command output pins and three feedback input

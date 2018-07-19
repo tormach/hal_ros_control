@@ -44,12 +44,6 @@ install(
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   )
 
-# Launch file
-# - Add library path to help locate HAL comp
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/launch/${PROJECT_NAME}.in.launch
-  ${CMAKE_CURRENT_SOURCE_DIR}/launch/${PROJECT_NAME}.launch @ONLY)
-
 #######################
 # HAL component build definitions
 
