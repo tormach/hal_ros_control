@@ -141,7 +141,7 @@ starting point.
 
 ### `hal_mgr` configuration
 
-The `hal_mgr.py` python script is launched as a ROS node, and performs
+The `hal_mgr` python script is launched as a ROS node, and performs
 simple management of the HAL life cycle:
 
 - At startup,

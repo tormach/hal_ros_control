@@ -85,8 +85,8 @@ install(
 # Install python executables
 catkin_install_python(
   PROGRAMS
-  src/hal_mgr.py
-  src/hal_io
+  scripts/hal_mgr
+  scripts/hal_io
 
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   )

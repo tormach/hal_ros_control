@@ -14,7 +14,7 @@
   <node
       name="hal_mgr"
       pkg="hal_hw_interface"
-      type="hal_mgr.py"
+      type="hal_mgr"
       output="screen"
       required="true"
       />
