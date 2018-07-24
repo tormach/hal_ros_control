@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package>
+  <name>hal_rrbot_control</name>
+  <version>0.0.0</version>
+  <description>Example usage of the hal_hw_interface package</description>
+
+  <maintainer email="john@zultron.com">John Morris</maintainer>
+
+  <license>BSD</license>
+
+  <author email="john@zultron.com">John Morris</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>hal_hw_interface</run_depend>
+  <run_depend>rrbot_control</run_depend>
+  <run_depend>rrbot_description</run_depend>
+</package>

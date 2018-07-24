@@ -1,0 +1,4 @@
+hal_mgr:
+  hal_files:
+    # Load a HAL file that inits a thread
+    - hal_hw_interface.hal

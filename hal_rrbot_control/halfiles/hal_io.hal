@@ -1,0 +1,42 @@
+# This demo generates a sine wave signal, and passes it to a
+# hal_robot_io_publisher with BIT, S32, U32 and FLOAT pins (with
+# conversion as needed).
+
+# Load hal_io user component
+loadusr -W hal_io
+
+# 10Hz thread (matches hal_io publisher rate)
+newthread robot_hw_thread 100000000 fp
+
+# The sine wave input signal
+loadrt siggen names=sinewave
+addf sinewave.update robot_hw_thread
+setp sinewave.frequency 0.1
+setp sinewave.amplitude 10
+net sinewave_out <= sinewave.sine
+
+# Publisher 'float_out' pin:  the unnchanged sine wave signal
+net sinewave_out => hal_io.float_in
+
+# Publisher 'bool_out' pin:  TRUE when sine wave signal is positive
+loadrt comp names=bool
+addf bool robot_hw_thread
+net sinewave_out => bool.in1
+setp bool.in0 0
+#net bool_out bool.out => hal_io.bool_out
+
+# Publisher 'int_out' pin:  signed integer part of sine wave signal
+loadrt conv_float_s32 names=int
+addf int robot_hw_thread
+net sinewave_out => int.in
+net int_out int.out => hal_io.int_in
+
+# Publisher 'uint_out' pin:  unsigned integer part of sine wave signal
+loadrt conv_float_u32 names=uint
+addf uint robot_hw_thread
+setp uint.clamp TRUE
+net sinewave_out => uint.in
+net uint_out uint.out => hal_io.uint_in
+
+# Start threads
+start

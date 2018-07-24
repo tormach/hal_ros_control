@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<package>
+  <name>hal_hw_interface</name>
+  <version>0.0.0</version>
+  <description>
+    Machinekit HAL interface to robot hardware and I/O
+  </description>
+
+  <maintainer email="john@zultron.com">John Morris</maintainer>
+
+  <license>BSD</license>
+
+  <author email="john@zultron.com">John Morris</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>ros_control_boilerplate</build_depend>
+  <build_depend>controller_manager</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>rospy</build_depend>
+
+  <run_depend>ros_control_boilerplate</run_depend>
+  <run_depend>controller_manager</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>rospy</run_depend>
+</package>
