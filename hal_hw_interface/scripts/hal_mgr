@@ -79,8 +79,6 @@ try:
     signal.signal(signal.SIGTERM, shutdown_graceful)
 
     # Load HAL configuration
-    robot_hw_loaded = False
-    hal_io_loaded = False
     os.environ['PATH'] += (":%s" % SCRIPT_DIR) # Help HAL find hal_io comp
     for fname in hal_mgr_config['hal_files']:
         fpath = os.path.join(hal_mgr_config['hal_file_dir'], fname)
