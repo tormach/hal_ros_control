@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
-import sys
-import os
-import subprocess
+import sys, os, subprocess, signal
 from machinekit import launcher, config, rtapi, hal
 
 # ROS
@@ -18,12 +16,18 @@ os.chdir(SCRIPT_DIR)
 debug = int(os.environ.get('DEBUG',0))
 launcher.set_debug_level(debug)
 
+shutdown_begun = False
 def shutdown(msg = "Shutting down for unknown reason", res = 0):
-    launcher.end_session()
+    # Only run this once
+    global shutdown_begun
+    if shutdown_begun: return
+    shutdown_begun = True
+
     if res:
         rospy.logerr("hal_mgr:  %s" % msg)
     else:
         rospy.loginfo("hal_mgr:  %s" % msg)
+    launcher.end_session()
     rospy.signal_shutdown(msg)
     sys.exit(res)
 
@@ -65,6 +69,14 @@ try:
     launcher.cleanup_session()  # kill any running Machinekit instances
     launcher.start_realtime()
     rospy.loginfo("hal_mgr:  Started realtime")
+
+    # Load rtapi module and set up signal handlers
+    if not rtapi.__rtapicmd:
+        rtapi.init_RTAPI()
+    def shutdown_graceful(signum, frame):
+        shutdown('Gracefully shutting down after interrupt signal')
+    signal.signal(signal.SIGINT, shutdown_graceful)
+    signal.signal(signal.SIGTERM, shutdown_graceful)
 
     # Load HAL configuration
     robot_hw_loaded = False
