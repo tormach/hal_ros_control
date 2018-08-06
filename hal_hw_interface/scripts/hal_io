@@ -1,10 +1,17 @@
 #!/usr/bin/env python
 # coding=utf-8
+import sys
 
 import rospy
 from std_msgs.msg import Bool, Float64, UInt32, Int32
 import hal
 import attr
+
+if (sys.version_info[0] < 3) or (sys.version[1] < 5):
+    def isclose(a, b, rel_tol=1e-9, abs_tol=0.0):
+        return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+else:
+    from math import isclose
 
 
 class HalIOException(RuntimeError):
@@ -22,6 +29,7 @@ class HalPin(object):
     hal_pin = attr.ib(default=None)
     sub = attr.ib(default=None)
     pub = attr.ib(default=None)
+    last_value = attr.ib(default=float('inf'))
 
 
 class HalIO(object):
@@ -52,6 +60,8 @@ class HalIO(object):
 
         # Publisher update rate in Hz
         self.update_rate = rospy.get_param('%s/update_rate' % self.cname, 10)
+        self.rel_tol = rospy.get_param('%s/relative_tolerance' % self.cname, 1e-9)
+        self.abs_tol = rospy.get_param('%s/absolute_tolerance' % self.cname, 0.0)
         self.rate = rospy.Rate(self.update_rate)
         rospy.loginfo("Publish update rate = %.1f" % self.update_rate)
 
@@ -127,13 +137,23 @@ class HalIO(object):
         #     (pin['name'], msg.data, type(msg)))
         self.comp[pin.name] = msg.data
 
+    def _compare_pin_value(self, pin, value):
+        if pin.hal_type == hal.HAL_FLOAT:
+            changed = isclose(pin.last_value, value, rel_tol=self.rel_tol, abs_tol=self.abs_tol)
+        else:
+            changed = pin.last_value != value
+        return changed
+
     def publish_pins(self):
         for pin_name, pin in self.pins.items():
             # Publish pin values
             # rospy.logdebug(
             #     "publish_pins:  Publishing pin '%s' value '%s'" %
             #     (pin_name, self.comp[pin_name]))
-            pin.pub.publish(self.comp[pin_name])
+            value = self.comp[pin_name]
+            if self._compare_pin_value(pin, value):
+                pin.last_value = value
+                pin.pub.publish(value)
 
     def run(self):
         # Loop until shutdown, publishing pins and sleeping
