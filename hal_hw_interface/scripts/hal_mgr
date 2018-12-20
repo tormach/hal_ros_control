@@ -85,20 +85,22 @@ try:
 
     def shutdown_graceful(signum, frame):
         shutdown('Gracefully shutting down after interrupt signal')
+
     signal.signal(signal.SIGINT, shutdown_graceful)
     signal.signal(signal.SIGTERM, shutdown_graceful)
 
     # Load HAL configuration
-    os.environ['PATH'] += (":%s" % SCRIPT_DIR)  # Help HAL find hal_io comp
+    os.environ['PATH'] += ":%s" % SCRIPT_DIR  # Help HAL find hal_io comp
     for fname in hal_mgr_config['hal_files']:
         fpath = os.path.join(hal_mgr_config['hal_file_dir'], fname)
         if not os.path.exists(fpath):
-            shutdown("No file '%s' in directory '%s'" %
-                     (fname, hal_mgr_config['hal_file_dir']))
+            shutdown(
+                "No file '%s' in directory '%s'"
+                % (fname, hal_mgr_config['hal_file_dir'])
+            )
         rospy.loginfo("hal_mgr:  Loading hal file '%s'" % fname)
         launcher.load_hal_file(fpath)
-        rospy.loginfo("hal_mgr:  Loading hal file '%s' complete" %
-                      fpath)
+        rospy.loginfo("hal_mgr:  Loading hal file '%s' complete" % fpath)
 
     # Spin until ROS shutdown event
     rospy.loginfo("ROS node and HAL started successfully")

@@ -8,8 +8,11 @@ import hal
 import attr
 
 if (sys.version_info[0] < 3) or (sys.version[1] < 5):
+
     def isclose(a, b, rel_tol=1e-9, abs_tol=0.0):
-        return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+        return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+
+
 else:
     from math import isclose
 
@@ -35,22 +38,10 @@ class HalPin(object):
 class HalIO(object):
     cname = 'hal_io'
     pin_type_map = dict(
-        BIT=hal.HAL_BIT,
-        FLOAT=hal.HAL_FLOAT,
-        U32=hal.HAL_U32,
-        S32=hal.HAL_S32,
+        BIT=hal.HAL_BIT, FLOAT=hal.HAL_FLOAT, U32=hal.HAL_U32, S32=hal.HAL_S32
     )
-    msg_type_map = dict(
-        BIT=Bool,
-        FLOAT=Float64,
-        U32=UInt32,
-        S32=Int32,
-    )
-    pin_dir_map = dict(
-        IN=hal.HAL_IN,
-        OUT=hal.HAL_OUT,
-        IO=hal.HAL_IO,
-    )
+    msg_type_map = dict(BIT=Bool, FLOAT=Float64, U32=UInt32, S32=Int32)
+    pin_dir_map = dict(IN=hal.HAL_IN, OUT=hal.HAL_OUT, IO=hal.HAL_IO)
 
     def __init__(self):
         rospy.loginfo("Initializing '%s' component" % self.cname)
@@ -60,18 +51,15 @@ class HalIO(object):
 
         # Publisher update rate in Hz
         self.update_rate = rospy.get_param('%s/update_rate' % self.cname, 10)
-        self.rel_tol = rospy.get_param('%s/relative_tolerance' %
-                                       self.cname, 1e-9)
-        self.abs_tol = rospy.get_param('%s/absolute_tolerance' %
-                                       self.cname, 0.0)
+        self.rel_tol = rospy.get_param('%s/relative_tolerance' % self.cname, 1e-9)
+        self.abs_tol = rospy.get_param('%s/absolute_tolerance' % self.cname, 0.0)
         self.rate = rospy.Rate(self.update_rate)
         rospy.loginfo("Publish update rate = %.1f" % self.update_rate)
 
         # Load pin configuration from ROS param server
         self.pin_config = rospy.get_param('{}/pins'.format(self.cname), dict())
         if not self.pin_config:
-            raise HalIOException(
-                'No pins defined in parameter "%s"' % self.cname)
+            raise HalIOException('No pins defined in parameter "%s"' % self.cname)
 
         # Init HAL component and pin data dict
         self.comp = hal.component(self.cname)
@@ -80,8 +68,7 @@ class HalIO(object):
         for pin_name, pin_data in self.pin_config.items():
             if len(pin_data) < 2:
                 raise HalIOException(
-                    'Must define HAL type and direction for pin "{}"'
-                    .format(pin_name)
+                    'Must define HAL type and direction for pin "{}"'.format(pin_name)
                 )
             type_str, dir_str = pin_data[0], pin_data[1]
 
@@ -95,54 +82,52 @@ class HalIO(object):
             except KeyError:
                 raise HalIOException(
                     'Unknown type "{}" or dir "{}" for pin "{}"'.format(
-                        type_str, dir_str, pin_name,
+                        type_str, dir_str, pin_name
                     )
                 )
 
             # set ROS topics
             if len(pin_data) == 2:
-                pin.pub_topic = pin.sub_topic = '{}/{}'.format(
-                                                self.cname, pin_name)
+                pin.pub_topic = pin.sub_topic = '{}/{}'.format(self.cname, pin_name)
             elif len(pin_data) == 3:
                 pin.pub_topic = pin.sub_topic = pin_data[2]
             else:
                 pin.pub_topic = pin_data[2]
                 pin.sub_topic = pin_data[3]
 
-            rospy.loginfo('Creating {} pin "{}" type "{}"'.format(
-                {hal.HAL_IN: 'input', hal.HAL_OUT: 'output'}.get(
-                    pin.hal_dir, 'input/output'),
-                pin_name,  pin_data[0],
-            ))
+            rospy.loginfo(
+                'Creating {} pin "{}" type "{}"'.format(
+                    {hal.HAL_IN: 'input', hal.HAL_OUT: 'output'}.get(
+                        pin.hal_dir, 'input/output'
+                    ),
+                    pin_name,
+                    pin_data[0],
+                )
+            )
             pin.hal_pin = self.comp.newpin(pin_name, pin.hal_type, pin.hal_dir)
 
             if pin.hal_dir in (hal.HAL_OUT, hal.HAL_IO):
-                rospy.loginfo('Creating subscriber on topic "{}"'.format(
-                    pin.sub_topic))
-                pin.sub = rospy.Subscriber(pin.sub_topic,
-                                           pin.msg_type,
-                                           self.subscriber_cb,
-                                           pin)
+                rospy.loginfo('Creating subscriber on topic "{}"'.format(pin.sub_topic))
+                pin.sub = rospy.Subscriber(
+                    pin.sub_topic, pin.msg_type, self.subscriber_cb, pin
+                )
 
-            rospy.loginfo('Creating publisher on topic "{}"'.format(
-                pin.pub_topic))
-            pin.pub = rospy.Publisher(pin.pub_topic,
-                                      pin.msg_type,
-                                      queue_size=1,
-                                      latch=True)
+            rospy.loginfo('Creating publisher on topic "{}"'.format(pin.pub_topic))
+            pin.pub = rospy.Publisher(
+                pin.pub_topic, pin.msg_type, queue_size=1, latch=True
+            )
 
         # Finish initialization
         self.comp.ready()
-        rospy.loginfo(
-            "User component '%s' ready" % self.cname)
+        rospy.loginfo("User component '%s' ready" % self.cname)
 
     def subscriber_cb(self, msg, pin):
         # Sanity check
         if type(msg) is not pin.msg_type:
             raise HalIOException(
                 "subscriber_cb:  Received incorrect message type '%s' for "
-                "pin '%s' of msg type '%s'" %
-                (type(msg), pin.name, pin.msg_type))
+                "pin '%s' of msg type '%s'" % (type(msg), pin.name, pin.msg_type)
+            )
 
         # Set pin value from message data
         # rospy.logdebug(
@@ -152,10 +137,9 @@ class HalIO(object):
 
     def _compare_pin_value(self, pin, value):
         if pin.hal_type == hal.HAL_FLOAT:
-            changed = isclose(pin.last_value,
-                              value,
-                              rel_tol=self.rel_tol,
-                              abs_tol=self.abs_tol)
+            changed = isclose(
+                pin.last_value, value, rel_tol=self.rel_tol, abs_tol=self.abs_tol
+            )
         else:
             changed = pin.last_value != value
         return changed
