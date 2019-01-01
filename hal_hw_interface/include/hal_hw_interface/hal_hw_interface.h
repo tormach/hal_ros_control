@@ -59,7 +59,7 @@ namespace hal_hw_interface
      * \param elapsed_time - period since last run
      */
     void write(ros::Duration &elapsed_time);
-  
+
     /**
      * \brief Enforce joint limits
      * \param elapsed_time - period since last run
