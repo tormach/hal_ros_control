@@ -58,6 +58,11 @@ public:
   void read(ros::Duration& elapsed_time);
 
   /**
+   * \brief Tell control loop whether controller reset is needed in update()
+   */
+  bool reset_controllers;
+
+  /**
    * \brief Write the command to the robot hardware.
    * \param elapsed_time - period since last run
    */
@@ -90,6 +95,9 @@ private:
   std::vector<double**> joint_pos_fb_ptrs_;
   std::vector<double**> joint_vel_fb_ptrs_;
   std::vector<double**> joint_eff_fb_ptrs_;
+
+  // Controller reset
+  bool** reset_ptr_;  // HAL pin
 
 };  // HalHWInterface
 

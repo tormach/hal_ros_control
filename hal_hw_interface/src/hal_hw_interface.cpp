@@ -51,6 +51,15 @@ void HalHWInterface::init(void (*funct)(void*, long))
       return;
     }
   }
+
+  // Initialize started pin
+  if (!create_bit_pin(&reset_ptr_, HAL_IN, "reset"))
+  {
+    HAL_ROS_LOG_ERR(CNAME, "%s: Failed to initialize reset pin", CNAME);
+    // return false; // FIXME
+    return;
+  }
+
   HAL_ROS_LOG_INFO(CNAME, "%s:  Initialized HAL pins", CNAME);
 
   // Export the function
@@ -133,6 +142,9 @@ void HalHWInterface::read(ros::Duration& elapsed_time)
     joint_velocity_[joint_id] = **joint_vel_fb_ptrs_[joint_id];
     joint_effort_[joint_id] = **joint_eff_fb_ptrs_[joint_id];
   }
+
+  // Read reset pin
+  reset_controllers = **reset_ptr_;
 }
 
 void HalHWInterface::write(ros::Duration& elapsed_time)
