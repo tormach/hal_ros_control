@@ -35,12 +35,15 @@ void HalHWInterface::init(void (*funct)(void*, long))
     HAL_ROS_LOG_INFO(CNAME, "%s: Init joint #%zu %s", CNAME, ix,
                      joint_names_[ix].c_str());
 
-    if (!create_float_pin(ix, &joint_pos_cmd_ptrs_, HAL_OUT, "pos-cmd") ||
-        !create_float_pin(ix, &joint_vel_cmd_ptrs_, HAL_OUT, "vel-cmd") ||
-        !create_float_pin(ix, &joint_eff_cmd_ptrs_, HAL_OUT, "eff-cmd") ||
-        !create_float_pin(ix, &joint_pos_fb_ptrs_, HAL_IN, "pos-fb") ||
-        !create_float_pin(ix, &joint_vel_fb_ptrs_, HAL_IN, "vel-fb") ||
-        !create_float_pin(ix, &joint_eff_fb_ptrs_, HAL_IN, "eff-fb"))
+    if (!create_joint_float_pins(ix, &joint_pos_cmd_ptrs_, HAL_OUT, "pos-"
+                                                                    "cmd") ||
+        !create_joint_float_pins(ix, &joint_vel_cmd_ptrs_, HAL_OUT, "vel-"
+                                                                    "cmd") ||
+        !create_joint_float_pins(ix, &joint_eff_cmd_ptrs_, HAL_OUT, "eff-"
+                                                                    "cmd") ||
+        !create_joint_float_pins(ix, &joint_pos_fb_ptrs_, HAL_IN, "pos-fb") ||
+        !create_joint_float_pins(ix, &joint_vel_fb_ptrs_, HAL_IN, "vel-fb") ||
+        !create_joint_float_pins(ix, &joint_eff_fb_ptrs_, HAL_IN, "eff-fb"))
     {
       HAL_ROS_LOG_ERR(CNAME, "%s: Failed to initialize joint %zu %s.%s", CNAME,
                       ix, CNAME, joint_names_[ix].c_str());
@@ -68,9 +71,10 @@ void HalHWInterface::init(void (*funct)(void*, long))
   // return true; // FIXME
 }  // init()
 
-bool HalHWInterface::create_float_pin(const std::size_t ix,
-                                      std::vector<double**>* ptrs,
-                                      hal_pin_dir_t dir, const char* name)
+bool HalHWInterface::create_joint_float_pins(const std::size_t ix,
+                                             std::vector<double**>* ptrs,
+                                             hal_pin_dir_t dir,
+                                             const char* name)
 {
   // Sanity check vector length
   if (ptrs->size() != ix)

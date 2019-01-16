@@ -33,14 +33,15 @@ public:
   void init(void (*funct)(void*, long));
 
   /**
-   * \brief Create float-type HAL pin
+   * \brief Create float-type HAL pins for each joint
    * \param ix - pin
    * \param ptrs - a vector of double pointers to HAL float storage
    * \param dir - pin direction; one of HAL_IN, HAL_OUT
-   * \param func - the HAL component function that runs read/update/write
+   * \param name - a string suffix to append to the pin name
    */
-  bool create_float_pin(const std::size_t ix, std::vector<double**>* ptrs,
-                        hal_pin_dir_t dir, const char* func);
+  bool create_joint_float_pins(const std::size_t ix,
+                               std::vector<double**>* ptrs, hal_pin_dir_t dir,
+                               const char* func);
 
   /**
    * \brief Read the state from the robot hardware.
