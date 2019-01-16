@@ -44,6 +44,14 @@ public:
                                const char* func);
 
   /**
+   * \brief Create single bit-type HAL pin
+   * \param ptr - a bool pointer to HAL hal_bit_t storage
+   * \param dir - pin direction; one of HAL_IN, HAL_OUT
+   * \param name - a string suffix to append to the pin name
+   */
+  bool create_bit_pin(bool*** ptr, hal_pin_dir_t dir, const char* name);
+
+  /**
    * \brief Read the state from the robot hardware.
    * \param elapsed_time - period since last run
    */
