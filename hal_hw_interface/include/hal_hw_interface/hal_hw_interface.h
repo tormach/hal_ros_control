@@ -39,7 +39,8 @@ public:
    * \param dir - pin direction; one of HAL_IN, HAL_OUT
    * \param func - the HAL component function that runs read/update/write
    */
-  bool create_float_pin(const std::size_t ix, std::vector<double**>* ptrs, hal_pin_dir_t dir, const char* func);
+  bool create_float_pin(const std::size_t ix, std::vector<double**>* ptrs,
+                        hal_pin_dir_t dir, const char* func);
 
   /**
    * \brief Read the state from the robot hardware.

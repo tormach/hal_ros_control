@@ -32,7 +32,8 @@ void HalHWInterface::init(void (*funct)(void*, long))
   for (std::size_t ix = 0; ix < num_joints_; ix++)
   {
     // init_joint(ix);
-    HAL_ROS_LOG_INFO(CNAME, "%s: Init joint #%zu %s", CNAME, ix, joint_names_[ix].c_str());
+    HAL_ROS_LOG_INFO(CNAME, "%s: Init joint #%zu %s", CNAME, ix,
+                     joint_names_[ix].c_str());
 
     if (!create_float_pin(ix, &joint_pos_cmd_ptrs_, HAL_OUT, "pos-cmd") ||
         !create_float_pin(ix, &joint_vel_cmd_ptrs_, HAL_OUT, "vel-cmd") ||
@@ -41,7 +42,8 @@ void HalHWInterface::init(void (*funct)(void*, long))
         !create_float_pin(ix, &joint_vel_fb_ptrs_, HAL_IN, "vel-fb") ||
         !create_float_pin(ix, &joint_eff_fb_ptrs_, HAL_IN, "eff-fb"))
     {
-      HAL_ROS_LOG_ERR(CNAME, "%s: Failed to initialize joint %zu %s.%s", CNAME, ix, CNAME, joint_names_[ix].c_str());
+      HAL_ROS_LOG_ERR(CNAME, "%s: Failed to initialize joint %zu %s.%s", CNAME,
+                      ix, CNAME, joint_names_[ix].c_str());
       // return false; // FIXME
       return;
     }
@@ -66,13 +68,15 @@ void HalHWInterface::init(void (*funct)(void*, long))
   // return true; // FIXME
 }  // init()
 
-bool HalHWInterface::create_float_pin(const std::size_t ix, std::vector<double**>* ptrs, hal_pin_dir_t dir,
-                                      const char* name)
+bool HalHWInterface::create_float_pin(const std::size_t ix,
+                                      std::vector<double**>* ptrs,
+                                      hal_pin_dir_t dir, const char* name)
 {
   // Sanity check vector length
   if (ptrs->size() != ix)
   {
-    HAL_ROS_LOG_ERR(CNAME, "%s: Size of pin storage not consistent with ID", CNAME);
+    HAL_ROS_LOG_ERR(CNAME, "%s: Size of pin storage not consistent with ID",
+                    CNAME);
     return false;
   }
   // Allocate space
@@ -82,14 +86,16 @@ bool HalHWInterface::create_float_pin(const std::size_t ix, std::vector<double**
     HAL_ROS_LOG_ERR(CNAME, "%s: Allocate HAL pin failed", CNAME);
     return false;
   }
-  if (hal_pin_float_newf(dir, ptrs->at(ix), comp_id_, "%s.%s.%s", CNAME, joint_names_[ix].c_str(), name))
+  if (hal_pin_float_newf(dir, ptrs->at(ix), comp_id_, "%s.%s.%s", CNAME,
+                         joint_names_[ix].c_str(), name))
   {
-    HAL_ROS_LOG_INFO(CNAME, "%s: New HAL pin %s.%s.%s failed", CNAME, CNAME, joint_names_[ix].c_str(), name);
+    HAL_ROS_LOG_INFO(CNAME, "%s: New HAL pin %s.%s.%s failed", CNAME, CNAME,
+                     joint_names_[ix].c_str(), name);
     return false;
   }
 
-  HAL_ROS_LOG_INFO(CNAME, "%s: New HAL pin %s.%s.%s succeeded; addr %p", CNAME, CNAME, joint_names_[ix].c_str(), name,
-                   ptrs->at(ix));
+  HAL_ROS_LOG_INFO(CNAME, "%s: New HAL pin %s.%s.%s succeeded; addr %p", CNAME,
+                   CNAME, joint_names_[ix].c_str(), name, ptrs->at(ix));
   return true;
 }
 
