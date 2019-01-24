@@ -1,0 +1,12 @@
+[flake8]
+# E501: line-length checking, handled by black
+# E203: space after :, not PEP8 compliant
+# W503: no operator after line break, not PEP8 compliant
+ignore = E501, E203, W503
+exclude =
+  # ignore templates
+  src/robot_ui/src/pathpilot/robot/program/templates/*
+  # ignore example programs
+  src/robot_command/examples/programs/*
+  # ignore playground files
+  src/robot_command/playground/*

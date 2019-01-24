@@ -1,0 +1,65 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.1.0
+    hooks:
+      - id: check-ast
+      - id: check-byte-order-marker
+      - id: trailing-whitespace
+        exclude: '.*\.patch'
+      - id: check-docstring-first
+      - id: check-executables-have-shebangs
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-xml
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: fix-encoding-pragma
+
+- repo: local
+  hooks:
+    -   id: black
+        name: Run black code formatter
+        description: This hook formats Python code.
+        entry: env LC_ALL=C.UTF-8 black -q
+        language: system
+        args: [-S, -l, "80"]
+        types: [python]
+
+    -   id: clang-format
+        name: Run clang-format
+        description: Clang C/C++ code formatter.
+        entry: clang-format -i
+        args: [-style=file]
+        language: system
+        types: [file, c++]
+        # note: formatting style in .clang-format
+
+    -   id: qmllint
+        name: Run qmllint
+        description: QML linter
+        entry: qmllint
+        language: system
+        files: .*\.qml
+
+    -   id: qmlfmt
+        name: Run qmlfmt
+        description: qmlfmt QML code formatter.
+        entry: qmlfmt -w -e
+        args: [-i 2, -t 2]
+        language: system
+        files: .*\.qml
+
+    -   id: shfmt
+        name: Run shfmt
+        description: shfmt Shell code formatter.
+        entry: shfmt -w
+        args: [-i=4]
+        language: system
+        types: [file, shell]
+
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.1.0
+    hooks:
+      - id: flake8
+        # note: ignores and excluded files in .flake8
