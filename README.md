@@ -208,3 +208,7 @@ configuration has three main parameters:
   subscribed to from the topic `robot_io/request_tool_num`
 
 [std_msgs]: http://wiki.ros.org/std_msgs
+
+# TODO
+
+- Expose joint limits through pins

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 # Copyright (c) 2018, John Morris
 # All rights reserved.
@@ -31,8 +32,12 @@
 # OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-import sys, os, subprocess, signal
-from machinekit import launcher, config, rtapi, hal
+import sys
+import os
+import subprocess
+import signal
+
+from machinekit import launcher, config, rtapi
 
 # ROS
 import rospy
@@ -44,14 +49,17 @@ SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 
 os.chdir(SCRIPT_DIR)
 
-debug = int(os.environ.get('DEBUG',0))
+debug = int(os.environ.get('DEBUG', 0))
 launcher.set_debug_level(debug)
 
 shutdown_begun = False
-def shutdown(msg = "Shutting down for unknown reason", res = 0):
+
+
+def shutdown(msg="Shutting down for unknown reason", res=0):
     # Only run this once
     global shutdown_begun
-    if shutdown_begun: return
+    if shutdown_begun:
+        return
     shutdown_begun = True
 
     if res:
@@ -61,6 +69,7 @@ def shutdown(msg = "Shutting down for unknown reason", res = 0):
     launcher.end_session()
     rospy.signal_shutdown(msg)
     sys.exit(res)
+
 
 if 'MACHINEKIT_INI' not in os.environ:  # export for package installs
     mkconfig = config.Config()
@@ -72,13 +81,13 @@ try:
     # Call end_session() on ROS shutdown; don't have the launcher
     # register its own exit handler
     rospy.on_shutdown(lambda: shutdown('Graceful shutdown via ROS'))
-    rate = rospy.Rate(1) # 1hz
+    rate = rospy.Rate(1)  # 1hz
     rospy.loginfo("hal_mgr:  Initialized node")
 
     # Find the hal_hw_interface comp's directory in LD_LIBRARY_PATH and put it
     # into $COMP_DIR
     comp_dir = ""
-    for path in os.environ.get('LD_LIBRARY_PATH','').split(':'):
+    for path in os.environ.get('LD_LIBRARY_PATH', '').split(':'):
         if os.path.exists(os.path.join(path, 'hal_hw_interface.so')):
             comp_dir = path
     os.environ['COMP_DIR'] = comp_dir
@@ -104,22 +113,25 @@ try:
     # Load rtapi module and set up signal handlers
     if not rtapi.__rtapicmd:
         rtapi.init_RTAPI()
+
     def shutdown_graceful(signum, frame):
         shutdown('Gracefully shutting down after interrupt signal')
+
     signal.signal(signal.SIGINT, shutdown_graceful)
     signal.signal(signal.SIGTERM, shutdown_graceful)
 
     # Load HAL configuration
-    os.environ['PATH'] += (":%s" % SCRIPT_DIR) # Help HAL find hal_io comp
+    os.environ['PATH'] += ":%s" % SCRIPT_DIR  # Help HAL find hal_io comp
     for fname in hal_mgr_config['hal_files']:
         fpath = os.path.join(hal_mgr_config['hal_file_dir'], fname)
         if not os.path.exists(fpath):
-            shutdown("No file '%s' in directory '%s'" %
-                     (fname, hal_mgr_config['hal_file_dir']))
+            shutdown(
+                "No file '%s' in directory '%s'"
+                % (fname, hal_mgr_config['hal_file_dir'])
+            )
         rospy.loginfo("hal_mgr:  Loading hal file '%s'" % fname)
         launcher.load_hal_file(fpath)
-        rospy.loginfo("hal_mgr:  Loading hal file '%s' complete" %
-                      fpath)
+        rospy.loginfo("hal_mgr:  Loading hal file '%s' complete" % fpath)
 
     # Spin until ROS shutdown event
     rospy.loginfo("ROS node and HAL started successfully")
