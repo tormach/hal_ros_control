@@ -12,6 +12,9 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
+  <build_depend>hal_hw_interface</build_depend>
+  <build_depend>rrbot_control</build_depend>
+
   <run_depend>hal_hw_interface</run_depend>
   <run_depend>rrbot_control</run_depend>
   <run_depend>rrbot_description</run_depend>

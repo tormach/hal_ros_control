@@ -10,7 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   ros_control_boilerplate
   roscpp
   rospy
-)
+  )
 
 # This package
 catkin_package(
@@ -22,10 +22,7 @@ catkin_package(
   ros_control_boilerplate
   roscpp
   rospy
-
-  LIBRARIES
-  ${PROJECT_NAME}
-)
+  )
 
 # Find Machinekit HAL
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
@@ -97,6 +94,5 @@ install(
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
 # Install launch files
-install(
-  FILES launch/${PROJECT_NAME}.launch
+install(DIRECTORY launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
