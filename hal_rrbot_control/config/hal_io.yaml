@@ -3,43 +3,62 @@ hal_io:
   # I/O main loop publish rate in Hz
   update_rate: 10
 
+  # Pin definitions
+  #
+  # output_pins: are read from a topic (default) or service
+
+  # HAL pins are named hal_io.<pin_name>
+  # HAL pins types are BIT, FLOAT, S32, U32
+
   # pins: a hash/dict of HAL pins, can be all HAL types
   # - HAL pin types are BIT, FLOAT, S32, U32
   # - HAL pin directions are OUT, IN, IO
   # - ROS publish topic, used for all HAL pins
   # - ROS subscribe topic, used for HAL IN and IO pins
   # HAL publish and subscribe topics are implicitly set to the HAL pin name per default
-  pins:
+  subscribe_pins:
+    # subscribe_pins values read from ROS topic and copied to HAL
+    # output pin
     float_out:
-      - FLOAT
-      - OUT
-      - hal_io/float_out
+      type: FLOAT
+      # Explicitly set subscribe topic name
+      sub: hal_io/float_out
     bool_out:
-      - BIT
-      - OUT
+      type: BIT
     int_out:
-      - S32
-      - OUT
+      type: S32
     uint_out:
-      - U32
-      - OUT
+      type: U32
+  publish_pins:
+    # publish_pins values read from HAL input pin and published to ROS
+    # topic
     float_in:
-      - FLOAT
-      - IN
-      - hal_io/float_out
-      - hal_io/float_in
+      type: FLOAT
+      # Explicitly set publish topic name
+      pub: hal_io/float_in
     bool_in:
-      - BIT
-      - IN
+      type: BIT
+      # Explicitly set HAL pin direction
+      direction: IN
     int_in:
-      - S32
-      - IN
+      type: S32
     uint_in:
-      - U32
-      - IN
+      type: U32
     float_io:
-      - FLOAT
-      - IO
+      type: FLOAT
+      # Set HAL IO pin
+      direction: IO
+  service_pins:
+    bool_svc:
+      type: BIT
+      # Set HAL IO pin
+      direction: IO
+    int_svc:
+      type: S32
+    uint_svc:
+      type: U32
+    float_svc:
+      type: FLOAT
 
 hal_mgr:
   hal_files:
