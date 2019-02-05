@@ -1,15 +1,26 @@
 <?xml version="1.0"?>
 <launch>
 
-  <!-- This file was copied directly from ros_control_boilerplate -->
+  <!-- This file was copied from ros_control_boilerplate and URDF changed -->
 
   <!-- Load example URDF -->
   <param
       name="robot_description"
-      command="$(find xacro)/xacro.py --inorder '$(find rrbot_description)/urdf/rrbot.xacro'"
+      command="$(find xacro)/xacro.py --inorder '$(find hal_rrbot_control)/urdf/hal_rrbot.xacro'"
       />
 
+  <!-- Hopefully we can revert back to this someday -->
+  <!-- See https://github.com/PickNikRobotics/ros_control_boilerplate/pull/27 -->
+  <!-- <param -->
+  <!--     name="robot_description" -->
+  <!--     command="$(find xacro)/xacro.py -\-inorder '$(find rrbot_description)/urdf/rrbot.xacro'" -->
+  <!--     /> -->
+
   <!-- Show in Rviz  -->
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find rrbot_description)/launch/rrbot.rviz"/>
+  <node
+      name="rviz"
+      pkg="rviz"
+      type="rviz"
+      args="-d $(find rrbot_description)/launch/rrbot.rviz"/>
 
 </launch>

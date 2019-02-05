@@ -1,0 +1,13 @@
+
+# Load hal_io user component
+loadusr -Wn hal_io rosrun hal_hw_interface hal_io
+
+# Select a float value 0.0 (closed) or 0.2 (open) depending on
+# gripper_cmd; feed back to gripper joint state
+loadrt mux2 names=fb_pos
+addf fb_pos robot_hw_thread
+setp fb_pos.in0 0.0
+setp fb_pos.in1 0.2
+show pin
+net gripper_cmd hal_io.gripper_cmd => fb_pos.sel
+net gripper_pos fb_pos.out => hal_hw_interface.gripper_finger.pos-fb

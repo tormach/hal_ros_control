@@ -13,10 +13,10 @@
 
   <group ns="rrbot">            <!-- Same ns as `rrbot_control` package -->
 
-    <!-- Load example URDF from rrbot_description package -->
+    <!-- Load URDF:  rrbot from rrbot_description; gripper from here -->
     <param
         name="robot_description"
-        command="$(find xacro)/xacro --inorder '$(find rrbot_description)/urdf/rrbot.xacro'"
+        command="$(find xacro)/xacro --inorder '$(find hal_rrbot_control)/urdf/hal_rrbot.xacro'"
         />
 
     <!-- Load all settings into ROS parameter server -->

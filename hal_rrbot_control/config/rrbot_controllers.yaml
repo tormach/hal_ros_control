@@ -12,6 +12,7 @@ hardware_interface:
    joints:
       - joint1
       - joint2
+      - gripper_finger
    sim_control_mode: 0 # 0: position, 1: velocity
 
 # Publish all joint states ----------------------------------

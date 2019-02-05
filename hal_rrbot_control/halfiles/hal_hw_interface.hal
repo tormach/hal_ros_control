@@ -31,6 +31,3 @@ net trig scope-trig.square
 setp scope-trig.frequency 10
 setp scope-trig.amplitude 1
 addf scope-trig.update robot_hw_thread
-
-# Start threads
-start

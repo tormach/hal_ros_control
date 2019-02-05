@@ -2,3 +2,12 @@ hal_mgr:
   hal_files:
     # Load a HAL file that inits a thread
     - hal_hw_interface.hal
+    - hal_gripper.hal
+    - start_threads.hal
+
+hal_io:
+  update_rate: 10
+  service_pins:
+    gripper_cmd:
+      # Open when TRUE, closed when FALSE
+      hal_type: BIT

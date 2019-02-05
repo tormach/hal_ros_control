@@ -1,0 +1,128 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="hal_rrbot_gripper" params="prefix parent_link offset">
+
+    <!-- Depth of base and finger links -->
+    <xacro:property name="d" value="0.1" />
+
+    <!-- Width and height of base link -->
+    <xacro:property name="base_w" value="0.4" />
+    <xacro:property name="base_h" value="0.1" />
+
+    <!-- Width, height, travel of finger links -->
+    <xacro:property name="finger_w" value="0.04" />
+    <xacro:property name="finger_h" value="0.3" />
+    <xacro:property name="travel" value="${base_w/2 - finger_w}" />
+
+    <!-- arbitrary value for mass -->
+    <xacro:property name="base_mass" value="${base_w*base_h*d}" />
+    <xacro:property name="finger_mass" value="${finger_w*finger_h*d}" />
+
+    <!-- Base joint on robot flange -->
+    <!-- - Centered on gripper_base bottom -->
+    <joint name="${prefix}gripper_base_joint" type="fixed">
+      <parent link="${parent_link}"/>
+      <child link="${prefix}gripper_base"/>
+      <origin xyz="0 ${d} ${offset-2*base_h}" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Finger joints -->
+    <!-- - joint1:  left side of base, travels right -->
+    <joint name="${prefix}gripper_finger" type="prismatic">
+      <parent link="${prefix}gripper_base"/>
+      <child link="${prefix}gripper_finger_link1"/>
+      <origin xyz="${-finger_w/2} 0 ${base_h}" rpy="0 0 0"/>
+      <axis xyz="1 0 0"/>
+      <limit effort="99" velocity="99" lower="0" upper="${travel}"/>
+    </joint>
+    <!-- - joint2:  right side of base, travels left symmetrically w/joint1 -->
+    <joint name="${prefix}gripper_finger2" type="prismatic">
+      <parent link="${prefix}gripper_base"/>
+      <child link="${prefix}gripper_finger_link2"/>
+      <origin xyz="${finger_w/2} 0 ${base_h}" rpy="0 0 0"/>
+      <axis xyz="-1 0 0"/>
+      <limit effort="99" velocity="99" lower="${-travel}" upper="0"/>
+      <mimic joint="${prefix}gripper_finger" multiplier="1"/>
+    </joint>
+
+    <!-- Base link -->
+    <link name="${prefix}gripper_base">
+      <collision>
+	<origin xyz="0 0 ${base_h/2}" rpy="0 0 0"/>
+	<geometry>
+	  <box size="${base_w} ${d} ${base_h}"/>
+	</geometry>
+      </collision>
+
+      <visual>
+	<origin xyz="0 0 ${base_h/2}" rpy="0 0 0"/>
+	<geometry>
+	  <box size="${base_w} ${d} ${base_h}"/>
+	</geometry>
+        <material name="red"/>
+      </visual>
+
+      <inertial>
+	<origin xyz="0 0 ${base_h/2}" rpy="0 0 0"/>
+	<mass value="${base_mass}"/>
+	<inertia
+	    ixx="${base_mass/12.0 * (d**2 + base_h**2)}" ixy="0.0" ixz="0.0"
+	    iyy="${base_mass/12.0 * (base_w**2 + base_h**2)}" iyz="0.0"
+	    izz="${base_mass/12.0 * (base_w**2 + d**2)}"/>
+      </inertial>
+    </link>
+
+    <link name="${prefix}gripper_finger_link1">
+      <collision>
+	<origin xyz="0 0 ${finger_h/2}" rpy="0 0 0"/>
+	<geometry>
+	  <box size="${finger_w} ${d} ${finger_h}"/>
+	</geometry>
+      </collision>
+
+      <visual>
+	<origin xyz="0 0 ${finger_h/2}" rpy="0 0 0"/>
+	<geometry>
+	  <box size="${finger_w} ${d} ${finger_h}"/>
+	</geometry>
+        <material name="red"/>
+      </visual>
+
+      <inertial>
+	<origin xyz="0 0 ${finger_h/2}" rpy="0 0 0"/>
+	<mass value="${finger_mass}"/>
+	<inertia
+	    ixx="${finger_mass/12.0 * (d**2 + finger_h**2)}" ixy="0.0" ixz="0.0"
+	    iyy="${finger_mass/12.0 * (finger_w**2 + finger_h**2)}" iyz="0.0"
+	    izz="${finger_mass/12.0 * (finger_w**2 + d**2)}"/>
+      </inertial>
+    </link>
+
+    <link name="${prefix}gripper_finger_link2">
+      <collision>
+	<origin xyz="0 0 ${finger_h/2}" rpy="0 0 0"/>
+	<geometry>
+	  <box size="${finger_w} ${d} ${finger_h}"/>
+	</geometry>
+      </collision>
+
+      <visual>
+	<origin xyz="0 0 ${finger_h/2}" rpy="0 0 0"/>
+	<geometry>
+	  <box size="${finger_w} ${d} ${finger_h}"/>
+	</geometry>
+        <material name="red"/>
+      </visual>
+
+      <inertial>
+	<origin xyz="0 0 0" rpy="0 0 0"/>
+	<mass value="${finger_mass}"/>
+	<inertia
+	    ixx="${finger_mass/12.0 * (d**2 + finger_h**2)}" ixy="0.0" ixz="0.0"
+	    iyy="${finger_mass/12.0 * (finger_w**2 + finger_h**2)}" iyz="0.0"
+	    izz="${finger_mass/12.0 * (finger_w**2 + d**2)}"/>
+      </inertial>
+    </link>
+
+  </xacro:macro>
+</robot>

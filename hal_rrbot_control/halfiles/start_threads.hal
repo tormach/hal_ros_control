@@ -1,0 +1,4 @@
+# Start threads
+#
+# Include this after loading all HAL files
+start
