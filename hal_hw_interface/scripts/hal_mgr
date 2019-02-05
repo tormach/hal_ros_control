@@ -121,7 +121,6 @@ try:
     signal.signal(signal.SIGTERM, shutdown_graceful)
 
     # Load HAL configuration
-    os.environ['PATH'] += ":%s" % SCRIPT_DIR  # Help HAL find hal_io comp
     for fname in hal_mgr_config['hal_files']:
         fpath = os.path.join(hal_mgr_config['hal_file_dir'], fname)
         if not os.path.exists(fpath):
