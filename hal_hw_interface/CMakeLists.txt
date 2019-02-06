@@ -10,10 +10,21 @@ find_package(catkin REQUIRED COMPONENTS
   ros_control_boilerplate
   roscpp
   rospy
-  )
+  std_msgs
+  std_srvs
+  message_generation
+)
 
 # Install packages with setup.py
 catkin_python_setup()
+
+add_service_files(
+  FILES
+  SetUInt32.srv
+  SetInt32.srv
+  SetFloat64.srv
+)
+generate_messages()
 
 # This package
 catkin_package(
@@ -25,7 +36,8 @@ catkin_package(
   ros_control_boilerplate
   roscpp
   rospy
-  )
+  message_runtime
+)
 
 # Find Machinekit HAL
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
