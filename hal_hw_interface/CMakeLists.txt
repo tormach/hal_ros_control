@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   std_srvs
   message_generation
+  redis_store
 )
 
 # Install packages with setup.py
@@ -37,6 +38,7 @@ catkin_package(
   roscpp
   rospy
   message_runtime
+  redis_store
 )
 
 # Find Machinekit HAL
