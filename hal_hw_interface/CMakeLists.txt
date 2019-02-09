@@ -101,6 +101,7 @@ catkin_install_python(
   PROGRAMS
   scripts/hal_mgr
   scripts/hal_io
+  scripts/hal_offset_mgr
 
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   )
