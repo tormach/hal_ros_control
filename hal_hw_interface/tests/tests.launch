@@ -1,0 +1,11 @@
+<launch>
+  <param
+      name="test_module"
+      value="$(find hal_hw_interface)/src/"
+      />
+  <test
+      test-name="test_lib"
+      pkg="ros_pytest"
+      type="ros_pytest_runner"
+      />
+</launch>

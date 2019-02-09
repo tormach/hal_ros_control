@@ -12,6 +12,9 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   )
 
+# Install packages with setup.py
+catkin_python_setup()
+
 # This package
 catkin_package(
   INCLUDE_DIRS
@@ -96,3 +99,9 @@ install(
 # Install launch files
 install(DIRECTORY launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
+if(CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+  find_package(ros_pytest REQUIRED)
+  add_rostest(tests/tests.launch)
+endif()
