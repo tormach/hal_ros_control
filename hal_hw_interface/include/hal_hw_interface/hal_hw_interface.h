@@ -46,39 +46,79 @@
 
 namespace hal_hw_interface
 {
+/**
+* \brief A `ros_control_boilerplate::GenericHWInterface` subclass for Machinekit
+* HAL
+*
+* The `hal_hw_interface::HalHWInterface` class implements the Machinekit HAL
+* realtime component:
+* 1. Initializes the component
+* 2. Implements the ros_control `read()` and `write()` functions
+* 3. Shuts down the component
+*
+* The HAL component name is `hw_hw_interface`, and has one `reset` pin and six
+* pins for each joint.
+*
+* The `reset` pin resets the ROS controllers whenever it is high.
+*
+* Joint names are read from configuration in [`ros_control_boilerplate`][1].
+* Six HAL pins are created for each joint:
+*
+* * Output pins connecting joint command from ROS into HAL
+*   * `<joint>.pos-cmd`, `<joint>.vel-cmd` and `<joint>.eff-cmd`
+* * Input pins connecting joint feedback from HAL back to ROS
+*   * `<joint>.pos-fb`, `<joint>.vel-fb` and `<joint>.eff-fb`
+*
+* The `read()` function reads joint feedback values from the `<joint>.*-fb` HAL
+* pins into the `hardware_interface::JointHandle`, and the `write()` function
+* writes joint command values back out to the `<joint>.*-cmd` HAL pins.
+*
+* This is plumbed into a ROS node in the `hal_hw_interface::HalRosControlLoop`
+* class.
+*
+* [1]: https://github.com/PickNikRobotics/ros_control_boilerplate
+*/
+
 class HalHWInterface : public ros_control_boilerplate::GenericHWInterface
 {
 public:
   /**
    * \brief Constructor
-   * \param nh - ROS node handle
-   * \param urdf_model - optional pointer to a parsed robot model
+   * \param nh          ROS node handle
+   * \param urdf_model  Optional pointer to a parsed robot model
    */
-
   HalHWInterface(ros::NodeHandle& nh, urdf::Model* urdf_model = NULL);
 
   /**
    * \brief Initialize the hardware interface
-   * \param funct - the component function run periodically in a HAL RT thread
+   * \param funct  The component function run periodically in a HAL RT thread
+   *
+   * Initializes the HAL component and sets up HAL pins for each joint.
    */
+  //* \todo Give this an int return value for reporting failure
+  //* \todo Make the `reset` pin an IO pin
   void init(void (*funct)(void*, long));
 
   /**
    * \brief Create float-type HAL pins for each joint
-   * \param ix - pin
-   * \param ptrs - a vector of double pointers to HAL float storage
-   * \param dir - pin direction; one of HAL_IN, HAL_OUT
-   * \param name - a string suffix to append to the pin name
+   * \param ix    Pin
+   * \param ptrs  A vector of double pointers to HAL float storage
+   * \param dir   Pin direction; one of HAL_IN, HAL_OUT
+   * \param name  A string suffix to append to the pin name
+   *
+   * Used in `init()`
    */
   bool create_joint_float_pins(const std::size_t ix,
                                std::vector<double**>* ptrs, hal_pin_dir_t dir,
-                               const char* func);
+                               const char* name);
 
   /**
    * \brief Create single bit-type HAL pin
-   * \param ptr - a bool pointer to HAL hal_bit_t storage
-   * \param dir - pin direction; one of HAL_IN, HAL_OUT
-   * \param name - a string suffix to append to the pin name
+   * \param ptr   A bool pointer to HAL hal_bit_t storage
+   * \param dir   Pin direction; one of HAL_IN, HAL_OUT
+   * \param name  A string suffix to append to the pin name
+   *
+   * Used in `init()`
    */
   bool create_bit_pin(bool*** ptr, hal_pin_dir_t dir, const char* name);
 
@@ -95,14 +135,15 @@ public:
 
   /**
    * \brief Write the command to the robot hardware.
-   * \param elapsed_time - period since last run
+   * \param elapsed_time  Period since last run
    */
   void write(ros::Duration& elapsed_time);
 
   /**
    * \brief Enforce joint limits
-   * \param elapsed_time - period since last run
+   * \param period   Period since last run
    */
+  //! \todo Unimplemented
   void enforceLimits(ros::Duration& period);
 
   /**
@@ -119,12 +160,18 @@ protected:
 private:
   // Joints:  HAL storage
   // - Commands
+  //!     Joint position command value pointer vector
   std::vector<double**> joint_pos_cmd_ptrs_;
+  //!     Joint velocity command value pointer vector
   std::vector<double**> joint_vel_cmd_ptrs_;
+  //!     Joint effort command value pointer vector
   std::vector<double**> joint_eff_cmd_ptrs_;
   // - States
+  //!     Joint position feedback value pointer vector
   std::vector<double**> joint_pos_fb_ptrs_;
+  //!     Joint velocity feedback value pointer vector
   std::vector<double**> joint_vel_fb_ptrs_;
+  //!     Joint effort feedback value pointer vector
   std::vector<double**> joint_eff_fb_ptrs_;
 
   // Controller reset

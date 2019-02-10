@@ -39,31 +39,57 @@
 
 namespace hal_hw_interface
 {
+/**
+* \brief A `ros_control_boilerplate::GenericHWControlLoop`-like class for
+* Machinekit HAL
+*
+* Implements the ROS node and ros_control `read()`/`update()`/`write()` loop
+* running in a Machinekit HAL component
+*
+* This class does the messy work of managing a C++ ROS node linked into a C HAL
+* component.  It sets up the control loop object in the component's
+* `rtapi_app_main()` init function, runs the ros_control `read(); update();
+* write()` in the update function, and finally shuts down the node and
+* component.
+*
+* Most of the real time work is done in the `hal_hw_interface::HalHWInterface`
+* class.
+*/
+
 class HalRosControlLoop
 {
 public:
   /**
    * \brief Constructor
-   * \param nh - Node handle for topics.
-   * \param hardware_interface - Hardware interface object
+   *
+   * The constructor:
+   * * Sets up the ROS node
+   * * Runs the ROS spinner thread
+   * * Initializes the `hal_hw_interface::HalHWInterface` object
+   * * Initializes the `controller_manager::ControllerManager` object
    */
   HalRosControlLoop();
 
   /**
    * \brief Destructor
+   *
+   * Calls `shutdown()`
    */
   ~HalRosControlLoop();
 
   /**
-   * \brief HAL RT component function that runs one ros_control
-   * read()/update()/write() cycle; this is wrapped in funct() for
-   * registering the C-linkable HAL component function callback at
-   * HAL component creation
+   * \brief Run one ros_control `read()/update()/write()` cycle
+   *
+   * This implements HAL component function, periodically run in a HAL real time
+   * thread.  This is wrapped in `funct()` for registering the C-linkable HAL
+   * component function callback at HAL component creation.
    */
   void update(long period);
 
   /**
    * \brief Shut down the robot hardware interface & controller
+   *
+   * Shuts down the ROS node and HAL component
    */
   void shutdown();
 
