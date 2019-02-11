@@ -87,6 +87,10 @@ revolute-revolute robot demo with HAL.  It is meant to show how simple
 it can be to build a `ros_control` hardware interface with HAL, and to
 serve as an example for creating your own.
 
+It also demonstrates the `hal_io` user component.  A simple gripper
+URDF is added, and a `hal_io` service pin open the gripper when
+`True` and closes when `False`.
+
 Run the simulated hardware interface:
 
     roslaunch hal_rrbot_control hal_rrbot_simulation.launch
@@ -103,34 +107,10 @@ The rviz and simulated trajectories are launched identically to the
     roslaunch hal_rrbot_control rrbot_visualize.launch
     roslaunch hal_rrbot_control rrbot_test_trajectory.launch
 
-### `hal_io` demo
+Open and close the gripper with the ROS service:
 
-The `hal_io_demo.launch` file loads the `hal_io.yaml` configuration.
-For each of the four supported data types, it creates one HAL input
-pin with ROS publisher connected to one ROS subscriber with HAL output
-pin, thus creating a HAL to ROS to HAL feedback loop.  The
-`hal_io.hal` file then generates a sine wave, feeding it to the HAL
-input pins (converting as appropriate).  A `halscope` will show the
-output pins tracking the input pins.
-
-This demo is a contrived example, but it shows working connections
-from HAL to ROS and back, and gives an example of how to configure the
-HAL pins and ROS publishers and subscribers.  A real application would
-connect its own publishers and subscribers to those from `hal_io`.
-
-Run the I/O demo:
-
-    roslaunch hal_rrbot_control hal_io_demo.launch
-    # Debugging: append `hal_debug_output:=1 hal_debug_level:=5`
-
-Run `halscope` to visualize the HAL pins; in the GUI, set the "Run
-Mode" to "Roll" for continuous updating:
-
-    halscope -i hal_rrbot_control/config/hal_io.halscope
-
-Run `rqt_plot` to visualize the ROS messages:
-
-    rqt_plot /rrbot/hal_io/bool_out:float_out:int_out:uint_out
+    rosservice call /rrbot/hal_io/gripper_cmd True
+    rosservice call /rrbot/hal_io/gripper_cmd False
 
 -----
 ## Configuration
