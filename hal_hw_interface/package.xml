@@ -36,4 +36,8 @@
   <run_depend>redis_store</run_depend>
 
   <test_depend>ros_pytest</test_depend>
+
+  <export>
+    <rosdoc config="rosdoc.yaml" />
+  </export>
 </package>
