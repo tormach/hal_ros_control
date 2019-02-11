@@ -3,7 +3,7 @@
 # conversion as needed).
 
 # Load hal_io user component
-loadusr -W hal_io
+loadusr -Wn hal_io rosrun hal_hw_interface hal_io
 
 # 10Hz thread (matches hal_io publisher rate)
 newthread robot_hw_thread 100000000 fp
