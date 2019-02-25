@@ -1,0 +1,29 @@
+# This will run on Travis' 'new' container-based infrastructure
+sudo: false
+
+# Blacklist
+branches:
+  except:
+    - gh-pages
+
+services:
+  - docker
+
+# Environment variables
+env:
+  global:
+    - DOC_SUBDIRS: hal_hw_interface
+
+before_install:
+  # Pull the Docker build image
+  - ./.travis.setup-docker-image.sh
+
+# Build docs
+script:
+  - ./.travis.build-docs.sh
+
+
+# # Generate and deploy documentation
+# after_success:
+#   - cd $TRAVIS_BUILD_DIR
+#   - ./.travis.build-docs.sh
