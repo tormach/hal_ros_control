@@ -51,6 +51,8 @@ class HalPinDir(HalPinAttrBase):
     :code:`HAL_IN`, :code:`HAL_OUT`, :code:`HAL_IO` attributes.  These
     may be specified in the constructor as the short or long string,
     e.g. :code:`'OUT'` or :code:`'HAL_IO'`.
+
+    .. inheritance-diagram:: hal_hw_interface.hal_pin_attrs.HalPinDir
     """
 
     _suffixes = set(['IN', 'OUT', 'IO'])
@@ -64,6 +66,8 @@ class HalPinType(HalPinAttrBase):
     :code:`HAL_FLOAT` attributes.  These may be specified in the
     constructor as the short or long string, e.g. :code:`'BIT'` or
     :code:`'HAL_FLOAT'`.
+
+    .. inheritance-diagram:: hal_hw_interface.hal_pin_attrs.HalPinType
     """
 
     _suffixes = set(['BIT', 'U32', 'S32', 'FLOAT'])

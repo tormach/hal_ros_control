@@ -6,6 +6,11 @@
 
    .. moduleauthor:: John Morris <john@dovetail-automata.com>
 
+   .. inheritance-diagram::
+        hal_hw_interface.ros_hal_pin.RosHalPin
+        hal_hw_interface.ros_hal_pin.RosHalPinPublisher
+        hal_hw_interface.ros_hal_pin.RosHalPinSubscriber
+        hal_hw_interface.ros_hal_pin.RosHalPinService
 """
 
 import sys

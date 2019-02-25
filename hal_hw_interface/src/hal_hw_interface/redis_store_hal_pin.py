@@ -7,6 +7,8 @@
 
    .. moduleauthor:: John Morris <john@dovetail-automata.com>
 
+   .. inheritance-diagram::
+        hal_hw_interface.redis_store_hal_pin.RedisStoreHalPin
 """
 
 import rospy
