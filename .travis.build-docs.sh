@@ -141,7 +141,11 @@ echo 'Generating Doxygen code documentation...'
 for subdir in ${DOC_SUBDIRS}; do
     cd src/${GH_REPO_NAME}/$subdir
     if test -d src; then
-        sphinx-apidoc -o doc src 2>&1 | tee -a doc/rosdoc.log
+        MODULES="$(find src -maxdepth 1 -mindepth 1 -type d)"
+        for m in $MODULES; do
+            echo "Generating automodule files for $m"
+            sphinx-apidoc -e -f -o doc $m 2>&1 | tee -a doc/rosdoc.log
+        done
     fi
     rosdoc_lite . 2>&1 | tee doc/rosdoc.log
     cd -

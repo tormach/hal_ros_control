@@ -1,4 +1,13 @@
 /hal_hw_interface.rst
+/hal_hw_interface.exception.rst
+/hal_hw_interface.hal_io_comp.rst
+/hal_hw_interface.hal_obj_base.rst
+/hal_hw_interface.hal_offset_mgr.rst
+/hal_hw_interface.hal_pin_attrs.rst
+/hal_hw_interface.pins.rst
+/hal_hw_interface.redis_store_hal_pin.rst
+/hal_hw_interface.ros_hal_component.rst
+/hal_hw_interface.ros_hal_pin.rst
 /html/
 /manifest.yaml
 /modules.rst
