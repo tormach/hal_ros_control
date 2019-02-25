@@ -167,6 +167,8 @@ class RosHalPinPublisher(RosHalPin):
 
     .. todo::  Parameter :code:`hal_dir` needs a validator; not all pin
       directions make sense for all subclasses
+
+    .. todo::  Link documentation to ROS ``srv`` messages
     '''
 
     _default_hal_dir = 'IN'
