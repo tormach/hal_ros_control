@@ -160,7 +160,7 @@ class RosHalPinPublisher(RosHalPin):
     :param pub_topic: ROS publisher topic
     :type pub_topic: str
 
-    .. todo::  :param:`hal_dir` needs a validator; not all pin
+    .. todo::  Parameter :code:`hal_dir` needs a validator; not all pin
       directions make sense for all subclasses
     '''
 

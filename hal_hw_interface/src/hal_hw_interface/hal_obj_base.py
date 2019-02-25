@@ -42,7 +42,7 @@ class HalObjBase(object):
         """Read-only property returning the global HAL component object
 
         The HAL component must have already been created with
-        :py:funct:`init_hal_comp`.
+        :py:func:`init_hal_comp`.
 
         :returns: HAL component object
         :rtype: :py:class:`hal.component`
