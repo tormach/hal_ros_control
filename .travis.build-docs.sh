@@ -57,6 +57,7 @@ if test -n "$DOCKER_IMAGE"; then
          -e TRAVIS_COMMIT \
          -e DOC_SUBDIRS \
          -e GH_REPO_TOKEN \
+         -e NO_CLEAN \
          ${DOCKER_IMAGE} \
          $0 "$@"
 fi
@@ -94,13 +95,19 @@ echo ROS_DISTRO=${ROS_DISTRO}
 echo REPO_DIR=${REPO_DIR}
 
 # Create a clean ROS workspace for this script.
-if test -d ../ros_ws; then
+if test -z "${NO_CLEAN}" -a -d ../ros_ws; then
     echo "Please remove '../ros_ws' directory before running this script" >&2
     exit 1
 fi
+# - Directory structure
 mkdir -p ../ros_ws/src
-git archive --prefix=${GH_REPO_NAME}/ HEAD | tar xCf ../ros_ws/src -
+SRCDIR_BASE="$(basename $PWD)"
 cd ../ros_ws
+# - Add package with symlink
+if test ! -e src/$GH_REPO_NAME; then
+    ln -sf "../../$SRCDIR_BASE" src/$GH_REPO_NAME
+fi
+# - Init workspace
 catkin config --init --extend /opt/ros/${ROS_DISTRO}
 
 # Build the workspace and load the config
@@ -120,7 +127,9 @@ if test -n "${TRAVIS_BUILD_ID}"; then
 fi
 
 # Checkout the current gh-pages branch
-git clone -b gh-pages ${GH_REPO_PULL_URL} doc/
+if test ! -d doc/.git; then
+    git clone -b gh-pages ${GH_REPO_PULL_URL} doc/
+fi
 # Remove everything currently in the gh-pages branch.
 # GitHub is smart enough to know which files have changed and which files have
 # stayed the same and will only update the changed files. So the gh-pages branch
@@ -140,13 +149,19 @@ echo 'Generating Doxygen code documentation...'
 # Redirect both stderr and stdout to the log file AND the console.
 for subdir in ${DOC_SUBDIRS}; do
     cd src/${GH_REPO_NAME}/$subdir
+    if test ! -d doc; then
+        echo "Skipping subdirectory $subdir with no doc/ directory" >&2
+        continue
+    fi
+    git clean -xdf doc/
     if test -d src; then
         MODULES="$(find src -maxdepth 1 -mindepth 1 -type d)"
         for m in $MODULES; do
-            echo "Generating automodule files for $m"
+            echo "Generating automodule files for $subdir/$m" >&2
             sphinx-apidoc -e -f -o doc $m 2>&1 | tee -a doc/rosdoc.log
         done
     fi
+    echo "Running rosdoc_lite for $subdir" >&2
     rosdoc_lite . 2>&1 | tee doc/rosdoc.log
     cd -
     cp -a  src/${GH_REPO_NAME}/$subdir/doc/* doc/
