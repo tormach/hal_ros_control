@@ -6,9 +6,6 @@ branches:
   except:
     - gh-pages
 
-services:
-  - docker
-
 # Environment variables
 env:
   global:
