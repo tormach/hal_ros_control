@@ -73,7 +73,7 @@ fully-functioning ``hal_rrbot_control`` example to demonstrate a basic
 .. Recursive formatting not allowed:
      http://docutils.sourceforge.net/FAQ.html#is-nested-inline-markup-possible
 
-.. _C++ documentation: ../c++/index.html
+.. _C++ documentation: c++/index.html
 
 .. |RobotHW| replace:: :code:`hardware_interface::RobotHW`
 .. _RobotHW:  http://wiki.ros.org/hardware_interface

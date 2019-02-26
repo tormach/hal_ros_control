@@ -164,7 +164,7 @@ for subdir in ${DOC_SUBDIRS}; do
     echo "Running rosdoc_lite for $subdir" >&2
     rosdoc_lite . 2>&1 | tee doc/rosdoc.log
     cd -
-    cp -a  src/${GH_REPO_NAME}/$subdir/doc/* doc/
+    cp -a  src/${GH_REPO_NAME}/$subdir/doc/html/* doc/
 done
 
 ################################################################################
@@ -173,7 +173,7 @@ done
 # Check this by verifying that the html directory and the file html/index.html
 # both exist. This is a good indication that Doxygen did it's work.
 cd doc
-if [ -d "html" ] && [ -f "html/index.html" ]; then
+if [ -f "index.html" ]; then
 
     echo 'Uploading documentation to the gh-pages branch...'
     # Add everything in this directory (the Doxygen code documentation) to the
