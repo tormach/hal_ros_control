@@ -119,4 +119,7 @@ if(CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
   find_package(ros_pytest REQUIRED)
   add_rostest(tests/tests.launch)
+  # Check launch file; see http://wiki.ros.org/roslaunch
+  find_package(roslaunch REQUIRED)
+  roslaunch_add_file_check(launch)
 endif()
