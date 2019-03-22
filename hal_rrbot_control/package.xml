@@ -17,5 +17,6 @@
 
   <run_depend>hal_hw_interface</run_depend>
   <run_depend>rrbot_control</run_depend>
-  <run_depend>rrbot_description</run_depend>
+  <!-- Ideally, this would be a proper package from gazebo_ros_demos -->
+  <!-- <run_depend>rrbot_description</run_depend> -->
 </package>
