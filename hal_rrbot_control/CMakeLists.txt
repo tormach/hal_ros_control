@@ -4,13 +4,13 @@ project(hal_rrbot_control)
 find_package(
   catkin REQUIRED COMPONENTS
   hal_hw_interface
-  rrbot_control
+  # rrbot_control
   )
 
 catkin_package(
   CATKIN_DEPENDS
   hal_hw_interface
-  rrbot_control
+  # rrbot_control
   )
 
 install(DIRECTORY config
