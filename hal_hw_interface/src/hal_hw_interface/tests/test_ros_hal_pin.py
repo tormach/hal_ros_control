@@ -398,7 +398,7 @@ class TestRosHalPinService(TestRosHalPinPublisher):
         '''
         msg = self.service_msg_type(obj)
         call_value = self.other_value(obj, data)
-        msg.request_data = call_value
+        msg.data = call_value
         reply = obj._svc_cb(msg)
         obj.hal_comp.__setitem__.assert_called_with(
             self.obj_test_name(obj), call_value

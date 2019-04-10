@@ -338,5 +338,5 @@ class RosHalPinService(RosHalPinPublisher):
         rospy.loginfo("Service {} created".format(self.service.resolved_name))
 
     def _svc_cb(self, req):
-        self.set_pin(req.request_data)
+        self.set_pin(req.data)
         return True, 'OK'
