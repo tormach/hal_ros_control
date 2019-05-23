@@ -137,6 +137,10 @@ The files may be either legacy `.hal` files or python scripts.
 See the `config/hal_hw_interface.yaml` and `config/hal_io.yaml` files
 in `hal_rrbot_control` for typical configuration examples.
 
+When the hal_mgr completes loading the HAL files, it sets 'hal_mgr/ready'
+topic to true. Other processes can use this topic to check the status
+loading the HAL configuration.
+
 ### `hal_hw_interface` configuration
 
 A `hal_hw_interface` configuration builds on an existing
