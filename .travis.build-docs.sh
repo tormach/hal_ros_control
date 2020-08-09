@@ -5,6 +5,7 @@
 # Changes:
 # - Figure out GH ID and repo from slug
 # - Run rosdoc instead of doxygen
+#   - Requires initializing & building in a new ROS workspace
 #
 ################################################################################
 # Title         : generateDocumentationAndDeploy.sh

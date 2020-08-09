@@ -1,7 +1,15 @@
  - builder: sphinx
-   sphinx_root_dir: doc      # document directory with conf.py
+   # The relatively complex Sphinx docs serve as the GH Pages front
+   # page; less work to integrate the simpler C++ and srv
+   # documentation from there
+   #
+   # Generic name covers everything
+   name: hal_hw_interface
+   # Document directory with conf.py
+   sphinx_root_dir: doc
  - builder: doxygen
-   name: C++ API
+   name: C++ Machinekit RT HAL ros_control hardware interface
    output_dir: c++
-   file_patterns: '*.c *.cpp *.h *.cc *.hh *.dox'
+   file_patterns: '*.c *.cpp *.h *.cc *.hh *.dox *.md'
    homepage:  https://github.com/zultron/hal_ros_control
+   use_mdfile_as_mainpage:  mainpage.md
