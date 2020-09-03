@@ -1,1 +1,5 @@
 autosave.halscope
+
+# bloom-generate rosdebian
+/hal_hw_interface/debian/
+/hal_hw_interface/obj-*/
