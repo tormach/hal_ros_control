@@ -23,7 +23,7 @@ from std_msgs.msg import Bool, Float64, UInt32, Int32
 from std_srvs.srv import SetBool
 from hal_hw_interface.srv import SetUInt32, SetInt32, SetFloat64
 
-if (sys.version_info[0] < 3) or (sys.version[1] < 5):
+if (sys.version_info[0] < 3) or (sys.version_info[1] < 5):
 
     def isclose(a, b, rel_tol=1e-9, abs_tol=0.0):
         return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
