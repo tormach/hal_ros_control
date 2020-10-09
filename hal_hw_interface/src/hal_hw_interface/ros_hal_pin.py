@@ -132,7 +132,7 @@ class RosHalPin(HalObjBase):
 
     @classmethod
     def _isclose(cls, a, b, rel_tol=1e-9, abs_tol=1e-9):
-        return isclose(a, b, rel_tol, abs_tol)
+        return isclose(a, b, rel_tol=rel_tol, abs_tol=abs_tol)
 
 
 @attr.s
