@@ -74,6 +74,7 @@ void HalHWInterface::init(void (*funct)(void*, long))
                                                                     "cmd") ||
         !create_joint_float_pins(ix, &joint_eff_cmd_ptrs_, HAL_OUT, "eff-"
                                                                     "cmd") ||
+        !create_joint_float_pins(ix, &joint_probe_result_ptrs_, HAL_OUT, "probe-pos") ||
         !create_joint_float_pins(ix, &joint_pos_fb_ptrs_, HAL_IN, "pos-fb") ||
         !create_joint_float_pins(ix, &joint_vel_fb_ptrs_, HAL_IN, "vel-fb") ||
         !create_joint_float_pins(ix, &joint_eff_fb_ptrs_, HAL_IN, "eff-fb"))
@@ -87,6 +88,20 @@ void HalHWInterface::init(void (*funct)(void*, long))
 
   // Initialize started pin
   if (!create_bit_pin(&reset_ptr_, HAL_IN, "reset"))
+  {
+    HAL_ROS_LOG_ERR(CNAME, "%s: Failed to initialize reset pin", CNAME);
+    // return false; // FIXME
+    return;
+  }
+
+  if (!create_bit_pin(&probe_trip_ptr_, HAL_IN, "probe-trip"))
+  {
+    HAL_ROS_LOG_ERR(CNAME, "%s: Failed to initialize reset pin", CNAME);
+    // return false; // FIXME
+    return;
+  }
+
+  if (!create_bit_pin(&probe_ready_ptr_, HAL_IN, "probe-ready"))
   {
     HAL_ROS_LOG_ERR(CNAME, "%s: Failed to initialize reset pin", CNAME);
     // return false; // FIXME
@@ -178,6 +193,8 @@ void HalHWInterface::read(ros::Duration& elapsed_time)
 
   // Read reset pin
   reset_controllers = **reset_ptr_;
+  probe_trip = **probe_trip_ptr_;
+  probe_ready = **probe_ready_ptr_;
 }
 
 void HalHWInterface::write(ros::Duration& elapsed_time)
@@ -190,6 +207,13 @@ void HalHWInterface::write(ros::Duration& elapsed_time)
     **joint_pos_cmd_ptrs_[joint_id] = joint_position_command_[joint_id];
     **joint_vel_cmd_ptrs_[joint_id] = joint_velocity_command_[joint_id];
     **joint_eff_cmd_ptrs_[joint_id] = joint_effort_command_[joint_id];
+  }
+
+  if (probe_trip && probe_ready) {
+    for (std::size_t joint_id = 0; joint_id < num_joints_; ++joint_id)
+    {
+      **joint_probe_result_ptrs_[joint_id] = joint_position_[joint_id];
+    }
   }
 }
 

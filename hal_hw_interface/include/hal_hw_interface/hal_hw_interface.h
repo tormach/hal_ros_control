@@ -133,6 +133,10 @@ public:
    */
   bool reset_controllers;
 
+  /** indicates if a probe trip was detected via HAL */
+  bool probe_trip;
+  bool probe_ready;
+
   /**
    * \brief Write the command to the robot hardware.
    * \param elapsed_time  Period since last run
@@ -174,8 +178,13 @@ private:
   //!     Joint effort feedback value pointer vector
   std::vector<double**> joint_eff_fb_ptrs_;
 
+  //!     Probe Position result
+  std::vector<double**> joint_probe_result_ptrs_;
+
   // Controller reset
   bool** reset_ptr_;  // HAL pin
+  bool** probe_trip_ptr_;  // HAL pin
+  bool** probe_ready_ptr_;  // HAL pin
 
 };  // HalHWInterface
 
