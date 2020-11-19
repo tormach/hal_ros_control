@@ -74,7 +74,7 @@ void HalHWInterface::init(void (*funct)(void*, long))
                                                                     "cmd") ||
         !create_joint_float_pins(ix, &joint_eff_cmd_ptrs_, HAL_OUT, "eff-"
                                                                     "cmd") ||
-        !create_joint_float_pins(ix, &joint_probe_result_ptrs_, HAL_OUT, "probe-pos") ||
+        !create_joint_float_pins(ix, &interruptible_joint_result_ptrs_, HAL_OUT, "probe-pos") ||
         !create_joint_float_pins(ix, &joint_pos_fb_ptrs_, HAL_IN, "pos-fb") ||
         !create_joint_float_pins(ix, &joint_vel_fb_ptrs_, HAL_IN, "vel-fb") ||
         !create_joint_float_pins(ix, &joint_eff_fb_ptrs_, HAL_IN, "eff-fb"))
@@ -212,7 +212,7 @@ void HalHWInterface::write(ros::Duration& elapsed_time)
   if (probe_trip && probe_ready) {
     for (std::size_t joint_id = 0; joint_id < num_joints_; ++joint_id)
     {
-      **joint_probe_result_ptrs_[joint_id] = joint_position_[joint_id];
+      **interruptible_joint_result_ptrs_[joint_id] = joint_position_[joint_id];
     }
   }
 }

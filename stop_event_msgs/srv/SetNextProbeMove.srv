@@ -1,0 +1,8 @@
+int32 mode
+int32 PROBING_DISABLED=0
+int32 PROBE_EXPECT_RISING_EDGE=1 # Expect a rising edge
+int32 PROBE_EXPECT_FALLING_EDGE=2 # Expect a rising edge
+int32 PROBE_RETRACT=3 # Expect a rising edge
+---
+int32 response
+string response_string

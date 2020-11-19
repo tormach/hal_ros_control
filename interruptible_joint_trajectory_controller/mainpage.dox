@@ -1,0 +1,14 @@
+/**
+\mainpage
+\htmlinclude manifest.html
+
+\b interruptible_joint_trajectory_controller
+
+<!-- 
+A wrapper around joint_trajectory_controller that implement touch-probing and similar sensor-based feedback.
+-->
+
+-->
+
+
+*/

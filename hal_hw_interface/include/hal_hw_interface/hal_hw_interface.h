@@ -179,7 +179,7 @@ private:
   std::vector<double**> joint_eff_fb_ptrs_;
 
   //!     Probe Position result
-  std::vector<double**> joint_probe_result_ptrs_;
+  std::vector<double**> interruptible_joint_result_ptrs_;
 
   // Controller reset
   bool** reset_ptr_;  // HAL pin

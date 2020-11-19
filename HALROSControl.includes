@@ -1,0 +1,8 @@
+hal_hw_interface/include
+hal_hw_interface/include/hal_hw_interface
+interruptible_joint_trajectory_controller/include
+interruptible_joint_trajectory_controller/include/interruptible_joint_trajectory_controller
+~/ros/devel/include
+/opt/ros/noetic/include
+/usr/include/
+/usr/include/machinekit
