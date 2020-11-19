@@ -1,4 +1,5 @@
 autosave.halscope
+__pycache__
 
 # bloom-generate rosdebian
 /hal_hw_interface/debian/
