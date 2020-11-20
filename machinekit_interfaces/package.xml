@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<?xml-model
+  href="http://download.ros.org/schema/package_format3.xsd"
+  schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>machinekit_interfaces</name>
+  <version>0.1.0</version>
+  <description>Hardware resource manager classes / interfaces for Machinekit</description>
+
+  <maintainer email="rellenberg@tormach.com">Robert W. Ellenberg</maintainer>
+
+  <license>BSD</license>
+
+  <author>Robert W. Ellenberg</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>roscpp</depend>
+</package>
