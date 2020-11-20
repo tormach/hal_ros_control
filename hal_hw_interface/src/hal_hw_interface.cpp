@@ -41,7 +41,7 @@ HalHWInterface::HalHWInterface(ros::NodeHandle& nh, urdf::Model* urdf_model)
 {
 }
 
-void HalHWInterface::init(void (*funct)(void*, long))
+void HalHWInterface::init_hal(void (*funct)(void*, long))
 {
   HAL_ROS_LOG_INFO(CNAME, "%s: Initializing HAL hardware interface, description: %s", CNAME, VER_DESCRIPTION);
 

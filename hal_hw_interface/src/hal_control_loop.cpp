@@ -74,7 +74,7 @@ HalRosControlLoop::HalRosControlLoop() : node_is_shutdown(0)
                    CNAME);
 
   // Init HAL hardware interface
-  hardware_interface_->init(&funct);
+  hardware_interface_->init_hal(&funct);
 
   HAL_ROS_LOG_INFO(CNAME, "%s: Done initializing HAL hardware interface",
                    CNAME);
