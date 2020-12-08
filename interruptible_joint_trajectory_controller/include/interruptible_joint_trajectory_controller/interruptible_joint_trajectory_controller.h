@@ -60,6 +60,7 @@
 #include <hardware_interface/internal/demangle_symbol.h>
 
 #include <machinekit_interfaces/realtime_event_interface.h>
+#include <machinekit_interfaces/probe_interface.h>
 
 // Project
 #include <joint_trajectory_controller/joint_trajectory_controller.h>
@@ -85,6 +86,11 @@ public:
   bool init(HardwareInterface* hw, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh);
   /*\}*/
 
+  // KLUDGE have to override this method in Controller to be able to initialize multiple hardware interface types
+  bool initRequest(hardware_interface::RobotHW* robot_hw,
+                   ros::NodeHandle&             root_nh,
+                   ros::NodeHandle&             controller_nh,
+                   controller_interface::ControllerBase::ClaimedResources&            claimed_resources) override;
   /** \name Real-Time Safe Functions
    *\{*/
   /** \brief Holds the current position. */
@@ -99,23 +105,15 @@ public:
 protected:
   using JointTrajectoryControllerType = typename joint_trajectory_controller::JointTrajectoryController<SegmentImpl, HardwareInterface>;
 
-  // TODO
+  // Services for controller trajectory behavior
+  ros::ServiceServer start_probe_service; //!< Declare success when probe trip occurs on the next send trajectory
+  ros::ServiceServer start_probe_retract_service; //!< Declare success when probe un-trips
+  // TODO future services for pause / resume synchronization
 
-  // For communication of stop events and controller configuration
-  ros::Subscriber    probe_trajectory_command_sub_;
-  // TODO ROS service interface here
   ros::Publisher     stop_event_notification_;
-
-private:
-  /**
-   * @brief Updates the pre-allocated feedback of the current active goal (if any)
-   * based on the current state values.
-   *
-   * @note This function is NOT thread safe but intended to be used in the
-   * update-function.
-   */
-  void setActionFeedback();
-
+  std::vector<typename JointTrajectoryControllerType::JointHandle> probe_joint_results_;
+  machinekit_interfaces::ProbeHandle probe_handle;
+  machinekit_interfaces::RealtimeEventHandle stop_event;
 };
 
 } // namespace
@@ -148,14 +146,103 @@ InterruptibleJointTrajectoryController()
 {
 }
 
+
 template <class SegmentImpl, class HardwareInterface>
 bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::init(HardwareInterface* hw,
                                                                      ros::NodeHandle&   root_nh,
                                                                      ros::NodeHandle&   controller_nh)
 {
-    // TODO custom behavior
-    return static_cast<JointTrajectoryControllerType*>(this)->init(hw, root_nh, controller_nh);
+    bool res = static_cast<JointTrajectoryControllerType*>(this)->init(hw, root_nh, controller_nh);
+    if (!res) {
+        return res;
+    }
+
+    // NOTE: this depends on successful initialization of the controller so we can reuse the found joint names to create probe results per joint
+    const unsigned int n_joints = this->joint_names_.size();
+    probe_joint_results_.resize(n_joints);
+    for (unsigned int i = 0; i < n_joints; ++i)
+    {
+        std::string probe_joint_name = "probe_" + this->joint_names_[i];
+        try {probe_joint_results_[i] = hw->getHandle(probe_joint_name);}
+        catch (...)
+        {
+            ROS_ERROR_STREAM_NAMED(this->name_, "Could not find joint '" << probe_joint_name << "' in '" <<
+                                   this->getHardwareInterfaceType() << "'.");
+            return false;
+        }
+    }
+    return true;
 }
+
+template<class SegmentImpl, class HardwareInterface>
+bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::initRequest(
+        hardware_interface::RobotHW *robot_hw,
+        ros::NodeHandle &root_nh,
+        ros::NodeHandle &controller_nh,
+        controller_interface::ControllerBase::ClaimedResources &claimed_resources)
+{
+    // Initialize auxiliary hardware interfaces required by this controller (probe / stop event interfaces)
+
+    // This is following the same basic pattern as Controller<>'s initRequest, but we can't just use the basic init function because it's tied to the Joint interface.
+    // initRequest itself has to be overridden to handle these auxiliary interfaces.
+    {
+        machinekit_interfaces::ProbeInterface* probe_intf = robot_hw->get<machinekit_interfaces::ProbeInterface>();
+        auto hw_if_typename = hardware_interface::internal::demangledTypeName<machinekit_interfaces::ProbeInterface>();
+        if (!probe_intf)
+        {
+            ROS_ERROR("This controller requires a hardware interface of type '%s'."
+                      " Make sure this is registered in the hardware_interface::RobotHW class.",
+                      hw_if_typename.c_str());
+            return false;
+        }
+        // return which resources are claimed by this controller
+        probe_intf->clearClaims();
+
+        try {
+            probe_handle = probe_intf->getHandle("probe");
+        }
+        catch (...)
+        {
+            ROS_ERROR_STREAM_NAMED(this->name_, "Could not find probe in '" <<
+                                   hw_if_typename << "'.");
+            return false;
+        }
+        hardware_interface::InterfaceResources iface_res(hw_if_typename, probe_intf->getClaims());
+        claimed_resources.assign(1, iface_res);
+        probe_intf->clearClaims();
+    }
+    {
+        machinekit_interfaces::RealtimeEventInterface* rt_event_intf = robot_hw->get<machinekit_interfaces::RealtimeEventInterface>();
+        auto hw_if_typename = hardware_interface::internal::demangledTypeName<machinekit_interfaces::RealtimeEventInterface>();
+        if (!rt_event_intf)
+        {
+            ROS_ERROR("This controller requires a hardware interface of type '%s'."
+                      " Make sure this is registered in the hardware_interface::RobotHW class.",
+                      hw_if_typename.c_str());
+            return false;
+        }
+        // return which resources are claimed by this controller
+        rt_event_intf->clearClaims();
+
+        try {
+            stop_event = rt_event_intf->getHandle("probe");
+        }
+        catch (...)
+        {
+            ROS_ERROR_STREAM_NAMED(this->name_, "Could not find stop_event in '" <<
+                                   hw_if_typename << "'.");
+            return false;
+        }
+        hardware_interface::InterfaceResources iface_res(hw_if_typename, rt_event_intf->getClaims());
+        claimed_resources.assign(1, iface_res);
+        rt_event_intf->clearClaims();
+    }
+
+    // SO ugly, need to redirect to the base class method, but this is fragile if JointTrajectoryController ever decides to add one...
+    // Complete the underlying initialization for the controller (probe joint stuff, JointTrajectoryController base-level init)
+    return controller_interface::Controller<HardwareInterface>::initRequest(robot_hw, root_nh, controller_nh, claimed_resources);
+}
+
 
 template <class SegmentImpl, class HardwareInterface>
 void InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::

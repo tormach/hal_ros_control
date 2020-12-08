@@ -34,6 +34,8 @@
 
 // hal_hw_interface subclasses ros_control_boilerplate
 #include <ros_control_boilerplate/generic_hw_interface.h>
+#include <machinekit_interfaces/realtime_event_interface.h>
+#include <machinekit_interfaces/probe_interface.h>
 
 // HAL
 #include <hal.h>
@@ -46,6 +48,7 @@
 
 namespace hal_hw_interface
 {
+  static const std::string PROBE_POSITION_PREFIX{ "probe_" };
 /**
 * \brief A `ros_control_boilerplate::GenericHWInterface` subclass for Machinekit
 * HAL
@@ -135,10 +138,6 @@ public:
    */
   bool reset_controllers;
 
-  /** indicates if a probe trip was detected via HAL */
-  bool probe_trip;
-  bool probe_ready;
-
   /**
    * \brief Write the command to the robot hardware.
    * \param elapsed_time  Period since last run
@@ -163,6 +162,20 @@ protected:
    */
   int comp_id_;
 
+  /** indicates if the probe signal is active in HAL */
+  int probe_signal;
+  int probe_transition;
+
+  /** Are we expecting a probe trip? */
+  int probe_request_capture_type;
+
+  std::vector<double> probe_joint_position_;
+  std::vector<double> probe_joint_velocity_;
+  std::vector<double> probe_joint_effort_;
+
+  machinekit_interfaces::RealtimeEventInterface rt_event_code_interface;
+  machinekit_interfaces::ProbeInterface probe_interface;
+
 private:
   // Joints:  HAL storage
   // - Commands
@@ -181,12 +194,14 @@ private:
   std::vector<double**> joint_eff_fb_ptrs_;
 
   //!     Probe Position result
-  std::vector<double**> interruptible_joint_result_ptrs_;
+  std::vector<double**> probe_joint_result_ptrs_; // HAL output pins for probe result (reference)
 
-  // Controller reset
-  bool** reset_ptr_;  // HAL pin
-  bool** probe_trip_ptr_;  // HAL pin
-  bool** probe_ready_ptr_;  // HAL pin
+  // TODO hal pin for realtime safety input
+
+  // TODO condense these with the preview member variables to remove the indirection / extra copy
+  bool** reset_ptr_;  // HAL input pin for controller reset
+  bool** probe_signal_ptr_;  // HAL input pin, probe signal
+  int** probe_capture_ptr_;  // HAL output pin for expected capture type (reference)
 
 };  // HalHWInterface
 

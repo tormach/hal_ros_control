@@ -45,8 +45,39 @@ void HalHWInterface::init_hal(void (*funct)(void*, long))
 {
   HAL_ROS_LOG_INFO(CNAME, "%s: Initializing HAL hardware interface, description: %s", CNAME, VER_DESCRIPTION);
 
-  // Call boilerplate init() function
+  // Register handles for joint position at probe trip
+
+  num_joints_ = joint_names_.size();
+  probe_joint_position_.resize(num_joints_, 0.0);
+  probe_joint_velocity_.resize(num_joints_, 0.0);
+  probe_joint_effort_.resize(num_joints_, 0.0);
+
+  // Initialize interfaces for probe position (done deliberately before the init below since that's where the interfaces are registered)
+  for (std::size_t joint_id = 0; joint_id < num_joints_; ++joint_id)
+  {
+    ROS_INFO_STREAM_NAMED(name_, "Setting up handle for probe position for " << joint_names_[joint_id]);
+
+    // Create joint state interface
+    joint_state_interface_.registerHandle(hardware_interface::JointStateHandle(
+        PROBE_POSITION_PREFIX+joint_names_[joint_id], &probe_joint_position_[joint_id], &probe_joint_velocity_[joint_id], &probe_joint_effort_[joint_id]));
+  }  // end for each joint
+
+  // Call base class init to set register interfaces and handles for joint state / command / limits
   ros_control_boilerplate::GenericHWInterface::init();
+
+  // Register handle for stop event interface from realtime loop
+  // This is used during update to indicate to the non-RT that a stop event was triggered within the RT loop
+  auto stop_event_handle = machinekit_interfaces::RealtimeEventHandle(
+              rt_event_code_interface.getHandle("stop_event"));
+
+  // TODO look up the probe name in config instead of hard-coding it
+  // TODO support multiple probes
+  probe_interface.registerHandle(machinekit_interfaces::ProbeHandle(
+                                     "probe",
+                                     &probe_request_capture_type,
+                                     &probe_signal,
+                                     &probe_transition));
+  registerInterface(&probe_interface);
 
   HAL_ROS_LOG_INFO(CNAME, "%s: Initialized boilerplate", CNAME);
 
@@ -74,7 +105,7 @@ void HalHWInterface::init_hal(void (*funct)(void*, long))
                                                                     "cmd") ||
         !create_joint_float_pins(ix, &joint_eff_cmd_ptrs_, HAL_OUT, "eff-"
                                                                     "cmd") ||
-        !create_joint_float_pins(ix, &interruptible_joint_result_ptrs_, HAL_OUT, "probe-pos") ||
+        !create_joint_float_pins(ix, &probe_joint_result_ptrs_, HAL_OUT, "probe-pos") ||
         !create_joint_float_pins(ix, &joint_pos_fb_ptrs_, HAL_IN, "pos-fb") ||
         !create_joint_float_pins(ix, &joint_vel_fb_ptrs_, HAL_IN, "vel-fb") ||
         !create_joint_float_pins(ix, &joint_eff_fb_ptrs_, HAL_IN, "eff-fb"))
@@ -94,14 +125,14 @@ void HalHWInterface::init_hal(void (*funct)(void*, long))
     return;
   }
 
-  if (!create_bit_pin(&probe_trip_ptr_, HAL_IN, "probe-trip"))
+  if (!create_bit_pin(&probe_signal_ptr_, HAL_IN, "probe-signal"))
   {
     HAL_ROS_LOG_ERR(CNAME, "%s: Failed to initialize reset pin", CNAME);
     // return false; // FIXME
     return;
   }
 
-  if (!create_bit_pin(&probe_ready_ptr_, HAL_IN, "probe-ready"))
+  if (!create_s32_pin(&probe_capture_ptr_, HAL_OUT, "probe-capture"))
   {
     HAL_ROS_LOG_ERR(CNAME, "%s: Failed to initialize reset pin", CNAME);
     // return false; // FIXME
@@ -214,8 +245,23 @@ void HalHWInterface::read(ros::Duration& elapsed_time)
 
   // Read reset pin
   reset_controllers = **reset_ptr_;
-  probe_trip = **probe_trip_ptr_;
-  probe_ready = **probe_ready_ptr_;
+  // IMPORTANT update these first before updating the last probe signal value
+  if (**probe_signal_ptr_ && !probe_signal) {
+      probe_transition = (int)machinekit_interfaces::ProbeTransitions::RISING;
+  } else if (!**probe_signal_ptr_ && probe_signal) {
+      probe_transition = (int)machinekit_interfaces::ProbeTransitions::FALLING;
+  } else {
+      probe_transition = (int)machinekit_interfaces::ProbeTransitions::NONE;
+  }
+
+  if (probe_transition == probe_request_capture_type) {
+      probe_joint_position_ = joint_position_;
+      probe_joint_velocity_ = joint_velocity_;
+      probe_joint_effort_ = joint_effort_;
+  }
+
+  // No overtravel support currently
+  probe_signal = **probe_signal_ptr_;
 }
 
 void HalHWInterface::write(ros::Duration& elapsed_time)
@@ -230,12 +276,13 @@ void HalHWInterface::write(ros::Duration& elapsed_time)
     **joint_eff_cmd_ptrs_[joint_id] = joint_effort_command_[joint_id];
   }
 
-  if (probe_trip && probe_ready) {
+  if (probe_request_capture_type == probe_transition) {
     for (std::size_t joint_id = 0; joint_id < num_joints_; ++joint_id)
     {
-      **interruptible_joint_result_ptrs_[joint_id] = joint_position_[joint_id];
+      **probe_joint_result_ptrs_[joint_id] = probe_joint_position_[joint_id];
     }
   }
+  **probe_capture_ptr_ = probe_request_capture_type;
 }
 
 void HalHWInterface::enforceLimits(ros::Duration& period)
