@@ -46,7 +46,7 @@ public:
   ProbeHandle(const std::string& name, //!< Name of the probe
                      int* probe_capture_ptr, //!< Capture setting (i.e. rising means expect a rising edge, none implies we expect the probe signal to be off and no edges to be seen)
                      const int* probe_state_ptr, //!< Probe state signal
-                     const int* probe_transition_ptr //!< transitions detected in the probe signal
+                     int* probe_transition_ptr //!< transitions detected in the probe signal (handshake)
               )
     : name_(name),
       probe_capture_(probe_capture_ptr),
@@ -58,9 +58,15 @@ public:
   int getProbeState() const {
       return probe_state_ ? *probe_state_ : (int)ProbeState::DISCONNECTED;
   }
-  int getProbeTransition() const {
-      return probe_transition_ ? *probe_transition_ : (int)ProbeTransitions::INVALID;
+  int acquireProbeTransition() {
+      if (!probe_transition_) {
+          return (int)ProbeTransitions::INVALID;
+      }
+      int transition = *probe_transition_;
+      *probe_transition_ = 0;
+      return transition;
   }
+
   int getProbeCapture() const {
       return probe_capture_ ? *probe_capture_ : (int)ProbeTransitions::INVALID;
   }
@@ -75,7 +81,7 @@ private:
   std::string name_;
   int * probe_capture_  = {nullptr};
   const int * probe_state_  = {nullptr};
-  const int * probe_transition_  = {nullptr};
+  int * probe_transition_  = {nullptr};
 };
 
 

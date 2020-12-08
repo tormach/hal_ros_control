@@ -79,41 +79,42 @@ class InterruptibleJointTrajectoryController : public joint_trajectory_controlle
 {
 public:
 
-  InterruptibleJointTrajectoryController();
+    InterruptibleJointTrajectoryController();
 
-  /** \name Non Real-Time Safe Functions
+    /** \name Non Real-Time Safe Functions
    *\{*/
-  bool init(HardwareInterface* hw, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh);
-  /*\}*/
+    bool init(HardwareInterface* hw, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh);
+    /*\}*/
 
-  // KLUDGE have to override this method in Controller to be able to initialize multiple hardware interface types
-  bool initRequest(hardware_interface::RobotHW* robot_hw,
-                   ros::NodeHandle&             root_nh,
-                   ros::NodeHandle&             controller_nh,
-                   controller_interface::ControllerBase::ClaimedResources&            claimed_resources) override;
-  /** \name Real-Time Safe Functions
+    // KLUDGE have to override this method in Controller to be able to initialize multiple hardware interface types
+    bool initRequest(hardware_interface::RobotHW* robot_hw,
+                     ros::NodeHandle&             root_nh,
+                     ros::NodeHandle&             controller_nh,
+                     controller_interface::ControllerBase::ClaimedResources&            claimed_resources) override;
+
+    /** \name Real-Time Safe Functions
    *\{*/
-  /** \brief Holds the current position. */
-  void starting(const ros::Time& time);
 
-  /** \brief Cancels the active action goal, if any. */
-  void stopping(const ros::Time& time);
+    void abortActiveGoalWithError(const ros::Time& time, std::string const &&explanation); // Like preemptActiveGoal but marks it as failed
+    void completeActiveGoal(const ros::Time &time); // Like preemptActiveGoal but for when an external goal state is reached (i.e. probing)
 
-  void update(const ros::Time& time, const ros::Duration& period);
-  /*\}*/
+    void update(const ros::Time& time, const ros::Duration& period);
+    /*\}*/
 
 protected:
-  using JointTrajectoryControllerType = typename joint_trajectory_controller::JointTrajectoryController<SegmentImpl, HardwareInterface>;
+    using JointTrajectoryControllerType = typename joint_trajectory_controller::JointTrajectoryController<SegmentImpl, HardwareInterface>;
 
-  // Services for controller trajectory behavior
-  ros::ServiceServer start_probe_service; //!< Declare success when probe trip occurs on the next send trajectory
-  ros::ServiceServer start_probe_retract_service; //!< Declare success when probe un-trips
-  // TODO future services for pause / resume synchronization
+    // Services for controller trajectory behavior
+    ros::ServiceServer start_probe_service; //!< Declare success when probe trip occurs on the next send trajectory
+    ros::ServiceServer start_probe_retract_service; //!< Declare success when probe un-trips
+    // TODO mechanism to throw clear error if probe move reaches end. For example, zero out goal tolerances? This may need a custom update function to get a real error message.
 
-  ros::Publisher     stop_event_notification_;
-  std::vector<typename JointTrajectoryControllerType::JointHandle> probe_joint_results_;
-  machinekit_interfaces::ProbeHandle probe_handle;
-  machinekit_interfaces::RealtimeEventHandle stop_event;
+    // TODO future services for pause / resume synchronization
+
+    ros::Publisher     stop_event_notification_;
+    std::vector<typename JointTrajectoryControllerType::JointHandle> probe_joint_results_;
+    machinekit_interfaces::ProbeHandle probe_handle;
+    machinekit_interfaces::RealtimeEventHandle stop_event;
 };
 
 } // namespace
@@ -124,35 +125,19 @@ namespace interruptible_joint_trajectory_controller
 {
 
 template <class SegmentImpl, class HardwareInterface>
-inline void InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
-starting(const ros::Time& time)
-{
-    static_cast<JointTrajectoryControllerType*>(this)->starting(time);
-    // TODO Custom probe behavior here
-}
-
-template <class SegmentImpl, class HardwareInterface>
-inline void InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
-stopping(const ros::Time& time)
-{
-    static_cast<JointTrajectoryControllerType*>(this)->stopping(time);
-    // TODO custom probe behavior here
-}
-
-template <class SegmentImpl, class HardwareInterface>
 InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
 InterruptibleJointTrajectoryController()
-  : JointTrajectoryControllerType()
+    : JointTrajectoryControllerType()
 {
 }
 
 
 template <class SegmentImpl, class HardwareInterface>
 bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::init(HardwareInterface* hw,
-                                                                     ros::NodeHandle&   root_nh,
-                                                                     ros::NodeHandle&   controller_nh)
+                                                                                  ros::NodeHandle&   root_nh,
+                                                                                  ros::NodeHandle&   controller_nh)
 {
-    bool res = static_cast<JointTrajectoryControllerType*>(this)->init(hw, root_nh, controller_nh);
+    bool res = JointTrajectoryControllerType::init(hw, root_nh, controller_nh);
     if (!res) {
         return res;
     }
@@ -245,11 +230,67 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::ini
 
 
 template <class SegmentImpl, class HardwareInterface>
+inline void InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
+abortActiveGoalWithError(const ros::Time& time, std::string const &&explanation)
+{
+    typename JointTrajectoryControllerType::RealtimeGoalHandlePtr current_active_goal(this->rt_active_goal_);
+
+    // Cancels the currently active goal
+    if (current_active_goal)
+    {
+        // Marks the current goal as canceled
+        this->rt_active_goal_.reset();
+        // TODO standardize error codes
+        current_active_goal->preallocated_result_->error_code = -6;
+        // TODO confirm realtime safety of this assignment (e.g. is the string reserved, or does this trigger an allocation?)
+        current_active_goal->preallocated_result_->error_string = explanation;
+        current_active_goal->setAborted(current_active_goal->preallocated_result_);
+        JointTrajectoryControllerType::setHoldPosition(time);
+    }
+}
+
+template <class SegmentImpl, class HardwareInterface>
+inline void InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
+completeActiveGoal(const ros::Time &time)
+{
+    typename JointTrajectoryControllerType::RealtimeGoalHandlePtr current_active_goal(this->rt_active_goal_);
+
+    // Cancels the currently active goal
+    if (current_active_goal)
+    {
+        // Marks the current goal as canceled
+        this->rt_active_goal_.reset();
+        // TODO pass details back
+        current_active_goal->preallocated_result_->error_code = 0;
+        current_active_goal->setSucceeded(current_active_goal->preallocated_result_);
+        JointTrajectoryControllerType::setHoldPosition(time);
+    }
+
+}
+
+template <class SegmentImpl, class HardwareInterface>
 void InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
 update(const ros::Time& time, const ros::Duration& period)
 {
-    // TODO check probe state and trigger a stop if it's hit
-    return static_cast<JointTrajectoryControllerType*>(this)->update(time, period);
+    // TODO configure this behavior with parameters
+    const int probe_transition = probe_handle.acquireProbeTransition();
+
+    if (probe_transition > 0 || probe_handle.getProbeState() > 0) {
+        // Something probe happened
+
+        switch (probe_handle.getProbeCapture()) {
+        case (int)machinekit_interfaces::ProbeTransitions::RISING:
+            completeActiveGoal(time);
+            break;
+        case (int)machinekit_interfaces::ProbeTransitions::FALLING:
+            // Don't halt the move when looking for a falling transition since
+            break;
+        default:
+            abortActiveGoalWithError(time, "Unexpected probe signal during non-probe motion");
+            break;
+        }
+    }
+    return JointTrajectoryControllerType::update(time, period);
 }
 
 } // namespace
