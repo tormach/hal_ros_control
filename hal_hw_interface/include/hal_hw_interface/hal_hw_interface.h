@@ -122,6 +122,8 @@ public:
    */
   bool create_bit_pin(bool*** ptr, hal_pin_dir_t dir, const char* name);
 
+  bool create_s32_pin(int*** ptr, hal_pin_dir_t dir, const char* name);
+
   /**
    * \brief Read the state from the robot hardware.
    * \param elapsed_time - period since last run

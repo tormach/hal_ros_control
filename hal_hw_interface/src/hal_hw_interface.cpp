@@ -181,6 +181,27 @@ bool HalHWInterface::create_bit_pin(bool*** ptr, hal_pin_dir_t dir,
   return true;
 }
 
+bool HalHWInterface::create_s32_pin(int*** ptr, hal_pin_dir_t dir,
+                                    const char* name)
+{
+  // Allocate space
+  *ptr = ((hal_s32_t**)hal_malloc(sizeof(hal_s32_t*)));
+  if (*ptr == NULL)
+  {
+    HAL_ROS_LOG_ERR(CNAME, "%s: Allocate HAL pin failed", CNAME);
+    return false;
+  }
+  if (hal_pin_s32_newf(dir, *ptr, comp_id_, "%s.%s", CNAME, name))
+  {
+    HAL_ROS_LOG_INFO(CNAME, "%s: New HAL pin %s.%s failed", CNAME, CNAME, name);
+    return false;
+  }
+
+  HAL_ROS_LOG_INFO(CNAME, "%s: New HAL pin %s.%s succeeded; addr %p", CNAME,
+                   CNAME, name, *ptr);
+  return true;
+}
+
 void HalHWInterface::read(ros::Duration& elapsed_time)
 {
   // Copy HAL joint feedback pin values to controller joint states
