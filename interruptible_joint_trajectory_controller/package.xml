@@ -33,6 +33,7 @@
   <depend>pluginlib</depend>
   <depend>joint_trajectory_controller</depend>
   <depend>stop_event_msgs</depend>
+  <depend>machinekit_interfaces</depend>
 
   <test_depend>rostest</test_depend>
   <test_depend>controller_manager</test_depend>

@@ -23,6 +23,7 @@ find_package(catkin
     pluginlib
     stop_event_msgs
     joint_trajectory_controller
+    machinekit_interfaces
 )
 
 # Declare catkin package
@@ -40,6 +41,7 @@ catkin_package(
   trajectory_msgs
   stop_event_msgs
   joint_trajectory_controller
+    machinekit_interfaces
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
 )

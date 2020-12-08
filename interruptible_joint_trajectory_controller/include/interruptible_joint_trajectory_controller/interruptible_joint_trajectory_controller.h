@@ -50,12 +50,16 @@
 #include <control_msgs/JointTrajectoryControllerState.h>
 #include <control_msgs/QueryTrajectoryState.h>
 #include <trajectory_msgs/JointTrajectory.h>
+#include <stop_event_msgs/SetNextProbeMove.h>
+#include <stop_event_msgs/StopEventResult.h>
 
 // ros_controls
 #include <realtime_tools/realtime_server_goal_handle.h>
 #include <controller_interface/controller.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/internal/demangle_symbol.h>
+
+#include <machinekit_interfaces/realtime_event_interface.h>
 
 // Project
 #include <joint_trajectory_controller/joint_trajectory_controller.h>
