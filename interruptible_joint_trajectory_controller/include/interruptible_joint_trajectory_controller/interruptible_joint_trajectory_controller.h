@@ -67,6 +67,7 @@
 
 namespace interruptible_joint_trajectory_controller
 {
+static const std::string PROBE_SERVICE_NAME{ "probe" };
 
 /**
  * Controller for executing joint-space trajectories on a group of joints, that can respond to stop events triggered from hardware in the realtime loop.
@@ -77,6 +78,12 @@ namespace interruptible_joint_trajectory_controller
 template <class SegmentImpl, class HardwareInterface>
 class InterruptibleJointTrajectoryController : public joint_trajectory_controller::JointTrajectoryController<SegmentImpl, HardwareInterface>
 {
+protected:
+    using JointTrajectoryControllerType = typename joint_trajectory_controller::JointTrajectoryController<SegmentImpl, HardwareInterface>;
+    using typename JointTrajectoryControllerType::JointTrajectoryConstPtr;
+    using typename JointTrajectoryControllerType::RealtimeGoalHandlePtr;
+    using typename JointTrajectoryControllerType::Trajectory;
+
 public:
 
     InterruptibleJointTrajectoryController();
@@ -101,13 +108,26 @@ public:
     void update(const ros::Time& time, const ros::Duration& period);
     /*\}*/
 
-protected:
-    using JointTrajectoryControllerType = typename joint_trajectory_controller::JointTrajectoryController<SegmentImpl, HardwareInterface>;
+    // Command handling, not real-time safe
+    virtual bool updateTrajectoryCommand(const JointTrajectoryConstPtr& msg, RealtimeGoalHandlePtr gh, std::string* error_string = nullptr);
 
+    // Service calls, not real-time safe
+
+    /**
+     * @brief Service callback to force the controller into the hold position.
+     *
+     * @param request Dummy for triggering the service
+     * @param response True on success.
+     *
+     * @return False if something went wrong. True otherwise.
+     */
+    bool handleProbeRequest(stop_event_msgs::SetNextProbeMoveRequest& request, stop_event_msgs::SetNextProbeMoveResponse& response);
+
+protected:
+    virtual void checkReachedTrajectoryGoal();
+    virtual void checkReachedTrajectoryGoalProbe();
     // Services for controller trajectory behavior
-    ros::ServiceServer start_probe_service; //!< Declare success when probe trip occurs on the next send trajectory
-    ros::ServiceServer start_probe_retract_service; //!< Declare success when probe un-trips
-    // TODO mechanism to throw clear error if probe move reaches end. For example, zero out goal tolerances? This may need a custom update function to get a real error message.
+    ros::ServiceServer probe_service_; //!< Declare success when probe trip occurs on the next send trajectory
 
     // TODO future services for pause / resume synchronization
 
@@ -156,6 +176,10 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::ini
             return false;
         }
     }
+
+    // Set up services to control probe behavior
+    probe_service_ = controller_nh.advertiseService(PROBE_SERVICE_NAME, &InterruptibleJointTrajectoryController::handleProbeRequest, this);
+
     return true;
 }
 
@@ -265,13 +289,14 @@ completeActiveGoal(const ros::Time &time)
         current_active_goal->setSucceeded(current_active_goal->preallocated_result_);
         JointTrajectoryControllerType::setHoldPosition(time);
     }
-
 }
 
+// WARNING do not early abort from this function, it must clean up probe capture mode
 template <class SegmentImpl, class HardwareInterface>
 void InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
 update(const ros::Time& time, const ros::Duration& period)
 {
+    RealtimeGoalHandlePtr current_active_goal(this->rt_active_goal_);
     // TODO configure this behavior with parameters
     const int probe_transition = probe_handle.acquireProbeTransition();
 
@@ -290,7 +315,77 @@ update(const ros::Time& time, const ros::Duration& period)
             break;
         }
     }
+
+    // TODO mechanism to throw clear error if probe move reaches end. For example, zero out goal tolerances? This may need a custom update function to get a real error message.
     return JointTrajectoryControllerType::update(time, period);
+
+    // Reset probe capture if goal is done (regardless of success / failure)
+    if (!this->rt_active_goal_ && current_active_goal) {
+        probe_handle.setProbeCapture(0);
+    }
 }
+
+/**
+ * Check if all joints have reached their goal state, and mark the goal handle as succeeded if so.
+ * Derived classes can specialize this if they need finer control over goal success
+ * (e.g. if there are additional criteria like for probing).
+ */
+template <class SegmentImpl, class HardwareInterface>
+void InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
+checkReachedTrajectoryGoal()
+{
+    switch((machinekit_interfaces::ProbeTransitions)probe_handle.getProbeCapture()) {
+    case machinekit_interfaces::ProbeTransitions::RISING:
+    case machinekit_interfaces::ProbeTransitions::FALLING:
+        // Do special handling below for probe moves
+        checkReachedTrajectoryGoalProbe();
+    default:
+        // Normal moves get forwarded to the stock goal check
+        typename JointTrajectoryControllerType::checkReachedTrajectoryGoal();
+    }
+}
+
+template <class SegmentImpl, class HardwareInterface>
+void InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
+checkReachedTrajectoryGoalProbe()
+{
+    //If there is an active goal and all segments finished successfully then set goal as succeeded
+    RealtimeGoalHandlePtr current_active_goal(this->rt_active_goal_);
+    if (current_active_goal && this->successful_joint_traj_.count() == this->getNumberOfJoints())
+    {
+        // FIXME do we need a dedicated error code for this in the message?
+        current_active_goal->preallocated_result_->error_code = -7;
+        current_active_goal->setFailed(current_active_goal->preallocated_result_);
+        current_active_goal.reset(); // do not publish feedback
+        this->rt_active_goal_.reset();
+        this->successful_joint_traj_.reset();
+    }
+}
+
+template <class SegmentImpl, class HardwareInterface>
+bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::handleProbeRequest(stop_event_msgs::SetNextProbeMoveRequest &request, stop_event_msgs::SetNextProbeMoveResponse &response)
+{
+    switch (request.mode) {
+    case stop_event_msgs::SetNextProbeMoveRequest::PROBING_DISABLED:
+    case stop_event_msgs::SetNextProbeMoveRequest::PROBE_EXPECT_RISING_EDGE:
+    case stop_event_msgs::SetNextProbeMoveRequest::PROBE_EXPECT_FALLING_EDGE:
+    case stop_event_msgs::SetNextProbeMoveRequest::PROBE_RETRACT:
+        // Batter up! It better not be executing something because this will step on it!
+        probe_handle.setProbeCapture(request.mode);
+        break;
+    }
+    response.message="Probing mode set";
+    response.success=true;
+    return true;
+}
+
+template <class SegmentImpl, class HardwareInterface>
+bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
+updateTrajectoryCommand(const JointTrajectoryConstPtr& msg, RealtimeGoalHandlePtr gh, std::string* error_string)
+{
+    // TODO handle custom options
+    return JointTrajectoryControllerType::updateTrajectoryCommand(msg, gh, error_string);
+}
+
 
 } // namespace
