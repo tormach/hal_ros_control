@@ -62,6 +62,12 @@
 #include <machinekit_interfaces/realtime_event_interface.h>
 #include <machinekit_interfaces/probe_interface.h>
 
+// Bring in enums
+using machinekit_interfaces::ProbeTransitions;
+using machinekit_interfaces::ProbeState;
+using stop_event_msgs::SetNextProbeMoveRequest;
+using stop_event_msgs::SetNextProbeMoveResponse;
+
 // Project
 #include <joint_trajectory_controller/joint_trajectory_controller.h>
 
@@ -297,27 +303,45 @@ void InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
 update(const ros::Time& time, const ros::Duration& period)
 {
     RealtimeGoalHandlePtr current_active_goal(this->rt_active_goal_);
-    // TODO configure this behavior with parameters
-    const int probe_transition = probe_handle.acquireProbeTransition();
 
-    if (probe_transition > 0 || probe_handle.getProbeState() > 0) {
-        // Something probe happened
+    auto probe_transition = (ProbeTransitions)probe_handle.acquireProbeTransition();
 
+    switch (probe_transition) {
+    case ProbeTransitions::RISING:
         switch (probe_handle.getProbeCapture()) {
-        case (int)machinekit_interfaces::ProbeTransitions::RISING:
+        case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_REQUIRE_RISING_EDGE:
+        case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_OPTIONAL_RISING_EDGE:
             completeActiveGoal(time);
             break;
-        case (int)machinekit_interfaces::ProbeTransitions::FALLING:
-            // Don't halt the move when looking for a falling transition since
+        case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_IGNORE_INPUT:
             break;
         default:
+            abortActiveGoalWithError(time, "Unexpected probe rising edge during probe motion");
+            break;
+        }
+        break;
+    case ProbeTransitions::FALLING:
+        switch (probe_handle.getProbeCapture()) {
+        case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_REQUIRE_FALLING_EDGE:
+        case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_OPTIONAL_FALLING_EDGE:
+            completeActiveGoal(time);
+            break;
+        case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_IGNORE_INPUT:
+            break;
+        default:
+            abortActiveGoalWithError(time, "Unexpected probe falling edge during motion");
+            break;
+        }
+        break;
+    default:
+        if (probe_handle.getProbeState() > 0 && probe_handle.getProbeCapture() < 1) {
             abortActiveGoalWithError(time, "Unexpected probe signal during non-probe motion");
             break;
         }
     }
 
     // TODO mechanism to throw clear error if probe move reaches end. For example, zero out goal tolerances? This may need a custom update function to get a real error message.
-    return JointTrajectoryControllerType::update(time, period);
+    JointTrajectoryControllerType::update(time, period);
 
     // Reset probe capture if goal is done (regardless of success / failure)
     if (!this->rt_active_goal_ && current_active_goal) {
@@ -341,7 +365,7 @@ checkReachedTrajectoryGoal()
         checkReachedTrajectoryGoalProbe();
     default:
         // Normal moves get forwarded to the stock goal check
-        typename JointTrajectoryControllerType::checkReachedTrajectoryGoal();
+        JointTrajectoryControllerType::checkReachedTrajectoryGoal();
     }
 }
 
@@ -355,7 +379,7 @@ checkReachedTrajectoryGoalProbe()
     {
         // FIXME do we need a dedicated error code for this in the message?
         current_active_goal->preallocated_result_->error_code = -7;
-        current_active_goal->setFailed(current_active_goal->preallocated_result_);
+        current_active_goal->setAborted(current_active_goal->preallocated_result_);
         current_active_goal.reset(); // do not publish feedback
         this->rt_active_goal_.reset();
         this->successful_joint_traj_.reset();
@@ -365,15 +389,8 @@ checkReachedTrajectoryGoalProbe()
 template <class SegmentImpl, class HardwareInterface>
 bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::handleProbeRequest(stop_event_msgs::SetNextProbeMoveRequest &request, stop_event_msgs::SetNextProbeMoveResponse &response)
 {
-    switch (request.mode) {
-    case stop_event_msgs::SetNextProbeMoveRequest::PROBING_DISABLED:
-    case stop_event_msgs::SetNextProbeMoveRequest::PROBE_EXPECT_RISING_EDGE:
-    case stop_event_msgs::SetNextProbeMoveRequest::PROBE_EXPECT_FALLING_EDGE:
-    case stop_event_msgs::SetNextProbeMoveRequest::PROBE_RETRACT:
-        // Batter up! It better not be executing something because this will step on it!
-        probe_handle.setProbeCapture(request.mode);
-        break;
-    }
+    probe_handle.setProbeCapture(request.mode);
+    // TODO more informative message
     response.message="Probing mode set";
     response.success=true;
     return true;
@@ -383,7 +400,22 @@ template <class SegmentImpl, class HardwareInterface>
 bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
 updateTrajectoryCommand(const JointTrajectoryConstPtr& msg, RealtimeGoalHandlePtr gh, std::string* error_string)
 {
-    // TODO handle custom options
+    // Guard against starting a motion if the probe is currently active
+    // KLUDGE this should really be done in realtime but this will have to do
+    if (probe_handle.getProbeState() > 0) {
+        switch (probe_handle.getProbeCapture()) {
+        case SetNextProbeMoveRequest::PROBE_NONE:
+        case SetNextProbeMoveRequest::PROBE_OPTIONAL_RISING_EDGE:
+        case SetNextProbeMoveRequest::PROBE_REQUIRE_RISING_EDGE:
+        {
+          const std::string err_msg("Can't start a motion or probe move with probe active");
+          if (error_string) {
+            *error_string = err_msg;
+          }
+          return false;
+        }
+        }
+    }
     return JointTrajectoryControllerType::updateTrajectoryCommand(msg, gh, error_string);
 }
 

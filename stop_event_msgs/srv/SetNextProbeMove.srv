@@ -1,5 +1,5 @@
 int32 mode
-int32 PROBING_NONE=0
+int32 PROBE_NONE=0
 # Follow LinuxCNC G38.x codes here
 int32 PROBE_REQUIRE_RISING_EDGE=2 # Capture a rising edge and stop, error if probe is active at start
 int32 PROBE_OPTIONAL_RISING_EDGE=3 # Capture a rising edge and stop
