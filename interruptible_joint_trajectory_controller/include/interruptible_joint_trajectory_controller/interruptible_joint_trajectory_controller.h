@@ -186,7 +186,7 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::ini
 
     // Set up services to control probe behavior
     probe_service_ = controller_nh.advertiseService(PROBE_SERVICE_NAME, &InterruptibleJointTrajectoryController::handleProbeRequest, this);
-    probe_result_service_ = controller_nh.advertiseService(PROBE_RESULT_SERVICE_NAME, &InterruptibleJointTrajectoryController::handleProbeRequest, this);
+    probe_result_service_ = controller_nh.advertiseService(PROBE_RESULT_SERVICE_NAME, &InterruptibleJointTrajectoryController::handleProbeResultRequest, this);
 
     return true;
 }
@@ -395,6 +395,20 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::han
     // TODO more informative message
     response.message="Probing mode set";
     response.success=true;
+    return true;
+}
+
+template <class SegmentImpl, class HardwareInterface>
+bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::handleProbeResultRequest(stop_event_msgs::GetProbeResultRequest &request, stop_event_msgs::GetProbeResultResponse &response)
+{
+    auto &probe_state = response.result.event_state;
+    for (unsigned int joint_index = 0; joint_index < this->getNumberOfJoints(); ++joint_index)
+    {
+        // Hope that the lock thrashing here doesn't affect RT...
+        probe_state.positions[joint_index] = probe_joint_results_[joint_index].getPosition();
+        probe_state.velocities[joint_index] = probe_joint_results_[joint_index].getVelocity();
+    }
+    // TODO fill in the rest of this stuff
     return true;
 }
 
