@@ -1,8 +1,11 @@
 int32 mode
-int32 PROBING_DISABLED=0
-int32 PROBE_EXPECT_RISING_EDGE=1 # Expect a rising edge, error if probe is active at start
-int32 PROBE_EXPECT_FALLING_EDGE=2 # Expect a falling edge, error if probe is inactive at start
-int32 PROBE_RETRACT=3 # Error if a rising edge is seen, ignore a falling edge and keep going
+int32 PROBING_NONE=0
+# Follow LinuxCNC G38.x codes here
+int32 PROBE_REQUIRE_RISING_EDGE=2 # Capture a rising edge and stop, error if probe is active at start
+int32 PROBE_OPTIONAL_RISING_EDGE=3 # Capture a rising edge and stop
+int32 PROBE_REQUIRE_FALLING_EDGE=4 # Expect a falling edge, error if probe is inactive at start
+int32 PROBE_OPTIONAL_FALLING_EDGE=5 # Error if a rising edge is seen, ignore a falling edge and keep going
+int32 PROBE_IGNORE_INPUT=6 # Ignore all probe inputs regardless of direction
 ---
 string message
 bool success
