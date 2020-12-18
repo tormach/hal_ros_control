@@ -52,6 +52,7 @@
 #include <trajectory_msgs/JointTrajectory.h>
 #include <stop_event_msgs/SetNextProbeMove.h>
 #include <stop_event_msgs/StopEventResult.h>
+#include <stop_event_msgs/GetProbeResult.h>
 
 // ros_controls
 #include <realtime_tools/realtime_server_goal_handle.h>
@@ -74,6 +75,7 @@ using stop_event_msgs::SetNextProbeMoveResponse;
 namespace interruptible_joint_trajectory_controller
 {
 static const std::string PROBE_SERVICE_NAME{ "probe" };
+static const std::string PROBE_RESULT_SERVICE_NAME{ "probe_result" };
 
 /**
  * Controller for executing joint-space trajectories on a group of joints, that can respond to stop events triggered from hardware in the realtime loop.
@@ -128,16 +130,15 @@ public:
      * @return False if something went wrong. True otherwise.
      */
     bool handleProbeRequest(stop_event_msgs::SetNextProbeMoveRequest& request, stop_event_msgs::SetNextProbeMoveResponse& response);
+    bool handleProbeResultRequest(stop_event_msgs::GetProbeResultRequest& request, stop_event_msgs::GetProbeResultResponse& response);
 
 protected:
     virtual void checkReachedTrajectoryGoal();
     virtual void checkReachedTrajectoryGoalProbe();
     // Services for controller trajectory behavior
     ros::ServiceServer probe_service_; //!< Declare success when probe trip occurs on the next send trajectory
+    ros::ServiceServer probe_result_service_; //!< Request the result of a probe
 
-    // TODO future services for pause / resume synchronization
-
-    ros::Publisher     stop_event_notification_;
     std::vector<typename JointTrajectoryControllerType::JointHandle> probe_joint_results_;
     machinekit_interfaces::ProbeHandle probe_handle;
     machinekit_interfaces::RealtimeEventHandle stop_event;
@@ -185,6 +186,7 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::ini
 
     // Set up services to control probe behavior
     probe_service_ = controller_nh.advertiseService(PROBE_SERVICE_NAME, &InterruptibleJointTrajectoryController::handleProbeRequest, this);
+    probe_result_service_ = controller_nh.advertiseService(PROBE_RESULT_SERVICE_NAME, &InterruptibleJointTrajectoryController::handleProbeRequest, this);
 
     return true;
 }

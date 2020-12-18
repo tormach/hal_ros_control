@@ -13,6 +13,7 @@ add_message_files(
 add_service_files(
   FILES
   SetNextProbeMove.srv
+  GetProbeResult.srv
 )
 
 generate_messages(
