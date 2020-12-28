@@ -127,14 +127,20 @@ void HalHWInterface::init_hal(void (*funct)(void*, long))
 
   if (!create_bit_pin(&probe_signal_ptr_, HAL_IN, "probe-signal-in"))
   {
-    HAL_ROS_LOG_ERR(CNAME, "%s: Failed to initialize reset pin", CNAME);
+    HAL_ROS_LOG_ERR(CNAME, "%s: Failed to initialize probe-signal-in pin", CNAME);
     // return false; // FIXME
     return;
   }
 
   if (!create_s32_pin(&probe_capture_ptr_, HAL_OUT, "probe-capture"))
   {
-    HAL_ROS_LOG_ERR(CNAME, "%s: Failed to initialize reset pin", CNAME);
+    HAL_ROS_LOG_ERR(CNAME, "%s: Failed to initialize probe-capture pin", CNAME);
+    // return false; // FIXME
+    return;
+  }
+  if (!create_s32_pin(&probe_transition_ptr_, HAL_OUT, "probe-transition"))
+  {
+    HAL_ROS_LOG_ERR(CNAME, "%s: Failed to initialize probe-transition pin", CNAME);
     // return false; // FIXME
     return;
   }
@@ -283,6 +289,7 @@ void HalHWInterface::write(ros::Duration& elapsed_time)
     }
   }
   **probe_capture_ptr_ = probe_request_capture_type;
+  **probe_transition_ptr_ = probe_transition;
 }
 
 void HalHWInterface::enforceLimits(ros::Duration& period)
