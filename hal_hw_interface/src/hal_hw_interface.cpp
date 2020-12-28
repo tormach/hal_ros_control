@@ -125,7 +125,7 @@ void HalHWInterface::init_hal(void (*funct)(void*, long))
     return;
   }
 
-  if (!create_bit_pin(&probe_signal_ptr_, HAL_IN, "probe-signal"))
+  if (!create_bit_pin(&probe_signal_ptr_, HAL_IN, "probe-signal-in"))
   {
     HAL_ROS_LOG_ERR(CNAME, "%s: Failed to initialize reset pin", CNAME);
     // return false; // FIXME
