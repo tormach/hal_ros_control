@@ -292,7 +292,6 @@ completeActiveGoal(const ros::Time &time)
     {
         // Marks the current goal as canceled
         this->rt_active_goal_.reset();
-        // TODO pass details back
         current_active_goal->preallocated_result_->error_code = 0;
         current_active_goal->setSucceeded(current_active_goal->preallocated_result_);
         JointTrajectoryControllerType::setHoldPosition(time);
@@ -401,14 +400,16 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::han
 template <class SegmentImpl, class HardwareInterface>
 bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::handleProbeResultRequest(stop_event_msgs::GetProbeResultRequest &request, stop_event_msgs::GetProbeResultResponse &response)
 {
+    // TODO handshake to ensure that probe result is valid and matches the request (so we're not returning old data?)
     auto &probe_state = response.result.event_state;
     for (unsigned int joint_index = 0; joint_index < this->getNumberOfJoints(); ++joint_index)
     {
         // Hope that the lock thrashing here doesn't affect RT...
+        response.result.joint_names[joint_index] = this->joint_names_[joint_index];
         probe_state.positions[joint_index] = probe_joint_results_[joint_index].getPosition();
         probe_state.velocities[joint_index] = probe_joint_results_[joint_index].getVelocity();
     }
-    // TODO fill in the rest of this stuff
+    // TODO fill in timing data, descriptions, etc.
     return true;
 }
 
