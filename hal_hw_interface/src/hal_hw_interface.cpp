@@ -65,11 +65,6 @@ void HalHWInterface::init_hal(void (*funct)(void*, long))
   // Call base class init to set register interfaces and handles for joint state / command / limits
   ros_control_boilerplate::GenericHWInterface::init();
 
-  // Register handle for stop event interface from realtime loop
-  // This is used during update to indicate to the non-RT that a stop event was triggered within the RT loop
-  auto stop_event_handle = machinekit_interfaces::RealtimeEventHandle(
-              rt_event_code_interface.getHandle("stop_event"));
-
   // TODO look up the probe name in config instead of hard-coding it
   // TODO support multiple probes
   probe_interface.registerHandle(machinekit_interfaces::ProbeHandle(

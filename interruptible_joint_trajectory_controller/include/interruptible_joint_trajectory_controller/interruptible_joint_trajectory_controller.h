@@ -228,32 +228,6 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::ini
         claimed_resources.assign(1, iface_res);
         probe_intf->clearClaims();
     }
-    {
-        machinekit_interfaces::RealtimeEventInterface* rt_event_intf = robot_hw->get<machinekit_interfaces::RealtimeEventInterface>();
-        auto hw_if_typename = hardware_interface::internal::demangledTypeName<machinekit_interfaces::RealtimeEventInterface>();
-        if (!rt_event_intf)
-        {
-            ROS_ERROR("This controller requires a hardware interface of type '%s'."
-                      " Make sure this is registered in the hardware_interface::RobotHW class.",
-                      hw_if_typename.c_str());
-            return false;
-        }
-        // return which resources are claimed by this controller
-        rt_event_intf->clearClaims();
-
-        try {
-            stop_event = rt_event_intf->getHandle("probe");
-        }
-        catch (...)
-        {
-            ROS_ERROR_STREAM_NAMED(this->name_, "Could not find stop_event in '" <<
-                                   hw_if_typename << "'.");
-            return false;
-        }
-        hardware_interface::InterfaceResources iface_res(hw_if_typename, rt_event_intf->getClaims());
-        claimed_resources.assign(1, iface_res);
-        rt_event_intf->clearClaims();
-    }
 
     // SO ugly, need to redirect to the base class method, but this is fragile if JointTrajectoryController ever decides to add one...
     // Complete the underlying initialization for the controller (probe joint stuff, JointTrajectoryController base-level init)

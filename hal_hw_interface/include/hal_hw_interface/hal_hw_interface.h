@@ -173,7 +173,6 @@ protected:
   std::vector<double> probe_joint_velocity_;
   std::vector<double> probe_joint_effort_;
 
-  machinekit_interfaces::RealtimeEventInterface rt_event_code_interface;
   machinekit_interfaces::ProbeInterface probe_interface;
 
 private:
