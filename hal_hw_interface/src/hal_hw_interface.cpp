@@ -58,9 +58,10 @@ void HalHWInterface::init_hal(void (*funct)(void*, long))
     ROS_INFO_STREAM_NAMED(name_, "Setting up handle for probe position for " << joint_names_[joint_id]);
 
     // Create joint state interface
-    joint_state_interface_.registerHandle(hardware_interface::JointStateHandle(
-        PROBE_POSITION_PREFIX+joint_names_[joint_id], &probe_joint_position_[joint_id], &probe_joint_velocity_[joint_id], &probe_joint_effort_[joint_id]));
+    joint_event_data_interface_.registerHandle(machinekit_interfaces::JointEventDataHandle(
+        joint_names_[joint_id], &probe_joint_position_[joint_id], &probe_joint_velocity_[joint_id], &probe_joint_effort_[joint_id]));
   }  // end for each joint
+  registerInterface(&joint_event_data_interface_);
 
   // Call base class init to set register interfaces and handles for joint state / command / limits
   ros_control_boilerplate::GenericHWInterface::init();

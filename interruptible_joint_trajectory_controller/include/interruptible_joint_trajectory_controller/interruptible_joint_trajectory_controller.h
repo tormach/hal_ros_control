@@ -62,6 +62,7 @@
 
 #include <machinekit_interfaces/realtime_event_interface.h>
 #include <machinekit_interfaces/probe_interface.h>
+#include <machinekit_interfaces/joint_event_interface.h>
 
 // Bring in enums
 using machinekit_interfaces::ProbeTransitions;
@@ -98,14 +99,13 @@ public:
 
     /** \name Non Real-Time Safe Functions
    *\{*/
-    bool init(HardwareInterface* hw, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh);
-    /*\}*/
 
     // KLUDGE have to override this method in Controller to be able to initialize multiple hardware interface types
     bool initRequest(hardware_interface::RobotHW* robot_hw,
                      ros::NodeHandle&             root_nh,
                      ros::NodeHandle&             controller_nh,
                      controller_interface::ControllerBase::ClaimedResources&            claimed_resources) override;
+    /*\}*/
 
     /** \name Real-Time Safe Functions
    *\{*/
@@ -139,7 +139,7 @@ protected:
     ros::ServiceServer probe_service_; //!< Declare success when probe trip occurs on the next send trajectory
     ros::ServiceServer probe_result_service_; //!< Request the result of a probe
 
-    std::vector<typename JointTrajectoryControllerType::JointHandle> probe_joint_results_;
+    std::vector<machinekit_interfaces::JointEventDataHandle> probe_joint_results_;
     machinekit_interfaces::ProbeHandle probe_handle;
     machinekit_interfaces::RealtimeEventHandle stop_event;
 };
@@ -158,38 +158,6 @@ InterruptibleJointTrajectoryController()
 {
 }
 
-
-template <class SegmentImpl, class HardwareInterface>
-bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::init(HardwareInterface* hw,
-                                                                                  ros::NodeHandle&   root_nh,
-                                                                                  ros::NodeHandle&   controller_nh)
-{
-    bool res = JointTrajectoryControllerType::init(hw, root_nh, controller_nh);
-    if (!res) {
-        return res;
-    }
-
-    // NOTE: this depends on successful initialization of the controller so we can reuse the found joint names to create probe results per joint
-    const unsigned int n_joints = this->joint_names_.size();
-    probe_joint_results_.resize(n_joints);
-    for (unsigned int i = 0; i < n_joints; ++i)
-    {
-        std::string probe_joint_name = "probe_" + this->joint_names_[i];
-        try {probe_joint_results_[i] = hw->getHandle(probe_joint_name);}
-        catch (...)
-        {
-            ROS_ERROR_STREAM_NAMED(this->name_, "Could not find joint '" << probe_joint_name << "' in '" <<
-                                   this->getHardwareInterfaceType() << "'.");
-            return false;
-        }
-    }
-
-    // Set up services to control probe behavior
-    probe_service_ = controller_nh.advertiseService(PROBE_SERVICE_NAME, &InterruptibleJointTrajectoryController::handleProbeRequest, this);
-    probe_result_service_ = controller_nh.advertiseService(PROBE_RESULT_SERVICE_NAME, &InterruptibleJointTrajectoryController::handleProbeResultRequest, this);
-
-    return true;
-}
 
 template<class SegmentImpl, class HardwareInterface>
 bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::initRequest(
@@ -228,10 +196,51 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::ini
         claimed_resources.assign(1, iface_res);
         probe_intf->clearClaims();
     }
+    {
+        machinekit_interfaces::JointEventDataInterface* probe_data_intf = robot_hw->get<machinekit_interfaces::JointEventDataInterface>();
+        auto hw_if_typename = hardware_interface::internal::demangledTypeName<machinekit_interfaces::JointEventDataInterface>();
+        if (!probe_data_intf)
+        {
+            ROS_ERROR("This controller requires a hardware interface of type '%s'."
+                      " Make sure this is registered in the hardware_interface::RobotHW class.",
+                      hw_if_typename.c_str());
+            return false;
+        }
+        // return which resources are claimed by this controller
+        probe_data_intf->clearClaims();
+
+        // NOTE: this depends on successful initialization of the controller so we can reuse the found joint names to create probe results per joint
+        const unsigned int n_joints = this->joint_names_.size();
+        probe_joint_results_.resize(n_joints);
+        for (unsigned int i = 0; i < n_joints; ++i)
+        {
+            std::string const &jname = this->joint_names_[i];
+            // Uses a parallel set of handles defined by the joint names (to avoid conflicts with the standard joint handles)
+            try {probe_joint_results_[i] = probe_data_intf->getHandle(jname);}
+            catch (...)
+            {
+                ROS_ERROR_STREAM_NAMED(this->name_, "Could not find joint '" << jname << "' in '" <<
+                                       this->getHardwareInterfaceType() << "'.");
+                return false;
+            }
+        }
+
+        hardware_interface::InterfaceResources iface_res(hw_if_typename, probe_data_intf->getClaims());
+        claimed_resources.assign(1, iface_res);
+        probe_data_intf->clearClaims();
+    }
 
     // SO ugly, need to redirect to the base class method, but this is fragile if JointTrajectoryController ever decides to add one...
     // Complete the underlying initialization for the controller (probe joint stuff, JointTrajectoryController base-level init)
-    return controller_interface::Controller<HardwareInterface>::initRequest(robot_hw, root_nh, controller_nh, claimed_resources);
+    bool base_init = controller_interface::Controller<HardwareInterface>::initRequest(robot_hw, root_nh, controller_nh, claimed_resources);
+    if (!base_init) {
+        return false;
+    }
+
+    // Set up services to control probe behavior
+    probe_service_ = controller_nh.advertiseService(PROBE_SERVICE_NAME, &InterruptibleJointTrajectoryController::handleProbeRequest, this);
+    probe_result_service_ = controller_nh.advertiseService(PROBE_RESULT_SERVICE_NAME, &InterruptibleJointTrajectoryController::handleProbeResultRequest, this);
+    return true;
 }
 
 

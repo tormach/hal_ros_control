@@ -36,6 +36,7 @@
 #include <ros_control_boilerplate/generic_hw_interface.h>
 #include <machinekit_interfaces/realtime_event_interface.h>
 #include <machinekit_interfaces/probe_interface.h>
+#include <machinekit_interfaces/joint_event_interface.h>
 
 // HAL
 #include <hal.h>
@@ -48,7 +49,6 @@
 
 namespace hal_hw_interface
 {
-  static const std::string PROBE_POSITION_PREFIX{ "probe_" };
 /**
 * \brief A `ros_control_boilerplate::GenericHWInterface` subclass for Machinekit
 * HAL
@@ -174,6 +174,7 @@ protected:
   std::vector<double> probe_joint_effort_;
 
   machinekit_interfaces::ProbeInterface probe_interface;
+  machinekit_interfaces::JointEventDataInterface joint_event_data_interface_;
 
 private:
   // Joints:  HAL storage
