@@ -32,6 +32,8 @@
 #include <hal_hw_interface/hal_hw_interface.h>
 #include <hal_hw_interface/hal_ros_logging.h>
 
+static constexpr const char *VER_DESCRIPTION = "Probing development version 0.1";
+
 namespace hal_hw_interface
 {
 HalHWInterface::HalHWInterface(ros::NodeHandle& nh, urdf::Model* urdf_model)
@@ -41,7 +43,7 @@ HalHWInterface::HalHWInterface(ros::NodeHandle& nh, urdf::Model* urdf_model)
 
 void HalHWInterface::init(void (*funct)(void*, long))
 {
-  HAL_ROS_LOG_INFO(CNAME, "%s: Initializing HAL hardware interface", CNAME);
+  HAL_ROS_LOG_INFO(CNAME, "%s: Initializing HAL hardware interface, description: %s", CNAME, VER_DESCRIPTION);
 
   // Call boilerplate init() function
   ros_control_boilerplate::GenericHWInterface::init();

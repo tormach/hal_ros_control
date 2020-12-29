@@ -32,10 +32,13 @@ class HalMgr(object):
     def start(self):
         # Find the hal_hw_interface comp's directory in LD_LIBRARY_PATH and put it
         # into $COMP_DIR
-        comp_dir = ""
         for path in os.environ.get('LD_LIBRARY_PATH', '').split(':'):
+            rospy.loginfo(f"Checking for hal_hw_interface.so in {path}")
             if os.path.exists(os.path.join(path, 'hal_hw_interface.so')):
                 comp_dir = path
+                break
+        else:
+            comp_dir = ""
         os.environ['COMP_DIR'] = comp_dir
         rospy.loginfo("hal_mgr:  COMP_DIR set to '%s'" % comp_dir)
 
