@@ -167,6 +167,8 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::ini
         controller_interface::ControllerBase::ClaimedResources &claimed_resources)
 {
     // Initialize auxiliary hardware interfaces required by this controller (probe / stop event interfaces)
+    ROS_INFO_STREAM(
+        "initRequest for InterruptibleJointTrajectory");
 
     // This is following the same basic pattern as Controller<>'s initRequest, but we can't just use the basic init function because it's tied to the Joint interface.
     // initRequest itself has to be overridden to handle these auxiliary interfaces.
@@ -231,12 +233,18 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::ini
     }
 
     // SO ugly, need to redirect to the base class method, but this is fragile if JointTrajectoryController ever decides to add one...
-    // Complete the underlying initialization for the controller (probe joint stuff, JointTrajectoryController base-level init)
+    // Complete the underlying initialization for the controller (JointTrajectoryController base-level init)
     bool base_init = controller_interface::Controller<HardwareInterface>::initRequest(robot_hw, root_nh, controller_nh, claimed_resources);
     if (!base_init) {
         return false;
     }
 
+    ROS_INFO_STREAM_NAMED(this->name_, "Claimed " << claimed_resources.size() << " interfaces");
+    for (auto const &s : claimed_resources) {
+        for (auto const &c : s.resources) {
+            ROS_INFO_STREAM_NAMED(this->name_, "interface " << s.hardware_interface << " claims " << c);
+    }}
+    ROS_INFO_STREAM_NAMED(this->name_, "Starting probe services");
     // Set up services to control probe behavior
     probe_service_ = controller_nh.advertiseService(PROBE_SERVICE_NAME, &InterruptibleJointTrajectoryController::handleProbeRequest, this);
     probe_result_service_ = controller_nh.advertiseService(PROBE_RESULT_SERVICE_NAME, &InterruptibleJointTrajectoryController::handleProbeResultRequest, this);
