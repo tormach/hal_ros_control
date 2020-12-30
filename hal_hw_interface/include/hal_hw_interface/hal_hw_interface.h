@@ -163,17 +163,17 @@ protected:
   int comp_id_;
 
   /** indicates if the probe signal is active in HAL */
-  int probe_signal;
-  int probe_transition;
+  int probe_signal_;
+  int probe_transition_;
 
   /** Are we expecting a probe trip? */
-  int probe_request_capture_type;
+  int probe_request_capture_type_;
 
   std::vector<double> probe_joint_position_;
   std::vector<double> probe_joint_velocity_;
   std::vector<double> probe_joint_effort_;
 
-  machinekit_interfaces::ProbeInterface probe_interface;
+  machinekit_interfaces::ProbeInterface probe_interface_;
   machinekit_interfaces::JointEventDataInterface joint_event_data_interface_;
 
 private:

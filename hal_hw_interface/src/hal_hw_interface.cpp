@@ -68,12 +68,12 @@ void HalHWInterface::init_hal(void (*funct)(void*, long))
 
   // TODO look up the probe name in config instead of hard-coding it
   // TODO support multiple probes
-  probe_interface.registerHandle(machinekit_interfaces::ProbeHandle(
+  probe_interface_.registerHandle(machinekit_interfaces::ProbeHandle(
                                      "probe",
-                                     &probe_request_capture_type,
-                                     &probe_signal,
-                                     &probe_transition));
-  registerInterface(&probe_interface);
+                                     &probe_request_capture_type_,
+                                     &probe_signal_,
+                                     &probe_transition_));
+  registerInterface(&probe_interface_);
 
   HAL_ROS_LOG_INFO(CNAME, "%s: Initialized boilerplate", CNAME);
 
@@ -247,23 +247,28 @@ void HalHWInterface::read(ros::Duration& elapsed_time)
 
   // Read reset pin
   reset_controllers = **reset_ptr_;
-  // IMPORTANT update these first before updating the last probe signal value
-  if (**probe_signal_ptr_ && !probe_signal) {
-      probe_transition = (int)machinekit_interfaces::ProbeTransitions::RISING;
-  } else if (!**probe_signal_ptr_ && probe_signal) {
-      probe_transition = (int)machinekit_interfaces::ProbeTransitions::FALLING;
-  } else {
-      probe_transition = (int)machinekit_interfaces::ProbeTransitions::NONE;
-  }
+    {
+        // FIXME hard-code active low behavior until we can properly configure this
+        const bool last_probe_active_signal = !(**probe_signal_ptr_);
+        const bool probe_active_signal = !probe_signal_;
+        // IMPORTANT update these first before updating the last probe signal value
+        if (last_probe_active_signal && !probe_active_signal) {
+            probe_transition_ = (int)machinekit_interfaces::ProbeTransitions::RISING;
+        } else if (!last_probe_active_signal && probe_active_signal) {
+            probe_transition_ = (int)machinekit_interfaces::ProbeTransitions::FALLING;
+        } else {
+            probe_transition_ = (int)machinekit_interfaces::ProbeTransitions::NONE;
+        }
 
-  if (probe_transition == probe_request_capture_type) {
-      probe_joint_position_ = joint_position_;
-      probe_joint_velocity_ = joint_velocity_;
-      probe_joint_effort_ = joint_effort_;
-  }
+        if (probe_transition_ == probe_request_capture_type_) {
+            probe_joint_position_ = joint_position_;
+            probe_joint_velocity_ = joint_velocity_;
+            probe_joint_effort_ = joint_effort_;
+        }
+    }
 
   // No overtravel support currently
-  probe_signal = **probe_signal_ptr_;
+  probe_signal_ = **probe_signal_ptr_;
 }
 
 void HalHWInterface::write(ros::Duration& elapsed_time)
@@ -278,14 +283,14 @@ void HalHWInterface::write(ros::Duration& elapsed_time)
     **joint_eff_cmd_ptrs_[joint_id] = joint_effort_command_[joint_id];
   }
 
-  if (probe_request_capture_type == probe_transition) {
+  if (probe_request_capture_type_ == probe_transition_) {
     for (std::size_t joint_id = 0; joint_id < num_joints_; ++joint_id)
     {
       **probe_joint_result_ptrs_[joint_id] = probe_joint_position_[joint_id];
     }
   }
-  **probe_capture_ptr_ = probe_request_capture_type;
-  **probe_transition_ptr_ = probe_transition;
+  **probe_capture_ptr_ = probe_request_capture_type_;
+  **probe_transition_ptr_ = probe_transition_;
 }
 
 void HalHWInterface::enforceLimits(ros::Duration& period)
