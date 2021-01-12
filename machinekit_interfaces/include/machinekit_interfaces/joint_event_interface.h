@@ -15,7 +15,7 @@ public:
   JointEventDataHandle() = default;
   JointEventDataHandle(const std::string& name, const double* pos, const double* vel, const double* eff) : JointStateHandle(name, pos, vel, eff) {}
 };
-class JointEventDataInterface : public hardware_interface::HardwareResourceManager<JointEventDataHandle> {};
+class JointEventDataInterface : public hardware_interface::HardwareResourceManager<JointEventDataHandle, hardware_interface::ClaimResources> {};
 
 }
 #endif // JOINT_EVENT_DATA_INTERFACE_H

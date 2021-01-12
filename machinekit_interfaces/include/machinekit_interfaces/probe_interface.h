@@ -86,7 +86,7 @@ private:
 
 
 /** \brief Hardware interface to support reading the state of a force-torque sensor. */
-class ProbeInterface : public hardware_interface::HardwareResourceManager<ProbeHandle> {};
+class ProbeInterface : public hardware_interface::HardwareResourceManager<ProbeHandle,  hardware_interface::ClaimResources> {};
 
 }
 
