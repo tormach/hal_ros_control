@@ -168,18 +168,26 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::ini
 {
     // Initialize auxiliary hardware interfaces required by this controller (probe / stop event interfaces)
     ROS_INFO_STREAM(
-        "initRequest for InterruptibleJointTrajectory");
+                "initRequest for InterruptibleJointTrajectoryController");
+
+    // SO ugly, need to redirect to the base class method, but this is fragile if JointTrajectoryController ever decides to add one...
+    // Complete the underlying initialization for the controller (JointTrajectoryController base-level init)
+    bool base_init = JointTrajectoryControllerType::initRequest(robot_hw, root_nh, controller_nh, claimed_resources);
+    if (!base_init) {
+        return false;
+    }
 
     // This is following the same basic pattern as Controller<>'s initRequest, but we can't just use the basic init function because it's tied to the Joint interface.
     // initRequest itself has to be overridden to handle these auxiliary interfaces.
     {
+        ROS_INFO_STREAM_NAMED(this->name_, "Claiming probe resources");
         machinekit_interfaces::ProbeInterface* probe_intf = robot_hw->get<machinekit_interfaces::ProbeInterface>();
         auto hw_if_typename = hardware_interface::internal::demangledTypeName<machinekit_interfaces::ProbeInterface>();
         if (!probe_intf)
         {
             ROS_ERROR("This controller requires a hardware interface of type '%s'."
-                      " Make sure this is registered in the hardware_interface::RobotHW class.",
-                      hw_if_typename.c_str());
+                                " Make sure this is registered in the hardware_interface::RobotHW class.",
+                                hw_if_typename.c_str());
             return false;
         }
         // return which resources are claimed by this controller
@@ -191,21 +199,22 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::ini
         catch (...)
         {
             ROS_ERROR_STREAM_NAMED(this->name_, "Could not find probe in '" <<
-                                   hw_if_typename << "'.");
+                                                         hw_if_typename << "'.");
             return false;
         }
         hardware_interface::InterfaceResources iface_res(hw_if_typename, probe_intf->getClaims());
-        claimed_resources.assign(1, iface_res);
+        claimed_resources.push_back(iface_res);
         probe_intf->clearClaims();
     }
     {
+        ROS_INFO_STREAM_NAMED(this->name_, "Claiming joint event data resources");
         machinekit_interfaces::JointEventDataInterface* probe_data_intf = robot_hw->get<machinekit_interfaces::JointEventDataInterface>();
         auto hw_if_typename = hardware_interface::internal::demangledTypeName<machinekit_interfaces::JointEventDataInterface>();
         if (!probe_data_intf)
         {
             ROS_ERROR("This controller requires a hardware interface of type '%s'."
-                      " Make sure this is registered in the hardware_interface::RobotHW class.",
-                      hw_if_typename.c_str());
+                                " Make sure this is registered in the hardware_interface::RobotHW class.",
+                                hw_if_typename.c_str());
             return false;
         }
         // return which resources are claimed by this controller
@@ -222,21 +231,14 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::ini
             catch (...)
             {
                 ROS_ERROR_STREAM_NAMED(this->name_, "Could not find joint '" << jname << "' in '" <<
-                                       this->getHardwareInterfaceType() << "'.");
+                                                             this->getHardwareInterfaceType() << "'.");
                 return false;
             }
         }
 
         hardware_interface::InterfaceResources iface_res(hw_if_typename, probe_data_intf->getClaims());
-        claimed_resources.assign(1, iface_res);
+        claimed_resources.push_back(iface_res);
         probe_data_intf->clearClaims();
-    }
-
-    // SO ugly, need to redirect to the base class method, but this is fragile if JointTrajectoryController ever decides to add one...
-    // Complete the underlying initialization for the controller (JointTrajectoryController base-level init)
-    bool base_init = controller_interface::Controller<HardwareInterface>::initRequest(robot_hw, root_nh, controller_nh, claimed_resources);
-    if (!base_init) {
-        return false;
     }
 
     ROS_INFO_STREAM_NAMED(this->name_, "Claimed " << claimed_resources.size() << " interfaces");
