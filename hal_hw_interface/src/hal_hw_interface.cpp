@@ -59,7 +59,7 @@ void HalHWInterface::init_hal(void (*funct)(void*, long))
 
     // Create joint state interface
     joint_event_data_interface_.registerHandle(machinekit_interfaces::JointEventDataHandle(
-        joint_names_[joint_id], &probe_joint_position_[joint_id], &probe_joint_velocity_[joint_id], &probe_joint_effort_[joint_id]));
+        joint_names_[joint_id]+"_probe", &probe_joint_position_[joint_id], &probe_joint_velocity_[joint_id], &probe_joint_effort_[joint_id]));
   }  // end for each joint
   registerInterface(&joint_event_data_interface_);
 

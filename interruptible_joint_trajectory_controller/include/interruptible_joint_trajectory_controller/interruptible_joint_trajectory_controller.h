@@ -225,7 +225,7 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::ini
         probe_joint_results_.resize(n_joints);
         for (unsigned int i = 0; i < n_joints; ++i)
         {
-            std::string const &jname = this->joint_names_[i];
+            std::string const &jname = this->joint_names_[i]+"_probe";
             // Uses a parallel set of handles defined by the joint names (to avoid conflicts with the standard joint handles)
             try {probe_joint_results_[i] = probe_data_intf->getHandle(jname);}
             catch (...)
@@ -250,6 +250,8 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::ini
     // Set up services to control probe behavior
     probe_service_ = controller_nh.advertiseService(PROBE_SERVICE_NAME, &InterruptibleJointTrajectoryController::handleProbeRequest, this);
     probe_result_service_ = controller_nh.advertiseService(PROBE_RESULT_SERVICE_NAME, &InterruptibleJointTrajectoryController::handleProbeResultRequest, this);
+    // success
+    this->state_ = controller_interface::Controller<HardwareInterface>::ControllerState::INITIALIZED;
     return true;
 }
 
