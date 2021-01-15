@@ -15,6 +15,11 @@
   <build_depend>hal_hw_interface</build_depend>
 
   <run_depend>hal_hw_interface</run_depend>
+  <run_depend>roslaunch</run_depend>
+  <run_depend>xacro</run_depend>
+  <run_depend>controller_manager</run_depend>
+  <run_depend>robot_state_publisher</run_depend>
+  <run_depend>rviz</run_depend>
 
   <!-- Ideally, these would be proper packages from gazebo_ros_demos -->
   <!-- <build_depend>rrbot_control</build_depend> -->
