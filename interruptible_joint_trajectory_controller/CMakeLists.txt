@@ -12,18 +12,19 @@ find_package(catkin
     actionlib
     angles
     cmake_modules
-    roscpp
-    urdf
+    control_msgs
     control_toolbox
     controller_interface
+
     hardware_interface
-    realtime_tools
-    control_msgs
-    trajectory_msgs
-    pluginlib
-    stop_event_msgs
     joint_trajectory_controller
     machinekit_interfaces
+    pluginlib
+    realtime_tools
+    roscpp
+    stop_event_msgs
+    trajectory_msgs
+    urdf
 )
 
 # Declare catkin package
@@ -31,45 +32,57 @@ catkin_package(
   CATKIN_DEPENDS
   actionlib
   angles
-  roscpp
-  urdf
+  control_msgs
   control_toolbox
   controller_interface
   hardware_interface
-  realtime_tools
-  control_msgs
-  trajectory_msgs
-  stop_event_msgs
   joint_trajectory_controller
-    machinekit_interfaces
-  INCLUDE_DIRS include
-  LIBRARIES ${PROJECT_NAME}
+  machinekit_interfaces
+  realtime_tools
+  roscpp
+  stop_event_msgs
+  trajectory_msgs
+  urdf
+  INCLUDE_DIRS
+    include
+  LIBRARIES
+    ${PROJECT_NAME}
 )
 
 include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
 
-if(CATKIN_ENABLE_TESTING AND ENABLE_COVERAGE_TESTING)
-  find_package(code_coverage REQUIRED)
-  APPEND_COVERAGE_COMPILER_FLAGS()
-endif()
-
-add_library(${PROJECT_NAME} src/interruptible_joint_trajectory_controller.cpp
+add_library(${PROJECT_NAME} 
                             include/interruptible_joint_trajectory_controller/interruptible_joint_trajectory_controller.h
+                            src/interruptible_joint_trajectory_controller.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
+
+#############
+## Testing ##
+#############
+
 if(CATKIN_ENABLE_TESTING)
-  find_package(catkin
-    REQUIRED COMPONENTS
-      actionlib
-      controller_manager
-      xacro
-  )
-
+  # Find packages required for tests
+  find_package(controller_manager REQUIRED)
   find_package(rostest REQUIRED)
-  include_directories(include ${catkin_INCLUDE_DIRS})
 
+  # Include directories required for tests
+  include_directories(${controller_manager_INCLUDE_DIRS})
+
+  # Build auxiliary tools for tests
+  add_executable(rrbot test/rrbot.cpp)
+  target_link_libraries(rrbot ${catkin_LIBRARIES} ${controller_manager_LIBRARIES})
+
+  add_executable(rrbot_wrapping test/rrbot_wrapping.cpp)
+  target_link_libraries(rrbot_wrapping ${catkin_LIBRARIES} ${controller_manager_LIBRARIES})
+
+  add_dependencies(tests rrbot)
+  add_dependencies(tests rrbot_wrapping)
+  add_dependencies(tests ${PROJECT_NAME})
+
+  # Test components
   catkin_add_gtest(quintic_spline_segment_test test/quintic_spline_segment_test.cpp)
   target_link_libraries(quintic_spline_segment_test ${catkin_LIBRARIES})
 
@@ -103,21 +116,13 @@ if(CATKIN_ENABLE_TESTING)
                   test/tolerances_test.cpp)
   target_link_libraries(tolerances_test ${catkin_LIBRARIES})
 
-  add_executable(rrbot test/rrbot.cpp)
-  target_link_libraries(rrbot ${catkin_LIBRARIES})
 
-  add_executable(rrbot_wrapping test/rrbot_wrapping.cpp)
-  target_link_libraries(rrbot_wrapping ${catkin_LIBRARIES})
-
-  add_dependencies(tests rrbot)
-  add_dependencies(tests rrbot_wrapping)
-  add_dependencies(tests ${PROJECT_NAME})
-
+  # Test the joint_trajectory_controller itself
   add_rostest_gtest(joint_trajectory_controller_test
                     test/joint_trajectory_controller.test
                     test/joint_trajectory_controller_test.cpp
                     test/test_common.cpp)
-  target_link_libraries(joint_trajectory_controller_test ${catkin_LIBRARIES})
+  target_link_libraries(joint_trajectory_controller_test ${catkin_LIBRARIES} ${controller_manager_LIBRARIES})
 
   add_rostest_gtest(joint_trajectory_controller_stopramp_test
                     test/joint_trajectory_controller_stopramp.test
@@ -137,28 +142,37 @@ if(CATKIN_ENABLE_TESTING)
                     test/joint_trajectory_controller_wrapping_test.cpp)
   target_link_libraries(joint_trajectory_controller_wrapping_test ${catkin_LIBRARIES})
 
+  # Code coverage test
   if(ENABLE_COVERAGE_TESTING)
+    find_package(code_coverage REQUIRED)
+    append_coverage_compiler_flags()
+
     set(COVERAGE_EXCLUDES "*/${PROJECT_NAME}/test*")
     add_code_coverage(NAME ${PROJECT_NAME}_coverage)
   endif()
 
 endif()
 
-# Install
+
+#############
+## Install ##
+#############
+
+# Install headers
 install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
 
-install(DIRECTORY include/trajectory_interface/
-  DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}/trajectory_interface/)
-
-# Install library
+# Install targets
 install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
   )
 
+# Install plugins
 install(FILES ros_control_plugins.xml
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 
 # TODO: Install test resource files as well?
