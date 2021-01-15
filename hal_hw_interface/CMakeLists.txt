@@ -7,14 +7,14 @@ add_compile_options(-std=c++11 -Wall)
 # Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
   controller_manager
+  machinekit_interfaces
+  message_generation
+  redis_store
   ros_control_boilerplate
   roscpp
   rospy
   std_msgs
   std_srvs
-  message_generation
-  redis_store
-  machinekit_interfaces
 )
 
 # Install packages with setup.py
@@ -22,9 +22,9 @@ catkin_python_setup()
 
 add_service_files(
   FILES
-  SetUInt32.srv
-  SetInt32.srv
   SetFloat64.srv
+  SetInt32.srv
+  SetUInt32.srv
 )
 generate_messages()
 
@@ -35,12 +35,14 @@ catkin_package(
 
   CATKIN_DEPENDS
   controller_manager
+  machinekit_interfaces
+  message_runtime
+  redis_store
   ros_control_boilerplate
   roscpp
   rospy
-  message_runtime
-  redis_store
-  machinekit_interfaces
+  std_msgs
+  std_srvs
 )
 
 # Find Machinekit HAL
