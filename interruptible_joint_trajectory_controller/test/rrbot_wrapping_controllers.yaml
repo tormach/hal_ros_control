@@ -1,5 +1,5 @@
 rrbot_wrapping_controller:
-  type: "velocity_controllers/JointTrajectoryController"
+  type: "velocity_controllers/InterruptibleJointTrajectoryController"
   joints:
     - joint1
     - joint2

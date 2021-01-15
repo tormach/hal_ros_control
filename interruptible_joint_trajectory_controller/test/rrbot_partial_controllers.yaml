@@ -1,5 +1,5 @@
 rrbot_controller:
-  type: "position_controllers/JointTrajectoryController"
+  type: "position_controllers/InterruptibleJointTrajectoryController"
   joints:
     - joint1
     - joint2
