@@ -110,7 +110,7 @@ public:
     /** \name Real-Time Safe Functions
    *\{*/
 
-    void abortActiveGoalWithError(const ros::Time& time, std::string const &&explanation); // Like preemptActiveGoal but marks it as failed
+    void abortActiveGoalWithError(const ros::Time& time, int error_code, std::string const &&explanation); // Like preemptActiveGoal but marks it as failed
     void completeActiveGoal(const ros::Time &time); // Like preemptActiveGoal but for when an external goal state is reached (i.e. probing)
 
     void update(const ros::Time& time, const ros::Duration& period);
@@ -259,7 +259,7 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::ini
 
 template <class SegmentImpl, class HardwareInterface>
 inline void InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
-abortActiveGoalWithError(const ros::Time& time, std::string const &&explanation)
+abortActiveGoalWithError(const ros::Time& time, int error_code, std::string const &&explanation)
 {
     typename JointTrajectoryControllerType::RealtimeGoalHandlePtr current_active_goal(this->rt_active_goal_);
 
@@ -316,7 +316,7 @@ update(const ros::Time& time, const ros::Duration& period)
         case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_IGNORE_INPUT:
             break;
         default:
-            abortActiveGoalWithError(uptime, "Unexpected probe rising edge during probe motion");
+            abortActiveGoalWithError(uptime, -6, "Unexpected probe rising edge during probe motion");
             break;
         }
         break;
@@ -329,13 +329,13 @@ update(const ros::Time& time, const ros::Duration& period)
         case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_IGNORE_INPUT:
             break;
         default:
-            abortActiveGoalWithError(uptime, "Unexpected probe falling edge during motion");
+            abortActiveGoalWithError(uptime, -7, "Unexpected probe falling edge during motion");
             break;
         }
         break;
     default:
         if (probe_handle.getProbeState() > 0 && probe_handle.getProbeCapture() < 1) {
-            abortActiveGoalWithError(uptime, "Unexpected probe signal during non-probe motion");
+            abortActiveGoalWithError(uptime, -8, "Unexpected probe signal during non-probe motion");
             break;
         }
     }
