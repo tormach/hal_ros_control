@@ -34,6 +34,7 @@
   <depend>joint_trajectory_controller</depend>
   <depend>stop_event_msgs</depend>
   <depend>machinekit_interfaces</depend>
+  <depend>moveit_ros_control_interface</depend>
 
   <test_depend>rostest</test_depend>
   <test_depend>controller_manager</test_depend>
@@ -42,5 +43,7 @@
 
   <export>
     <controller_interface plugin="${prefix}/ros_control_plugins.xml"/>
+    <moveit_ros_control_interface
+        plugin="${prefix}/moveit_ros_control_interface_plugins.xml"/>
   </export>
 </package>

@@ -15,6 +15,7 @@ find_package(catkin
     control_msgs
     control_toolbox
     controller_interface
+    moveit_ros_control_interface
 
     hardware_interface
     joint_trajectory_controller
@@ -35,8 +36,10 @@ catkin_package(
   control_msgs
   control_toolbox
   controller_interface
+  moveit_ros_control_interface
   hardware_interface
   joint_trajectory_controller
+  pluginlib
   machinekit_interfaces
   realtime_tools
   roscpp
@@ -51,8 +54,7 @@ catkin_package(
 
 include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
 
-add_library(${PROJECT_NAME} 
-                            include/interruptible_joint_trajectory_controller/interruptible_joint_trajectory_controller.h
+add_library(${PROJECT_NAME}
                             src/interruptible_joint_trajectory_controller.cpp
 )
 
@@ -171,7 +173,7 @@ install(TARGETS ${PROJECT_NAME}
   )
 
 # Install plugins
-install(FILES ros_control_plugins.xml
+install(FILES ros_control_plugins.xml moveit_ros_control_interface_plugins.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
