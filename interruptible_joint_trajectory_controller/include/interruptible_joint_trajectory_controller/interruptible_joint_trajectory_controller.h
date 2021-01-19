@@ -142,6 +142,7 @@ protected:
     std::vector<machinekit_interfaces::JointEventDataHandle> probe_joint_results_;
     machinekit_interfaces::ProbeHandle probe_handle;
     machinekit_interfaces::RealtimeEventHandle stop_event;
+    bool stop_event_triggered_;
 };
 
 } // namespace
@@ -263,20 +264,16 @@ abortActiveGoalWithError(const ros::Time& time, std::string const &&explanation)
     typename JointTrajectoryControllerType::RealtimeGoalHandlePtr current_active_goal(this->rt_active_goal_);
 
     // Cancels the currently active goal
-    if (current_active_goal)
+    if (current_active_goal && !stop_event_triggered_)
     {
-        // Marks the current goal as canceled
-        this->rt_active_goal_.reset();
         // TODO standardize error codes
         current_active_goal->preallocated_result_->error_code = -6;
         // TODO confirm realtime safety of this assignment (e.g. is the string reserved, or does this trigger an allocation?)
         current_active_goal->preallocated_result_->error_string = explanation;
         current_active_goal->setAborted(current_active_goal->preallocated_result_);
         // FIXME this fails noisily if the stop trajectory duration is 0.0
-        typename JointTrajectoryControllerType::RealtimeGoalHandlePtr stop_goal(this->rt_active_goal_);
-        this->setHoldPosition(time, stop_goal);
-        ROS_INFO_STREAM(
-              "abortActiveGoalWithError called at time " << time << ": " << explanation);
+        this->setHoldPosition(time, current_active_goal);
+        stop_event_triggered_ = true;
     }
 }
 
@@ -287,16 +284,13 @@ completeActiveGoal(const ros::Time &time)
     typename JointTrajectoryControllerType::RealtimeGoalHandlePtr current_active_goal(this->rt_active_goal_);
 
     // Cancels the currently active goal
-    if (current_active_goal)
+    if (current_active_goal && !stop_event_triggered_)
     {
         // Marks the current goal as canceled
-        this->rt_active_goal_.reset();
         current_active_goal->preallocated_result_->error_code = 0;
         current_active_goal->setSucceeded(current_active_goal->preallocated_result_);
-        typename JointTrajectoryControllerType::RealtimeGoalHandlePtr stop_goal(this->rt_active_goal_);
-        this->setHoldPosition(time, stop_goal);
-    ROS_INFO_STREAM(
-                "completeActiveGoal called");
+        this->setHoldPosition(time, current_active_goal);
+        stop_event_triggered_ = true;
     }
 }
 
@@ -438,6 +432,8 @@ updateTrajectoryCommand(const JointTrajectoryConstPtr& msg, RealtimeGoalHandlePt
         }
         }
     }
+    // FIXME not RT safe, this is a huge bandaid right now
+    stop_event_triggered_ = false;
     return JointTrajectoryControllerType::updateTrajectoryCommand(msg, gh, error_string);
 }
 
