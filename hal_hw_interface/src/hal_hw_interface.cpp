@@ -249,12 +249,12 @@ void HalHWInterface::read(ros::Duration& elapsed_time)
   reset_controllers = **reset_ptr_;
     {
         // FIXME hard-code active low behavior until we can properly configure this
-        const bool last_probe_active_signal = !(**probe_signal_ptr_);
-        const bool probe_active_signal = !probe_signal_;
+        const bool probe_active_signal = !(**probe_signal_ptr_);
+        const bool last_probe_active_signal = probe_signal_;
         // IMPORTANT update these first before updating the last probe signal value
-        if (last_probe_active_signal && !probe_active_signal) {
+        if (!last_probe_active_signal && probe_active_signal) {
             probe_transition_ = (int)machinekit_interfaces::ProbeTransitions::RISING;
-        } else if (!last_probe_active_signal && probe_active_signal) {
+        } else if (last_probe_active_signal && !probe_active_signal) {
             probe_transition_ = (int)machinekit_interfaces::ProbeTransitions::FALLING;
         } else {
             probe_transition_ = (int)machinekit_interfaces::ProbeTransitions::NONE;
@@ -265,10 +265,10 @@ void HalHWInterface::read(ros::Duration& elapsed_time)
             probe_joint_velocity_ = joint_velocity_;
             probe_joint_effort_ = joint_effort_;
         }
+        // No overtravel support currently
+        probe_signal_ = probe_active_signal;
     }
 
-  // No overtravel support currently
-  probe_signal_ = **probe_signal_ptr_;
 }
 
 void HalHWInterface::write(ros::Duration& elapsed_time)
