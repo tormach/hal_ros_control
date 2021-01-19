@@ -309,17 +309,20 @@ update(const ros::Time& time, const ros::Duration& period)
 
     auto probe_transition = (ProbeTransitions)probe_handle.acquireProbeTransition();
 
+    // FIXME does this need to be incremented here?
+    auto const time_data_tmp = *(this->time_data_.readFromRT());
+    auto const uptime = time_data_tmp.uptime + period;
     switch (probe_transition) {
     case ProbeTransitions::RISING:
         switch (probe_handle.getProbeCapture()) {
         case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_REQUIRE_RISING_EDGE:
         case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_OPTIONAL_RISING_EDGE:
-            completeActiveGoal(time);
+            completeActiveGoal(uptime);
             break;
         case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_IGNORE_INPUT:
             break;
         default:
-            abortActiveGoalWithError(time, "Unexpected probe rising edge during probe motion");
+            abortActiveGoalWithError(uptime, "Unexpected probe rising edge during probe motion");
             break;
         }
         break;
@@ -327,18 +330,18 @@ update(const ros::Time& time, const ros::Duration& period)
         switch (probe_handle.getProbeCapture()) {
         case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_REQUIRE_FALLING_EDGE:
         case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_OPTIONAL_FALLING_EDGE:
-            completeActiveGoal(time);
+            completeActiveGoal(uptime);
             break;
         case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_IGNORE_INPUT:
             break;
         default:
-            abortActiveGoalWithError(time, "Unexpected probe falling edge during motion");
+            abortActiveGoalWithError(uptime, "Unexpected probe falling edge during motion");
             break;
         }
         break;
     default:
         if (probe_handle.getProbeState() > 0 && probe_handle.getProbeCapture() < 1) {
-            abortActiveGoalWithError(time, "Unexpected probe signal during non-probe motion");
+            abortActiveGoalWithError(uptime, "Unexpected probe signal during non-probe motion");
             break;
         }
     }
