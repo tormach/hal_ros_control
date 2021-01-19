@@ -272,7 +272,8 @@ abortActiveGoalWithError(const ros::Time& time, std::string const &&explanation)
         // TODO confirm realtime safety of this assignment (e.g. is the string reserved, or does this trigger an allocation?)
         current_active_goal->preallocated_result_->error_string = explanation;
         current_active_goal->setAborted(current_active_goal->preallocated_result_);
-        JointTrajectoryControllerType::setHoldPosition(time);
+        // FIXME this fails noisily if the stop trajectory duration is 0.0
+        this->setHoldPosition(time);
     }
 }
 
