@@ -274,6 +274,8 @@ abortActiveGoalWithError(const ros::Time& time, std::string const &&explanation)
         current_active_goal->setAborted(current_active_goal->preallocated_result_);
         // FIXME this fails noisily if the stop trajectory duration is 0.0
         this->setHoldPosition(time);
+        ROS_INFO_STREAM(
+              "abortActiveGoalWithError called at time " << time << ": " << explanation);
     }
 }
 
@@ -291,6 +293,8 @@ completeActiveGoal(const ros::Time &time)
         current_active_goal->preallocated_result_->error_code = 0;
         current_active_goal->setSucceeded(current_active_goal->preallocated_result_);
         JointTrajectoryControllerType::setHoldPosition(time);
+    ROS_INFO_STREAM(
+                "completeActiveGoal called");
     }
 }
 
