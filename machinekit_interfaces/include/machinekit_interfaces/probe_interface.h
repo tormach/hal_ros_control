@@ -87,8 +87,17 @@ public:
   void setProbeCapture(int to_capture) {
       assert(probe_capture_);
       *probe_capture_ = to_capture;
-      assert(probe_result_type_);
-      *probe_result_type_ = 0;
+      // FIXME hard-coded case values (should come from stop_event_msgs?)
+      switch (to_capture) {
+      case 2:
+      case 3:
+      case 4:
+      case 5:
+        // If we're expecting a capture, clear the previous result
+        // If we're NOT expecting a capture, then keep the previous result around for querying
+        assert(probe_result_type_);
+        *probe_result_type_ = 0;
+      }
   }
 
 private:
