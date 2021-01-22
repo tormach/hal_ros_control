@@ -131,7 +131,8 @@ public:
    * \brief Read the state from the robot hardware.
    * \param elapsed_time - period since last run
    */
-  void read(ros::Duration& elapsed_time);
+  void read(ros::Duration& elapsed_time) { read_with_time(elapsed_time, ros::Time::now());};
+  void read_with_time(ros::Duration& elapsed_time, ros::Time const &current_time);
 
   /**
    * \brief Tell control loop whether controller reset is needed in update()
@@ -165,9 +166,11 @@ protected:
   /** indicates if the probe signal is active in HAL */
   int probe_signal_;
   int probe_transition_;
+  ros::Time probe_event_time_;
 
   /** Are we expecting a probe trip? */
   int probe_request_capture_type_;
+  int probe_result_type_;
 
   std::vector<double> probe_joint_position_;
   std::vector<double> probe_joint_velocity_;

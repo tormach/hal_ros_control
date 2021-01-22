@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   std_srvs
+  stop_event_msgs
 )
 
 # Install packages with setup.py
@@ -43,6 +44,7 @@ catkin_package(
   rospy
   std_msgs
   std_srvs
+  stop_event_msgs
 )
 
 # Find Machinekit HAL

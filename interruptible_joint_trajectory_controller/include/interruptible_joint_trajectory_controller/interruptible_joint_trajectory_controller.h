@@ -51,8 +51,7 @@
 #include <control_msgs/QueryTrajectoryState.h>
 #include <trajectory_msgs/JointTrajectory.h>
 #include <stop_event_msgs/SetNextProbeMove.h>
-#include <stop_event_msgs/StopEventResult.h>
-#include <stop_event_msgs/GetProbeResult.h>
+#include <stop_event_msgs/GetStopEventResult.h>
 
 // ros_controls
 #include <realtime_tools/realtime_server_goal_handle.h>
@@ -130,7 +129,7 @@ public:
      * @return False if something went wrong. True otherwise.
      */
     bool handleProbeRequest(stop_event_msgs::SetNextProbeMoveRequest& request, stop_event_msgs::SetNextProbeMoveResponse& response);
-    bool handleProbeResultRequest(stop_event_msgs::GetProbeResultRequest& request, stop_event_msgs::GetProbeResultResponse& response);
+    bool handleStopEventResultRequest(stop_event_msgs::GetStopEventResultRequest& request, stop_event_msgs::GetStopEventResultResponse& response);
 
 protected:
     virtual void checkReachedTrajectoryGoal();
@@ -250,7 +249,7 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::ini
     ROS_INFO_STREAM_NAMED(this->name_, "Starting probe services");
     // Set up services to control probe behavior
     probe_service_ = controller_nh.advertiseService(PROBE_SERVICE_NAME, &InterruptibleJointTrajectoryController::handleProbeRequest, this);
-    probe_result_service_ = controller_nh.advertiseService(PROBE_RESULT_SERVICE_NAME, &InterruptibleJointTrajectoryController::handleProbeResultRequest, this);
+    probe_result_service_ = controller_nh.advertiseService(PROBE_RESULT_SERVICE_NAME, &InterruptibleJointTrajectoryController::handleStopEventResultRequest, this);
     // success
     this->state_ = controller_interface::Controller<HardwareInterface>::ControllerState::INITIALIZED;
     return true;
@@ -395,26 +394,32 @@ checkReachedTrajectoryGoalProbe(int capture_type)
 template <class SegmentImpl, class HardwareInterface>
 bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::handleProbeRequest(stop_event_msgs::SetNextProbeMoveRequest &request, stop_event_msgs::SetNextProbeMoveResponse &response)
 {
+    ROS_INFO_STREAM("Probe capture requested, mode " << request.mode);
     probe_handle.setProbeCapture(request.mode);
-    // TODO more informative message
-    response.message="Probing mode set";
-    response.success=true;
     return true;
 }
 
 template <class SegmentImpl, class HardwareInterface>
-bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::handleProbeResultRequest(stop_event_msgs::GetProbeResultRequest &request, stop_event_msgs::GetProbeResultResponse &response)
+bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::handleStopEventResultRequest(stop_event_msgs::GetStopEventResultRequest &request, stop_event_msgs::GetStopEventResultResponse &response)
 {
-    // TODO handshake to ensure that probe result is valid and matches the request (so we're not returning old data?)
-    auto &probe_state = response.result.event_state;
-    for (unsigned int joint_index = 0; joint_index < this->getNumberOfJoints(); ++joint_index)
-    {
+    response.stop_event = probe_handle.getProbeResultType();
+    response.event_time = probe_handle.getProbeCaptureTime();
+    ROS_INFO_STREAM("Handling request for probe results, stop event " << response.stop_event << ", event_time " << response.event_time);
+    if (response.stop_event) {
+      // TODO handshake to ensure that probe result is valid and matches the request (so we're not returning old data?)
+      std::vector<double> probe_positions(this->getNumberOfJoints(), 0.0);
+      for (unsigned int joint_index = 0; joint_index < this->getNumberOfJoints(); ++joint_index)
+      {
+        probe_positions[joint_index] = 0;
         // Hope that the lock thrashing here doesn't affect RT...
-        response.result.joint_names[joint_index] = this->joint_names_[joint_index];
-        probe_state.positions[joint_index] = probe_joint_results_[joint_index].getPosition();
-        probe_state.velocities[joint_index] = probe_joint_results_[joint_index].getVelocity();
+        //response.result.joint_names[joint_index] = this->joint_names_[joint_index];
+        probe_positions[joint_index] = probe_joint_results_[joint_index].getPosition();
+        //probe_state.velocities[joint_index] = probe_joint_results_[joint_index].getVelocity();
+        //probe_state.positions[joint_index] = 0;
+        //probe_state.velocities[joint_index] = 0;
+      }
+      response.event_position = probe_positions;
     }
-    // TODO fill in timing data, descriptions, etc.
     return true;
 }
 
@@ -430,12 +435,14 @@ updateTrajectoryCommand(const JointTrajectoryConstPtr& msg, RealtimeGoalHandlePt
         case SetNextProbeMoveRequest::PROBE_OPTIONAL_RISING_EDGE:
         case SetNextProbeMoveRequest::PROBE_REQUIRE_RISING_EDGE:
         {
-          const std::string err_msg("Can't start a motion or probe move with probe active");
+          const std::string err_msg("Can't start a motion or probe move with probe active in mode" + std::to_string(probe_handle.getProbeCapture()));
           if (error_string) {
             *error_string = err_msg;
           }
           return false;
         }
+        default:
+           break;
         }
     }
     // FIXME not RT safe, this is a huge bandaid right now

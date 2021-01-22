@@ -46,12 +46,16 @@ public:
   ProbeHandle(const std::string& name, //!< Name of the probe
                      int* probe_capture_ptr, //!< Capture setting (i.e. rising means expect a rising edge, none implies we expect the probe signal to be off and no edges to be seen)
                      const int* probe_state_ptr, //!< Probe state signal
-                     int* probe_transition_ptr //!< transitions detected in the probe signal (handshake)
+                     int* probe_transition_ptr, //!< transitions detected in the probe signal (handshake)
+                     int* probe_result_type_ptr, //!< Kind of transition captured for the result
+                     ros::Time* capture_time_ptr
               )
     : name_(name),
       probe_capture_(probe_capture_ptr),
       probe_state_(probe_state_ptr),
-      probe_transition_(probe_transition_ptr)
+      probe_transition_(probe_transition_ptr),
+      probe_result_type_(probe_result_type_ptr),
+      capture_time_(capture_time_ptr)
   {}
 
   std::string getName()     const {return name_;}
@@ -71,10 +75,20 @@ public:
       return probe_capture_ ? *probe_capture_ : (int)ProbeTransitions::INVALID;
   }
 
+  int getProbeResultType() const {
+      return probe_result_type_ ? *probe_result_type_ : (int)ProbeTransitions::INVALID;
+  }
+
+  ros::Time getProbeCaptureTime() const {
+      return capture_time_ ? *capture_time_ : (ros::Time)0;
+  }
+
   /** Set from controller to tell the hardware when to capture joint state */
   void setProbeCapture(int to_capture) {
       assert(probe_capture_);
       *probe_capture_ = to_capture;
+      assert(probe_result_type_);
+      *probe_result_type_ = 0;
   }
 
 private:
@@ -82,6 +96,8 @@ private:
   int * probe_capture_  = {nullptr};
   const int * probe_state_  = {nullptr};
   int * probe_transition_  = {nullptr};
+  int * probe_result_type_  = {nullptr};
+  ros::Time * capture_time_ = {nullptr};
 };
 
 

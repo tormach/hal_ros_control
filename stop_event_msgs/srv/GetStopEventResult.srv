@@ -1,0 +1,20 @@
+---
+# Results for a generic stop event (only relevant fields are populated)
+int64 stop_event
+bool expected
+string description
+time event_time
+time stop_time
+duration stop_duration
+# TODO support goal ID tracking
+# int64 active_goal_id # What was executing when stop happened
+
+# Trajectory data for the event
+# TODO support string names instead of implicit order
+#string[] joint_names
+float64[] event_position
+float64[] event_velocity
+float64[] event_acceleration
+float64[] final_position
+float64[] final_velocity
+float64[] final_acceleration

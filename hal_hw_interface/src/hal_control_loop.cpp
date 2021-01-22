@@ -129,12 +129,13 @@ void HalRosControlLoop::update(long period)
 {
   ros::Duration ros_period(period / 1000000000ull, period % 1000000000ull);
 
-  hardware_interface_->read(ros_period);
+  auto const time_now = ros::Time::now();
+  hardware_interface_->read_with_time(ros_period, time_now);
   // For debugging; spews at startup
   // if (hardware_interface_->reset_controllers)
   //   // don't use ROS logging in RT context
   //   rtapi_print_msg(RTAPI_MSG_INFO, "%s:  Resetting controllers", CNAME);
-  controller_manager_->update(ros::Time::now(), ros_period,
+  controller_manager_->update(time_now, ros_period,
                               hardware_interface_->reset_controllers);
   hardware_interface_->write(ros_period);
 }

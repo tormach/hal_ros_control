@@ -31,6 +31,7 @@
 
 #include <hal_hw_interface/hal_hw_interface.h>
 #include <hal_hw_interface/hal_ros_logging.h>
+#include <stop_event_msgs/SetNextProbeMove.h>
 
 static constexpr const char *VER_DESCRIPTION = "Probing development version 0.1";
 
@@ -72,7 +73,9 @@ void HalHWInterface::init_hal(void (*funct)(void*, long))
                                      "probe",
                                      &probe_request_capture_type_,
                                      &probe_signal_,
-                                     &probe_transition_));
+                                     &probe_transition_,
+                                     &probe_result_type_,
+                                     &probe_event_time_));
   registerInterface(&probe_interface_);
 
   HAL_ROS_LOG_INFO(CNAME, "%s: Initialized boilerplate", CNAME);
@@ -235,7 +238,23 @@ bool HalHWInterface::create_s32_pin(int*** ptr, hal_pin_dir_t dir,
   return true;
 }
 
-void HalHWInterface::read(ros::Duration& elapsed_time)
+static machinekit_interfaces::ProbeTransitions transitionNeededForCapture(int capture_type)
+{
+    switch (capture_type) {
+        case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_REQUIRE_RISING_EDGE:
+        case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_OPTIONAL_RISING_EDGE:
+          return machinekit_interfaces::ProbeTransitions::RISING;
+        case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_REQUIRE_FALLING_EDGE:
+        case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_OPTIONAL_FALLING_EDGE:
+          return machinekit_interfaces::ProbeTransitions::FALLING;
+        case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_NONE:
+        case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_IGNORE_INPUT:
+         return machinekit_interfaces::ProbeTransitions::NONE;
+    }
+    return machinekit_interfaces::ProbeTransitions::INVALID;
+}
+
+void HalHWInterface::read_with_time(ros::Duration& elapsed_time, ros::Time const &current_time)
 {
   // Copy HAL joint feedback pin values to controller joint states
   for (std::size_t joint_id = 0; joint_id < num_joints_; ++joint_id)
@@ -260,7 +279,9 @@ void HalHWInterface::read(ros::Duration& elapsed_time)
             probe_transition_ = (int)machinekit_interfaces::ProbeTransitions::NONE;
         }
 
-        if (probe_transition_ == probe_request_capture_type_) {
+        if (!probe_result_type_
+                && probe_request_capture_type_
+                && probe_transition_ == (int)transitionNeededForCapture(probe_request_capture_type_)) {
             for (std::size_t joint_id = 0; joint_id < num_joints_; ++joint_id)
             {
               // Explicitly copy elements without re-allocating
@@ -268,6 +289,8 @@ void HalHWInterface::read(ros::Duration& elapsed_time)
               probe_joint_velocity_[joint_id] = joint_velocity_[joint_id];
               probe_joint_effort_[joint_id] = joint_effort_[joint_id];
             }
+            probe_result_type_ = probe_transition_;
+            probe_event_time_ = current_time;
         }
         // No overtravel support currently
         probe_signal_ = probe_active_signal;
