@@ -59,7 +59,7 @@ void HalHWInterface::init_hal(void (*funct)(void*, long))
 
     // Create joint state interface
     joint_event_data_interface_.registerHandle(machinekit_interfaces::JointEventDataHandle(
-        joint_names_[joint_id]+"_probe", &probe_joint_position_[joint_id], &probe_joint_velocity_[joint_id], &probe_joint_effort_[joint_id]));
+        joint_names_[joint_id]+"_probe", &(probe_joint_position_[joint_id]), &(probe_joint_velocity_[joint_id]), &(probe_joint_effort_[joint_id])));
   }  // end for each joint
   registerInterface(&joint_event_data_interface_);
 
@@ -261,9 +261,13 @@ void HalHWInterface::read(ros::Duration& elapsed_time)
         }
 
         if (probe_transition_ == probe_request_capture_type_) {
-            probe_joint_position_ = joint_position_;
-            probe_joint_velocity_ = joint_velocity_;
-            probe_joint_effort_ = joint_effort_;
+            for (std::size_t joint_id = 0; joint_id < num_joints_; ++joint_id)
+            {
+              // Explicitly copy elements without re-allocating
+              probe_joint_position_[joint_id] = joint_position_[joint_id];
+              probe_joint_velocity_[joint_id] = joint_velocity_[joint_id];
+              probe_joint_effort_[joint_id] = joint_effort_[joint_id];
+            }
         }
         // No overtravel support currently
         probe_signal_ = probe_active_signal;
