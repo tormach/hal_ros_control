@@ -134,7 +134,7 @@ public:
 
 protected:
     virtual void checkReachedTrajectoryGoal();
-    virtual void checkReachedTrajectoryGoalProbe();
+    virtual void checkReachedTrajectoryGoalProbe(int capture_type);
     // Services for controller trajectory behavior
     ros::ServiceServer probe_service_; //!< Declare success when probe trip occurs on the next send trajectory
     ros::ServiceServer probe_result_service_; //!< Request the result of a probe
@@ -358,12 +358,10 @@ template <class SegmentImpl, class HardwareInterface>
 void InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
 checkReachedTrajectoryGoal()
 {
-    switch((machinekit_interfaces::ProbeTransitions)probe_handle.getProbeCapture()) {
-    case machinekit_interfaces::ProbeTransitions::RISING:
-    case machinekit_interfaces::ProbeTransitions::FALLING:
-        // Do special handling below for probe moves
-        checkReachedTrajectoryGoalProbe();
-    default:
+    int capture_type = probe_handle.getProbeCapture();
+    if (capture_type) {
+        checkReachedTrajectoryGoalProbe(capture_type);
+    } else {
         // Normal moves get forwarded to the stock goal check
         JointTrajectoryControllerType::checkReachedTrajectoryGoal();
     }
@@ -371,17 +369,25 @@ checkReachedTrajectoryGoal()
 
 template <class SegmentImpl, class HardwareInterface>
 void InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
-checkReachedTrajectoryGoalProbe()
+checkReachedTrajectoryGoalProbe(int capture_type)
 {
-    //If there is an active goal and all segments finished successfully then set goal as succeeded
+    // Check if we have reached the end of a
     RealtimeGoalHandlePtr current_active_goal(this->rt_active_goal_);
     if (current_active_goal && this->successful_joint_traj_.count() == this->getNumberOfJoints())
     {
-        // FIXME do we need a dedicated error code for this in the message?
-        current_active_goal->preallocated_result_->error_code = -7;
-        current_active_goal->setAborted(current_active_goal->preallocated_result_);
-        current_active_goal.reset(); // do not publish feedback
+        if (!stop_event_triggered_ && (capture_type == stop_event_msgs::SetNextProbeMoveRequest::PROBE_REQUIRE_RISING_EDGE ||
+             capture_type == stop_event_msgs::SetNextProbeMoveRequest::PROBE_REQUIRE_FALLING_EDGE)) {
+          current_active_goal->preallocated_result_->error_code = -9;
+          current_active_goal->preallocated_result_->error_string = "Reached end of probe motion without probe trip";
+          current_active_goal->setAborted(current_active_goal->preallocated_result_);
+        } else {
+            // Declare success because we reached the end of the motion (or we've successfully stopped after a probe trip)
+            current_active_goal->preallocated_result_->error_code = control_msgs::FollowJointTrajectoryResult::SUCCESSFUL;
+            current_active_goal->setSucceeded(current_active_goal->preallocated_result_);
+            current_active_goal.reset(); // do not publish feedback
+        }
         this->rt_active_goal_.reset();
+        // TODO pass uptime in here to plane a stop trajectory in case the goal has nonzero velocity?
         this->successful_joint_traj_.reset();
     }
 }
