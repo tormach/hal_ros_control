@@ -248,6 +248,7 @@ static machinekit_interfaces::ProbeTransitions transitionNeededForCapture(int ca
         case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_OPTIONAL_FALLING_EDGE:
           return machinekit_interfaces::ProbeTransitions::FALLING;
         case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_NONE:
+        case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_RETRACT:
         case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_IGNORE_INPUT:
          return machinekit_interfaces::ProbeTransitions::NONE;
     }

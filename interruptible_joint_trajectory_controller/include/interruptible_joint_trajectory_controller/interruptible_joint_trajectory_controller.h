@@ -315,6 +315,7 @@ update(const ros::Time& time, const ros::Duration& period)
         case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_IGNORE_INPUT:
             break;
         default:
+            // "RETRACT" is meant to retract off of a surface and continue moving, but should stop if it hits something else
             abortActiveGoalWithError(uptime, -6, "Unexpected probe rising edge during probe motion");
             break;
         }
@@ -325,6 +326,7 @@ update(const ros::Time& time, const ros::Duration& period)
         case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_OPTIONAL_FALLING_EDGE:
             completeActiveGoal(uptime);
             break;
+        case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_RETRACT:
         case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_IGNORE_INPUT:
             break;
         default:

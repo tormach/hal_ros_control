@@ -5,5 +5,6 @@ int32 PROBE_REQUIRE_RISING_EDGE=2 # Capture a rising edge and stop, error if pro
 int32 PROBE_OPTIONAL_RISING_EDGE=3 # Capture a rising edge and stop
 int32 PROBE_REQUIRE_FALLING_EDGE=4 # Expect a falling edge, error if probe is inactive at start
 int32 PROBE_OPTIONAL_FALLING_EDGE=5 # Error if a rising edge is seen, ignore a falling edge and keep going
-int32 PROBE_IGNORE_INPUT=6 # Ignore all probe inputs regardless of direction
+int32 PROBE_RETRACT=6 # Ignore falling edges (and ok to start with probe on or off), but stop at a rising edge (since the probe could have hit something else)
+int32 PROBE_IGNORE_INPUT=7 # Ignore all probe inputs regardless of direction, be sure you know what you're doing!!!
 ---
