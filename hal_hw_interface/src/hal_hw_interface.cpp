@@ -238,23 +238,6 @@ bool HalHWInterface::create_s32_pin(int*** ptr, hal_pin_dir_t dir,
   return true;
 }
 
-static machinekit_interfaces::ProbeTransitions transitionNeededForCapture(int capture_type)
-{
-    switch (capture_type) {
-        case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_REQUIRE_RISING_EDGE:
-        case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_OPTIONAL_RISING_EDGE:
-          return machinekit_interfaces::ProbeTransitions::RISING;
-        case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_REQUIRE_FALLING_EDGE:
-        case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_OPTIONAL_FALLING_EDGE:
-          return machinekit_interfaces::ProbeTransitions::FALLING;
-        case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_NONE:
-        case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_RETRACT:
-        case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_IGNORE_INPUT:
-         return machinekit_interfaces::ProbeTransitions::NONE;
-    }
-    return machinekit_interfaces::ProbeTransitions::INVALID;
-}
-
 void HalHWInterface::read_with_time(ros::Duration& elapsed_time, ros::Time const &current_time)
 {
   // Copy HAL joint feedback pin values to controller joint states
@@ -280,9 +263,10 @@ void HalHWInterface::read_with_time(ros::Duration& elapsed_time, ros::Time const
             probe_transition_ = (int)machinekit_interfaces::ProbeTransitions::NONE;
         }
 
+        int expected_transition = (int)machinekit_interfaces::ProbeHandle::transitionNeededForCapture((machinekit_interfaces::ProbeCaptureType)probe_request_capture_type_);
         if (!probe_result_type_
                 && probe_request_capture_type_
-                && probe_transition_ == (int)transitionNeededForCapture(probe_request_capture_type_)) {
+                && probe_transition_ == expected_transition) {
             for (std::size_t joint_id = 0; joint_id < num_joints_; ++joint_id)
             {
               // Explicitly copy elements without re-allocating

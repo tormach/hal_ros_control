@@ -51,3 +51,4 @@ interruptible_joint_trajectory_controller/test/trajectory_interface_test.cpp
 machinekit_interfaces/include/machinekit_interfaces/joint_event_interface.h
 machinekit_interfaces/include/machinekit_interfaces/probe_interface.h
 machinekit_interfaces/include/machinekit_interfaces/realtime_event_interface.h
+machinekit_interfaces/include/machinekit_interfaces/transition_util.h

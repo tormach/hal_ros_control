@@ -77,6 +77,11 @@ namespace interruptible_joint_trajectory_controller
 static const std::string PROBE_SERVICE_NAME{ "probe" };
 static const std::string PROBE_RESULT_SERVICE_NAME{ "probe_result" };
 
+struct ProbeSettings {
+  int probe_request_capture_type;
+  bool applied; //!< Starts false, then flipped to true when controller starts the trajectory
+};
+
 /**
  * Controller for executing joint-space trajectories on a group of joints, that can respond to stop events triggered from hardware in the realtime loop.
  *
@@ -84,13 +89,14 @@ static const std::string PROBE_RESULT_SERVICE_NAME{ "probe_result" };
  *
  */
 template <class SegmentImpl, class HardwareInterface>
-class InterruptibleJointTrajectoryController : public joint_trajectory_controller::JointTrajectoryController<SegmentImpl, HardwareInterface>
+class InterruptibleJointTrajectoryController : public joint_trajectory_controller::JointTrajectoryController<SegmentImpl, HardwareInterface, ProbeSettings>
 {
 protected:
-    using JointTrajectoryControllerType = typename joint_trajectory_controller::JointTrajectoryController<SegmentImpl, HardwareInterface>;
+    using JointTrajectoryControllerType = typename joint_trajectory_controller::JointTrajectoryController<SegmentImpl, HardwareInterface, ProbeSettings>;
     using typename JointTrajectoryControllerType::JointTrajectoryConstPtr;
     using typename JointTrajectoryControllerType::RealtimeGoalHandlePtr;
     using typename JointTrajectoryControllerType::Trajectory;
+    using typename JointTrajectoryControllerType::ExtendedTrajectoryPtr;
 
 public:
 
@@ -298,56 +304,78 @@ template <class SegmentImpl, class HardwareInterface>
 void InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
 update(const ros::Time& time, const ros::Duration& period)
 {
-    RealtimeGoalHandlePtr current_active_goal(this->rt_active_goal_);
+    // Acquire the trajectory pointer from the RT box ONCE (here), and pass to various methods as needed
+    ExtendedTrajectoryPtr curr_traj_ptr;
+    joint_trajectory_controller::TimeData time_data;
+    JointTrajectoryControllerType::prepare_for_update(time, period, curr_traj_ptr, time_data);
 
-    auto probe_transition = (ProbeTransitions)probe_handle.acquireProbeTransition();
+    auto probe_transition = probe_handle.acquireProbeTransition();
+    auto const probe_capture_type = probe_handle.getProbeCapture();
 
-    // FIXME does this need to be incremented here?
-    auto const time_data_tmp = *(this->time_data_.readFromRT());
-    auto const uptime = time_data_tmp.uptime + period;
     switch (probe_transition) {
     case ProbeTransitions::RISING:
-        switch (probe_handle.getProbeCapture()) {
-        case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_REQUIRE_RISING_EDGE:
-        case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_OPTIONAL_RISING_EDGE:
-            completeActiveGoal(uptime);
+        switch (probe_capture_type) {
+        case stop_event_msgs::SetNextProbeMoveRequest::PROBE_REQUIRE_RISING_EDGE:
+        case stop_event_msgs::SetNextProbeMoveRequest::PROBE_OPTIONAL_RISING_EDGE:
+            completeActiveGoal(time_data.uptime);
             break;
-        case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_IGNORE_INPUT:
+        case stop_event_msgs::SetNextProbeMoveRequest::PROBE_IGNORE_INPUT:
             break;
         default:
             // "RETRACT" is meant to retract off of a surface and continue moving, but should stop if it hits something else
-            abortActiveGoalWithError(uptime, -6, "Unexpected probe rising edge during probe motion");
+            abortActiveGoalWithError(time_data.uptime, -6, "Unexpected probe rising edge during probe motion");
             break;
         }
         break;
     case ProbeTransitions::FALLING:
-        switch (probe_handle.getProbeCapture()) {
-        case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_REQUIRE_FALLING_EDGE:
-        case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_OPTIONAL_FALLING_EDGE:
-            completeActiveGoal(uptime);
+        switch (probe_capture_type) {
+        case stop_event_msgs::SetNextProbeMoveRequest::PROBE_REQUIRE_FALLING_EDGE:
+        case stop_event_msgs::SetNextProbeMoveRequest::PROBE_OPTIONAL_FALLING_EDGE:
+            completeActiveGoal(time_data.uptime);
             break;
-        case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_RETRACT:
-        case (int)stop_event_msgs::SetNextProbeMoveRequest::PROBE_IGNORE_INPUT:
+        case stop_event_msgs::SetNextProbeMoveRequest::PROBE_RETRACT:
+        case stop_event_msgs::SetNextProbeMoveRequest::PROBE_IGNORE_INPUT:
             break;
         default:
-            abortActiveGoalWithError(uptime, -7, "Unexpected probe falling edge during motion");
+            abortActiveGoalWithError(time_data.uptime, -7, "Unexpected probe falling edge during motion");
             break;
         }
         break;
-    default:
-        if (probe_handle.getProbeState() > 0 && probe_handle.getProbeCapture() < 1) {
-            abortActiveGoalWithError(uptime, -8, "Unexpected probe signal during non-probe motion");
-            break;
+    case ProbeTransitions::NONE:
+        // Probe should not be high for non-probe motions, or if we're looking for a rising edge (and haven't found it yet)
+        if (probe_handle.getProbeState()) {
+            switch (probe_capture_type) {
+            case stop_event_msgs::SetNextProbeMoveRequest::PROBE_REQUIRE_FALLING_EDGE:
+            case stop_event_msgs::SetNextProbeMoveRequest::PROBE_OPTIONAL_FALLING_EDGE:
+            case stop_event_msgs::SetNextProbeMoveRequest::PROBE_RETRACT:
+            case stop_event_msgs::SetNextProbeMoveRequest::PROBE_IGNORE_INPUT:
+                // We're ok, expect the probe to be active for these motion types
+                break;
+            case stop_event_msgs::SetNextProbeMoveRequest::PROBE_REQUIRE_RISING_EDGE:
+            case stop_event_msgs::SetNextProbeMoveRequest::PROBE_OPTIONAL_RISING_EDGE:
+                if (stop_event_triggered_) {
+                    // Can't stop any harder...
+                    break;
+                }
+            default: // Deliberate fallthrough
+                abortActiveGoalWithError(time_data.uptime, -8, "Unexpected probe signal during motion");
+                break;
+            }
         }
+        break;
+    default:
+        abortActiveGoalWithError(time_data.uptime, -9, "Invalid probe transition detected, probe state is unknown");
+        break;
     }
 
-    // TODO mechanism to throw clear error if probe move reaches end. For example, zero out goal tolerances? This may need a custom update function to get a real error message.
-    JointTrajectoryControllerType::update(time, period);
-
-    // Reset probe capture if goal is done (regardless of success / failure)
-    if (!this->rt_active_goal_ && current_active_goal) {
-        probe_handle.setProbeCapture(0);
+    // Finished reacting to probe events, begin to actually handle a trajectory update
+    // First, ensure that a new trajectory's probe settings are applied
+    ProbeSettings &settings = curr_traj_ptr->motion_settings;
+    if (!settings.applied) {
+        probe_handle.setProbeCapture(settings.probe_request_capture_type);
+        settings.applied = true;
     }
+    JointTrajectoryControllerType::update_joint_trajectory(curr_traj_ptr->trajectory, time_data, period);
 }
 
 /**
@@ -379,7 +407,7 @@ checkReachedTrajectoryGoalProbe(int capture_type)
         if (!stop_event_triggered_ && (capture_type == stop_event_msgs::SetNextProbeMoveRequest::PROBE_REQUIRE_RISING_EDGE ||
              capture_type == stop_event_msgs::SetNextProbeMoveRequest::PROBE_REQUIRE_FALLING_EDGE)) {
           current_active_goal->preallocated_result_->error_code = -9;
-          current_active_goal->preallocated_result_->error_string = "Reached end of probe motion without probe trip";
+          current_active_goal->preallocated_result_->error_string = "Reached end of motion without probe contact";
           current_active_goal->setAborted(current_active_goal->preallocated_result_);
         } else {
             // Declare success because we reached the end of the motion (or we've successfully stopped after a probe trip)
@@ -404,7 +432,7 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::han
 template <class SegmentImpl, class HardwareInterface>
 bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::handleStopEventResultRequest(stop_event_msgs::GetStopEventResultRequest &request, stop_event_msgs::GetStopEventResultResponse &response)
 {
-    response.stop_event = probe_handle.getProbeResultType();
+    response.stop_event = (long)probe_handle.getProbeResultType();
     response.event_time = probe_handle.getProbeCaptureTime();
     ROS_INFO_STREAM("Handling request for probe results, stop event " << response.stop_event << ", event_time " << response.event_time);
     if (response.stop_event) {
@@ -447,8 +475,6 @@ updateTrajectoryCommand(const JointTrajectoryConstPtr& msg, RealtimeGoalHandlePt
            break;
         }
     }
-    // FIXME not RT safe, this is a huge bandaid right now
-    stop_event_triggered_ = false;
     return JointTrajectoryControllerType::updateTrajectoryCommand(msg, gh, error_string);
 }
 

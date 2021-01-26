@@ -7,6 +7,7 @@
 
 
 #include <hardware_interface/internal/hardware_resource_manager.h>
+#include <stop_event_msgs/SetNextProbeMoveRequest.h>
 #include <string>
 
 namespace machinekit_interfaces
@@ -25,6 +26,9 @@ enum class ProbeTransitions : int {
     RISING,
     FALLING,
 };
+
+// Derived from the stop message anonymous enum
+using ProbeCaptureType = decltype (stop_event_msgs::SetNextProbeMoveRequest::PROBE_NONE);
 
 /**
  * Communicates status of a probe in realtime from the control loop to any listening controllers.
@@ -62,21 +66,22 @@ public:
   int getProbeState() const {
       return probe_state_ ? *probe_state_ : (int)ProbeState::DISCONNECTED;
   }
-  int acquireProbeTransition() {
+  ProbeTransitions acquireProbeTransition() {
       if (!probe_transition_) {
-          return (int)ProbeTransitions::INVALID;
+          return ProbeTransitions::INVALID;
       }
       int transition = *probe_transition_;
       *probe_transition_ = 0;
-      return transition;
+      return (ProbeTransitions)transition;
   }
 
-  int getProbeCapture() const {
-      return probe_capture_ ? *probe_capture_ : (int)ProbeTransitions::INVALID;
+  ProbeCaptureType getProbeCapture() const {
+      int cap_type = probe_capture_ ? *probe_capture_ : -1;
+      return static_cast<ProbeCaptureType>(cap_type);
   }
 
-  int getProbeResultType() const {
-      return probe_result_type_ ? *probe_result_type_ : (int)ProbeTransitions::INVALID;
+  ProbeTransitions getProbeResultType() const {
+      return probe_result_type_ ? static_cast<ProbeTransitions>(*probe_result_type_) : ProbeTransitions::INVALID;
   }
 
   ros::Time getProbeCaptureTime() const {
@@ -98,6 +103,23 @@ public:
         assert(probe_result_type_);
         *probe_result_type_ = 0;
       }
+  }
+
+  static ProbeTransitions transitionNeededForCapture(ProbeCaptureType capture_type)
+  {
+      switch (capture_type) {
+      case ProbeCaptureType::PROBE_REQUIRE_RISING_EDGE:
+      case ProbeCaptureType::PROBE_OPTIONAL_RISING_EDGE:
+          return ProbeTransitions::RISING;
+      case ProbeCaptureType::PROBE_REQUIRE_FALLING_EDGE:
+      case ProbeCaptureType::PROBE_OPTIONAL_FALLING_EDGE:
+          return ProbeTransitions::FALLING;
+      case ProbeCaptureType::PROBE_NONE:
+      case ProbeCaptureType::PROBE_RETRACT:
+      case ProbeCaptureType::PROBE_IGNORE_INPUT:
+          return ProbeTransitions::NONE;
+      }
+      return ProbeTransitions::INVALID;
   }
 
 private:

@@ -4,6 +4,7 @@ project(machinekit_interfaces)
 # Load catkin and all dependencies required for this package
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  stop_event_msgs
 )
 
 # Declare a catkin package
