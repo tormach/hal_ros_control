@@ -5,6 +5,7 @@ interruptible_joint_trajectory_controller/include/interruptible_joint_trajectory
 machinekit_interfaces/include
 machinekit_interfaces/include/machinekit_interfaces
 
+../ros_controllers/joint_trajectory_controller/include
 ~/ros/devel/include
 /opt/ros/noetic/include
 /usr/include/
