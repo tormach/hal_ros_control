@@ -89,11 +89,11 @@ public:
   }
 
   /** Set from controller to tell the hardware when to capture joint state */
-  void setProbeCapture(int to_capture) {
+  void startNewProbeCapture(int capture_type) {
       assert(probe_capture_);
-      *probe_capture_ = to_capture;
+      *probe_capture_ = capture_type;
       // FIXME hard-coded case values (should come from stop_event_msgs?)
-      switch (to_capture) {
+      switch (capture_type) {
       case 2:
       case 3:
       case 4:

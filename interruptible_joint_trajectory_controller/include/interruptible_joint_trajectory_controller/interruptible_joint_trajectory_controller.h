@@ -372,7 +372,7 @@ update(const ros::Time& time, const ros::Duration& period)
     // First, ensure that a new trajectory's probe settings are applied
     ProbeSettings &settings = curr_traj_ptr->motion_settings;
     if (!settings.applied) {
-        probe_handle.setProbeCapture(settings.probe_request_capture_type);
+        probe_handle.startNewProbeCapture(settings.probe_request_capture_type);
         settings.applied = true;
     }
     JointTrajectoryControllerType::update_joint_trajectory(curr_traj_ptr->trajectory, time_data, period);
@@ -425,7 +425,7 @@ template <class SegmentImpl, class HardwareInterface>
 bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::handleProbeRequest(stop_event_msgs::SetNextProbeMoveRequest &request, stop_event_msgs::SetNextProbeMoveResponse &response)
 {
     ROS_INFO_STREAM("Probe capture requested, mode " << request.mode);
-    probe_handle.setProbeCapture(request.mode);
+    this->queued_motion_settings_.probe_request_capture_type = (machinekit_interfaces::ProbeCaptureType)request.mode;
     return true;
 }
 
