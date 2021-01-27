@@ -112,6 +112,7 @@ public:
                      controller_interface::ControllerBase::ClaimedResources&            claimed_resources) override;
     /*\}*/
 
+protected:
     void update(const ros::Time& time, const ros::Duration& period);
     /*\}*/
 
@@ -131,7 +132,6 @@ public:
     bool handleProbeRequest(stop_event_msgs::SetNextProbeMoveRequest& request, stop_event_msgs::SetNextProbeMoveResponse& response);
     bool handleStopEventResultRequest(stop_event_msgs::GetStopEventResultRequest& request, stop_event_msgs::GetStopEventResultResponse& response);
 
-protected:
     // Real-Time ONLY Functions (must be called within the context of an update)
     void abortActiveGoalWithError(RealtimeGoalHandlePtr &gh_ref, ProbeSettings const &settings, const ros::Time& time, int error_code, std::string const &&explanation); // Like preemptActiveGoal but marks it as failed
     void completeActiveGoal(RealtimeGoalHandlePtr &gh_ref, ProbeSettings const &settings, const ros::Time &time); // Like preemptActiveGoal but for when an external goal state is reached (i.e. probing)
@@ -442,7 +442,6 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::han
     response.event_time = probe_handle.getProbeCaptureTime();
     ROS_INFO_STREAM("Handling request for probe results, stop event " << response.stop_event << ", event_time " << response.event_time);
     if (response.stop_event) {
-      // TODO handshake to ensure that probe result is valid and matches the request (so we're not returning old data?)
       std::vector<double> probe_positions(this->getNumberOfJoints(), 0.0);
       for (unsigned int joint_index = 0; joint_index < this->getNumberOfJoints(); ++joint_index)
       {
@@ -466,21 +465,24 @@ updateTrajectoryCommand(const JointTrajectoryConstPtr& msg, RealtimeGoalHandlePt
     // Guard against starting a motion if the probe is currently active
     // KLUDGE this should really be done in realtime but this will have to do
     if (probe_handle.getProbeState() > 0) {
-        switch (probe_handle.getProbeCapture()) {
+        auto requested_capture = this->queued_motion_settings_.probe_request_capture_type;
+        switch (requested_capture) {
         case SetNextProbeMoveRequest::PROBE_NONE:
         case SetNextProbeMoveRequest::PROBE_OPTIONAL_RISING_EDGE:
         case SetNextProbeMoveRequest::PROBE_REQUIRE_RISING_EDGE:
         {
-          const std::string err_msg("Can't start a motion or probe move with probe active in mode" + std::to_string(probe_handle.getProbeCapture()));
+          const std::string err_msg("Can't start a motion or probe move with probe active in probing mode " + std::to_string(requested_capture));
           if (error_string) {
             *error_string = err_msg;
           }
+          this->clearQueuedSettings();
           return false;
         }
         default:
            break;
         }
     }
+    // NOTE: this clears the queued settings once they're accepted
     return JointTrajectoryControllerType::updateTrajectoryCommand(msg, gh, error_string);
 }
 
