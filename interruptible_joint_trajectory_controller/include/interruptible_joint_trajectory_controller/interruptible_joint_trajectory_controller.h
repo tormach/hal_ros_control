@@ -373,7 +373,10 @@ update(const ros::Time& time, const ros::Duration& period)
     ProbeSettings &settings = curr_traj_ptr->motion_settings;
     if (!settings.applied) {
         probe_handle.startNewProbeCapture(settings.probe_request_capture_type);
+        // Don't re-apply the settings now that the new trajectory is active
         settings.applied = true;
+        // Since we're starting a new trajectory, the previous "stop" event is over
+        stop_event_triggered_ = false;
     }
     JointTrajectoryControllerType::update_joint_trajectory(curr_traj_ptr->trajectory, time_data, period);
 }
