@@ -272,7 +272,7 @@ abortActiveGoalWithError(const ros::Time& time, int error_code, std::string cons
     if (current_active_goal && !stop_event_triggered_)
     {
         // TODO standardize error codes
-        current_active_goal->preallocated_result_->error_code = -6;
+        current_active_goal->preallocated_result_->error_code = error_code;
         // TODO confirm realtime safety of this assignment (e.g. is the string reserved, or does this trigger an allocation?)
         current_active_goal->preallocated_result_->error_string = explanation;
         current_active_goal->setAborted(current_active_goal->preallocated_result_);
