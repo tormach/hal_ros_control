@@ -440,7 +440,7 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::han
 {
     response.stop_event = (long)probe_handle.getProbeResultType();
     response.event_time = probe_handle.getProbeCaptureTime();
-    ROS_INFO_STREAM("Handling request for probe results, stop event " << response.stop_event << ", event_time " << response.event_time);
+    ROS_INFO_STREAM("Handling request for probe results for capture type " << response.stop_event << " at time " << response.event_time);
     if (response.stop_event) {
       std::vector<double> probe_positions(this->getNumberOfJoints(), 0.0);
       for (unsigned int joint_index = 0; joint_index < this->getNumberOfJoints(); ++joint_index)
