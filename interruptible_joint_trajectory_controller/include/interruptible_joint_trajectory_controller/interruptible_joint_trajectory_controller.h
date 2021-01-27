@@ -265,17 +265,21 @@ inline void InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterfac
 abortActiveGoalWithError(RealtimeGoalHandlePtr &current_active_goal, ProbeSettings const &settings, const ros::Time& time, int error_code, std::string const &&explanation)
 {
     // Cancels the currently active goal
-    if (current_active_goal && !stop_event_triggered_)
+    if (!stop_event_triggered_)
     {
-        // TODO standardize error codes
-        current_active_goal->preallocated_result_->error_code = error_code;
-        // TODO confirm realtime safety of this assignment (e.g. is the string reserved, or does this trigger an allocation?)
-        current_active_goal->preallocated_result_->error_string = explanation;
-        current_active_goal->setAborted(current_active_goal->preallocated_result_);
-        // FIXME this fails noisily if the stop trajectory duration is 0.0
-        this->setHoldPosition(time, current_active_goal);
-        stop_event_triggered_ = true;
+        if (current_active_goal) {
+            // TODO standardize error codes
+            current_active_goal->preallocated_result_->error_code = error_code;
+            // TODO confirm realtime safety of this assignment (e.g. is the string reserved, or does this trigger an allocation?)
+            current_active_goal->preallocated_result_->error_string = explanation;
+            current_active_goal->setAborted(current_active_goal->preallocated_result_);
+            // FIXME this fails noisily if the stop trajectory duration is 0.0
+            this->setHoldPositionWithSettings(settings, time, current_active_goal);
+        } else {
+            this->setHoldPositionWithSettings(settings, time);
+        }
     }
+    stop_event_triggered_ = true;
 }
 
 template <class SegmentImpl, class HardwareInterface>
@@ -283,14 +287,18 @@ inline void InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterfac
 completeActiveGoal(RealtimeGoalHandlePtr &current_active_goal, ProbeSettings const &settings, const ros::Time &time)
 {
     // Cancels the currently active goal
-    if (current_active_goal && !stop_event_triggered_)
+    if (!stop_event_triggered_)
     {
-        // Marks the current goal as canceled
-        current_active_goal->preallocated_result_->error_code = 0;
-        current_active_goal->setSucceeded(current_active_goal->preallocated_result_);
-        this->setHoldPosition(settings, time, current_active_goal);
-        stop_event_triggered_ = true;
+        if (current_active_goal) {
+            // Marks the current goal as canceled
+            current_active_goal->preallocated_result_->error_code = 0;
+            current_active_goal->setSucceeded(current_active_goal->preallocated_result_);
+            this->setHoldPositionWithSettings(settings, time, current_active_goal);
+        } else {
+            this->setHoldPositionWithSettings(settings, time);
+        }
     }
+    stop_event_triggered_ = true;
 }
 
 // WARNING do not early abort from this function, it must clean up probe capture mode
