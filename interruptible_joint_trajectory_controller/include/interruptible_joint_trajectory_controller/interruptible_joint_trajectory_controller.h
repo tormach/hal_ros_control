@@ -112,12 +112,6 @@ public:
                      controller_interface::ControllerBase::ClaimedResources&            claimed_resources) override;
     /*\}*/
 
-    /** \name Real-Time Safe Functions
-   *\{*/
-
-    void abortActiveGoalWithError(const ros::Time& time, int error_code, std::string const &&explanation); // Like preemptActiveGoal but marks it as failed
-    void completeActiveGoal(const ros::Time &time); // Like preemptActiveGoal but for when an external goal state is reached (i.e. probing)
-
     void update(const ros::Time& time, const ros::Duration& period);
     /*\}*/
 
@@ -138,8 +132,12 @@ public:
     bool handleStopEventResultRequest(stop_event_msgs::GetStopEventResultRequest& request, stop_event_msgs::GetStopEventResultResponse& response);
 
 protected:
+    // Real-Time ONLY Functions (must be called within the context of an update)
+    void abortActiveGoalWithError(RealtimeGoalHandlePtr &gh_ref, ProbeSettings const &settings, const ros::Time& time, int error_code, std::string const &&explanation); // Like preemptActiveGoal but marks it as failed
+    void completeActiveGoal(RealtimeGoalHandlePtr &gh_ref, ProbeSettings const &settings, const ros::Time &time); // Like preemptActiveGoal but for when an external goal state is reached (i.e. probing)
     virtual void checkReachedTrajectoryGoal();
     virtual void checkReachedTrajectoryGoalProbe(int capture_type);
+
     // Services for controller trajectory behavior
     ros::ServiceServer probe_service_; //!< Declare success when probe trip occurs on the next send trajectory
     ros::ServiceServer probe_result_service_; //!< Request the result of a probe
@@ -264,10 +262,8 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::ini
 
 template <class SegmentImpl, class HardwareInterface>
 inline void InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
-abortActiveGoalWithError(const ros::Time& time, int error_code, std::string const &&explanation)
+abortActiveGoalWithError(RealtimeGoalHandlePtr &current_active_goal, ProbeSettings const &settings, const ros::Time& time, int error_code, std::string const &&explanation)
 {
-    typename JointTrajectoryControllerType::RealtimeGoalHandlePtr current_active_goal(this->rt_active_goal_);
-
     // Cancels the currently active goal
     if (current_active_goal && !stop_event_triggered_)
     {
@@ -284,17 +280,15 @@ abortActiveGoalWithError(const ros::Time& time, int error_code, std::string cons
 
 template <class SegmentImpl, class HardwareInterface>
 inline void InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
-completeActiveGoal(const ros::Time &time)
+completeActiveGoal(RealtimeGoalHandlePtr &current_active_goal, ProbeSettings const &settings, const ros::Time &time)
 {
-    typename JointTrajectoryControllerType::RealtimeGoalHandlePtr current_active_goal(this->rt_active_goal_);
-
     // Cancels the currently active goal
     if (current_active_goal && !stop_event_triggered_)
     {
         // Marks the current goal as canceled
         current_active_goal->preallocated_result_->error_code = 0;
         current_active_goal->setSucceeded(current_active_goal->preallocated_result_);
-        this->setHoldPosition(time, current_active_goal);
+        this->setHoldPosition(settings, time, current_active_goal);
         stop_event_triggered_ = true;
     }
 }
@@ -308,6 +302,7 @@ update(const ros::Time& time, const ros::Duration& period)
     ExtendedTrajectoryPtr curr_traj_ptr;
     joint_trajectory_controller::TimeData time_data;
     JointTrajectoryControllerType::prepare_for_update(time, period, curr_traj_ptr, time_data);
+    typename JointTrajectoryControllerType::RealtimeGoalHandlePtr current_active_goal(this->rt_active_goal_);
 
     auto probe_transition = probe_handle.acquireProbeTransition();
     auto const probe_capture_type = probe_handle.getProbeCapture();
@@ -317,13 +312,13 @@ update(const ros::Time& time, const ros::Duration& period)
         switch (probe_capture_type) {
         case stop_event_msgs::SetNextProbeMoveRequest::PROBE_REQUIRE_RISING_EDGE:
         case stop_event_msgs::SetNextProbeMoveRequest::PROBE_OPTIONAL_RISING_EDGE:
-            completeActiveGoal(time_data.uptime);
+            completeActiveGoal(current_active_goal, curr_traj_ptr->motion_settings, time_data.uptime);
             break;
         case stop_event_msgs::SetNextProbeMoveRequest::PROBE_IGNORE_INPUT:
             break;
         default:
             // "RETRACT" is meant to retract off of a surface and continue moving, but should stop if it hits something else
-            abortActiveGoalWithError(time_data.uptime, -6, "Unexpected probe rising edge during probe motion");
+            abortActiveGoalWithError(current_active_goal, curr_traj_ptr->motion_settings, time_data.uptime, -6, "Unexpected probe rising edge during probe motion");
             break;
         }
         break;
@@ -331,13 +326,13 @@ update(const ros::Time& time, const ros::Duration& period)
         switch (probe_capture_type) {
         case stop_event_msgs::SetNextProbeMoveRequest::PROBE_REQUIRE_FALLING_EDGE:
         case stop_event_msgs::SetNextProbeMoveRequest::PROBE_OPTIONAL_FALLING_EDGE:
-            completeActiveGoal(time_data.uptime);
+            completeActiveGoal(current_active_goal, curr_traj_ptr->motion_settings, time_data.uptime);
             break;
         case stop_event_msgs::SetNextProbeMoveRequest::PROBE_RETRACT:
         case stop_event_msgs::SetNextProbeMoveRequest::PROBE_IGNORE_INPUT:
             break;
         default:
-            abortActiveGoalWithError(time_data.uptime, -7, "Unexpected probe falling edge during motion");
+            abortActiveGoalWithError(current_active_goal, curr_traj_ptr->motion_settings, time_data.uptime, -7, "Unexpected probe falling edge during motion");
             break;
         }
         break;
@@ -358,13 +353,13 @@ update(const ros::Time& time, const ros::Duration& period)
                     break;
                 }
             default: // Deliberate fallthrough
-                abortActiveGoalWithError(time_data.uptime, -8, "Unexpected probe signal during motion");
+                abortActiveGoalWithError(current_active_goal, curr_traj_ptr->motion_settings, time_data.uptime, -8, "Unexpected probe signal during motion");
                 break;
             }
         }
         break;
     default:
-        abortActiveGoalWithError(time_data.uptime, -9, "Invalid probe transition detected, probe state is unknown");
+        abortActiveGoalWithError(current_active_goal, curr_traj_ptr->motion_settings, time_data.uptime, -9, "Invalid probe transition detected, probe state is unknown");
         break;
     }
 
