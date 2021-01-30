@@ -57,9 +57,9 @@ class TestRosHalComponent(object):
     def test_ros_hal_component_get_param(self, obj, mock_objs):
         '''Test get_param()
         '''
-        res = obj.get_param('relative_tolerance', 42)
+        res = obj.get_ros_param('relative_tolerance', 42)
         assert res == 1e-9
-        res = obj.get_param('bogus_key', 88)
+        res = obj.get_ros_param('bogus_key', 88)
         assert res == 88
 
     def test_ros_hal_component_run(self, obj, mock_objs):
