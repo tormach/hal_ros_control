@@ -132,10 +132,11 @@ class RosHalComponent(HalObjBase):
     def shutdown_component(self):
         """Perform extra shutdown actions
 
-        This may optionally be defined in subclasses to take care of
-        extra shutdown actions, such as disconnecting from services.
+        Executes the list of callbacks defined by calls to
+        :py:func:`hal_hw_interface.hal_obj_base.HalObjBase.add_shutdown_callback`.
         """
-        pass
+        for cb in self._cached_objs.setdefault('shutdown_cbs', []):
+            cb()
 
     def main(self):
         """The ROS node and HAL component `main()` function

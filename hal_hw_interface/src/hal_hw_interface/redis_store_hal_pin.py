@@ -82,13 +82,3 @@ class RedisStoreHalPin(RosHalPin):
                 self._redis_config.get_param(self._redis_param_key),
             )
         return new_val
-
-    @classmethod
-    def shutdown(cls):
-        '''Closes the shared redis client connection.  Call this from
-        :py:func:`hal_hw_interface.ros_hal_component.RosHalComponent.shutdown_component`
-        to close the connection at the HAL component's exit.
-        '''
-        config = cls._cached_objs.get('redis_config_client', None)
-        if config is not None:
-            config.stop()
