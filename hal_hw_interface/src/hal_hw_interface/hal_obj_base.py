@@ -69,3 +69,13 @@ class HalObjBase(object):
             suffix,
             rospy.get_param('{}/{}'.format(self.compname, suffix), default),
         )
+
+    def add_shutdown_callback(self, cb):
+        """Add a shutdown callback
+
+        Add a callback performing some extra shutdown action (such as
+        disconnect from a service) to a list that will be run from
+        :py:func:`hal_hw_interface.ros_hal_component.RosHalComponent.shutdown_component`
+        at component shut down time.
+        """
+        self._cached_objs.setdefault('shutdown_cbs', []).append(cb)
