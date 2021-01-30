@@ -67,7 +67,7 @@ class RosHalComponent(HalObjBase):
         rospy.loginfo("Initializing '%s' component" % self.compname)
 
         # Publisher update rate in Hz
-        self.update_rate = rospy.get_param('%s/update_rate' % self.compname, 10)
+        self.update_rate = self.get_ros_param('update_rate', 10)
         self.rate = rospy.Rate(self.update_rate)
         rospy.logdebug("Publish update rate = %.1f" % self.update_rate)
 
@@ -80,17 +80,6 @@ class RosHalComponent(HalObjBase):
         # Finish initialization
         self.hal_comp.ready()
         rospy.loginfo("User component '%s' ready" % self.compname)
-
-    def get_param(self, key_suffix, default=None):
-        """Shorthand for `rospy.get_param(self.compname + key_suffix)`
-
-        :param key_suffix: A suffix to append to :py:attr:`compname`
-          to form the full ROS parameter name
-        :type key_suffix: str
-        :param default: A default value, same as :py:func:`rospy.get_param`
-        """
-        key = '{}/{}'.format(self.compname, key_suffix)
-        return rospy.get_param(key, default)
 
     def setup_component(self):
         """Set up the ROS node and HAL component
