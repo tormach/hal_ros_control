@@ -5,6 +5,7 @@ from hal_hw_interface.ros_hal_pin import (
     RosHalPinPublisher,
     RosHalPinService,
 )
+from hal_hw_interface.redis_store_hal_pin import RedisStoreHalPin
 
 
 class HalIO(RosHalComponent):
@@ -26,10 +27,18 @@ class HalIO(RosHalComponent):
             enable:
               hal_type: BIT
               hal_dir: OUT
+          publish_pins:
+            digital_out_1:
+              hal_type: BIT
+              hal_dir: IN
           service_pins:
             encoder_scale:
               hal_type: FLOAT
               hal_dir: OUT
+          redis_pins:
+            current_tool:
+              hal_type: U32
+              hal_dir: IO
 
     The periodic :py:func:`update` function calls the pins'
     :py:func:`update` functions, if any.
@@ -45,6 +54,7 @@ class HalIO(RosHalComponent):
             subscribe_pins=RosHalPinSubscriber,
             publish_pins=RosHalPinPublisher,
             service_pins=RosHalPinService,
+            redis_pins=RedisStoreHalPin,
         )
         for config_key, pin_class in pin_class_map.items():
             pins = self.get_ros_param(config_key, dict())
