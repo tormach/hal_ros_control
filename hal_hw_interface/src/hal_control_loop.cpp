@@ -139,7 +139,7 @@ void HalRosControlLoop::update(long period)
   hardware_interface_->write(ros_period);
 }
 
-}  // namespace
+}  // namespace hal_hw_interface
 
 // The HAL hardware interface control loop object
 boost::shared_ptr<hal_hw_interface::HalRosControlLoop> control_loop_;

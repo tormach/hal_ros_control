@@ -13,7 +13,6 @@
         hal_hw_interface.ros_hal_pin.RosHalPinService
 """
 
-import sys
 import attr
 import rospy
 from hal_hw_interface.hal_obj_base import HalObjBase
@@ -27,7 +26,7 @@ from math import isclose
 
 @attr.s
 class RosHalPin(HalObjBase):
-    '''Basic HAL pin for use in
+    """Basic HAL pin for use in
     :py:class:`hal_hw_interface.ros_hal_component.RosHalComponent`
     user components
 
@@ -42,7 +41,7 @@ class RosHalPin(HalObjBase):
     :type hal_type:  :py:class:`hal_hw_interface.hal_pin_attrs.HalPinType`
     :param hal_dir: HAL pin direction, one of :code:`['IN', 'OUT', 'IO']`
     :type hal_dir:  :py:class:`hal_hw_interface.hal_pin_attrs.HalPinDir`
-    '''
+    """
 
     _default_hal_type = None
     _default_hal_dir = 'IN'  # Subclasses may override for hal_dir attribute
@@ -64,13 +63,13 @@ class RosHalPin(HalObjBase):
 
     @property
     def pin_name(self):
-        '''Return the pin_name; read-only property
+        """Return the pin_name; read-only property
 
         In some subclasses, this may not be the same as the
         :code:`name` parameter supplied to the constructor.
 
         :returns:  :py:class:`str` pin name
-        '''
+        """
         return self.name
 
     def __attrs_post_init__(self):
@@ -93,8 +92,7 @@ class RosHalPin(HalObjBase):
         pass
 
     def update(self):
-        '''An update function; used in some subclasses
-        '''
+        """An update function; used in some subclasses"""
         # May be implemented in subclasses
         raise NotImplementedError()
 
@@ -116,10 +114,10 @@ class RosHalPin(HalObjBase):
 
     @property
     def compname(self):
-        '''The HAL component name; read-only property
+        """The HAL component name; read-only property
 
         :returns: :py:class:`str` of component name
-        '''
+        """
         return self.hal_comp.getprefix()
 
     @classmethod
@@ -129,7 +127,7 @@ class RosHalPin(HalObjBase):
 
 @attr.s
 class RosHalPinPublisher(RosHalPin):
-    '''HAL pin with attached ROS publisher
+    """HAL pin with attached ROS publisher
 
     This HAL pin is set with publishes its value on a ROS topic,
     :code:`<compname>/<name>` by default.  Its :py:func:`update` function
@@ -161,7 +159,7 @@ class RosHalPinPublisher(RosHalPin):
       directions make sense for all subclasses
 
     .. todo::  Link documentation to ROS ``srv`` messages
-    '''
+    """
 
     _default_hal_dir = 'IN'
     pub_topic = attr.ib()
@@ -206,21 +204,23 @@ class RosHalPinPublisher(RosHalPin):
         return changed
 
     def update(self):
-        """If pin value has changed, publish to ROS topic
-        """
+        """If pin value has changed, publish to ROS topic"""
         value = self.get_pin()
         if self._value_changed(value):
             rospy.logdebug(
-                "publish_pins:  Publishing pin '%s' value '%s'" %
-                (self.pin_name, self.get_pin()))
-            rospy.loginfo(f'Pin {self.pin_name} changed:  old={self._msg.data}; new={value}')
+                "publish_pins:  Publishing pin '%s' value '%s'"
+                % (self.pin_name, self.get_pin())
+            )
+            rospy.loginfo(
+                f'Pin {self.pin_name} changed:  old={self._msg.data}; new={value}'
+            )
             self._msg.data = value
             self.pub.publish(self._msg)
 
 
 @attr.s
 class RosHalPinSubscriber(RosHalPinPublisher):
-    '''HAL pin with attached ROS publisher and subscriber
+    """HAL pin with attached ROS publisher and subscriber
 
     This HAL pin isn't set via :py:func:`set_pin`, but subscribes to a
     ROS topic for its value.  As a subclass of
@@ -241,7 +241,7 @@ class RosHalPinSubscriber(RosHalPinPublisher):
     :type pub_topic: str
     :param sub_topic: ROS subscriber topic
     :type sub_topic: str
-    '''
+    """
 
     _default_hal_dir = 'OUT'
     sub_topic = attr.ib()
@@ -273,14 +273,13 @@ class RosHalPinSubscriber(RosHalPinPublisher):
             )
 
         if self._value_changed(msg.data):
-            rospy.loginfo(f'Pin {self.pin_name} subscriber change:  old={self._msg.data}; new={msg.data}')
             self.set_pin(msg.data)
             self.update()
 
 
 @attr.s
 class RosHalPinService(RosHalPinPublisher):
-    '''HAL pin with attached ROS service and publisher
+    """HAL pin with attached ROS service and publisher
 
     This HAL pin may be set via a ROS service, in addition to
     :py:func:`set_pin`.  As a subclass of
@@ -303,7 +302,7 @@ class RosHalPinService(RosHalPinPublisher):
     :type pub_topic: str
     :param service_name: ROS service name
     :type service_name: str
-    '''
+    """
 
     _default_hal_dir = 'OUT'
 

@@ -47,37 +47,37 @@
 namespace hal_hw_interface
 {
 /**
-* \brief A `ros_control_boilerplate::GenericHWInterface` subclass for Machinekit
-* HAL
-*
-* The `hal_hw_interface::HalHWInterface` class implements the Machinekit HAL
-* realtime component:
-* 1. Initializes the component
-* 2. Implements the ros_control `read()` and `write()` functions
-* 3. Shuts down the component
-*
-* The HAL component name is `hw_hw_interface`, and has one `reset` pin and six
-* pins for each joint.
-*
-* The `reset` pin resets the ROS controllers whenever it is high.
-*
-* Joint names are read from configuration in [`ros_control_boilerplate`][1].
-* Six HAL pins are created for each joint:
-*
-* * Output pins connecting joint command from ROS into HAL
-*   * `<joint>.pos-cmd`, `<joint>.vel-cmd` and `<joint>.eff-cmd`
-* * Input pins connecting joint feedback from HAL back to ROS
-*   * `<joint>.pos-fb`, `<joint>.vel-fb` and `<joint>.eff-fb`
-*
-* The `read()` function reads joint feedback values from the `<joint>.*-fb` HAL
-* pins into the `hardware_interface::JointHandle`, and the `write()` function
-* writes joint command values back out to the `<joint>.*-cmd` HAL pins.
-*
-* This is plumbed into a ROS node in the `hal_hw_interface::HalRosControlLoop`
-* class.
-*
-* [1]: https://github.com/PickNikRobotics/ros_control_boilerplate
-*/
+ * \brief A `ros_control_boilerplate::GenericHWInterface` subclass for
+ * Machinekit HAL
+ *
+ * The `hal_hw_interface::HalHWInterface` class implements the Machinekit HAL
+ * realtime component:
+ * 1. Initializes the component
+ * 2. Implements the ros_control `read()` and `write()` functions
+ * 3. Shuts down the component
+ *
+ * The HAL component name is `hw_hw_interface`, and has one `reset` pin and six
+ * pins for each joint.
+ *
+ * The `reset` pin resets the ROS controllers whenever it is high.
+ *
+ * Joint names are read from configuration in [`ros_control_boilerplate`][1].
+ * Six HAL pins are created for each joint:
+ *
+ * * Output pins connecting joint command from ROS into HAL
+ *   * `<joint>.pos-cmd`, `<joint>.vel-cmd` and `<joint>.eff-cmd`
+ * * Input pins connecting joint feedback from HAL back to ROS
+ *   * `<joint>.pos-fb`, `<joint>.vel-fb` and `<joint>.eff-fb`
+ *
+ * The `read()` function reads joint feedback values from the `<joint>.*-fb` HAL
+ * pins into the `hardware_interface::JointHandle`, and the `write()` function
+ * writes joint command values back out to the `<joint>.*-cmd` HAL pins.
+ *
+ * This is plumbed into a ROS node in the `hal_hw_interface::HalRosControlLoop`
+ * class.
+ *
+ * [1]: https://github.com/PickNikRobotics/ros_control_boilerplate
+ */
 
 class HalHWInterface : public ros_control_boilerplate::GenericHWInterface
 {
@@ -179,6 +179,6 @@ private:
 
 };  // HalHWInterface
 
-}  // hardware_interface
+}  // namespace hal_hw_interface
 
 #endif  // HAL_HW_INTERFACE_HAL_HW_INTERFACE_H

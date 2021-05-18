@@ -22,7 +22,7 @@ from hal_hw_interface.ros_hal_pin import RosHalPin, HalPinDir
 
 @attr.s
 class RedisStoreHalPin(RosHalPin):
-    '''HAL pin attached to :code:`redis_store` ROS package's parameter
+    """HAL pin attached to :code:`redis_store` ROS package's parameter
     server
 
     This HAL pin's value may be read from and written to a
@@ -38,7 +38,7 @@ class RedisStoreHalPin(RosHalPin):
     :type hal_type:  :py:class:`hal_hw_interface.hal_pin_attrs.HalPinType`
     :param hal_dir: HAL pin direction, one of :code:`['IN', 'OUT', 'IO']`
     :type hal_dir:  :py:class:`hal_hw_interface.hal_pin_attrs.HalPinDir`
-    '''
+    """
 
     key = attr.ib()
 
@@ -47,7 +47,7 @@ class RedisStoreHalPin(RosHalPin):
     def _key_default(self):
         return '{}/{}'.format(self.compname, self.pin_name)
 
-    redis_service_timeout_default = 20.0 # seconds to wait for service
+    redis_service_timeout_default = 20.0  # seconds to wait for service
 
     @property
     def _redis_config(self):
@@ -56,8 +56,7 @@ class RedisStoreHalPin(RosHalPin):
 
         # Autovivify
         timeout = self.get_ros_param(
-            'redis_service_timeout',
-            self.redis_service_timeout_default
+            'redis_service_timeout', self.redis_service_timeout_default
         )
         rospy.loginfo(f"Connecting to redis database, timeout {timeout}s")
         client = redis_config.ConfigClient(subscribe=True)
@@ -92,8 +91,7 @@ class RedisStoreHalPin(RosHalPin):
         self._prev_pin_val = self._prev_redis_val = value
 
     def update(self):
-        """Write changed pin value to redis for input and IO pins
-        """
+        """Write changed pin value to redis for input and IO pins"""
         new_val = self.get_pin()
         if self.hal_dir == HalPinDir('OUT') or self._prev_pin_val == new_val:
             return  # Not applicable

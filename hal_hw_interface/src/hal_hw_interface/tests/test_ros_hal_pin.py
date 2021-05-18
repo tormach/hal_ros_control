@@ -221,8 +221,7 @@ class TestRosHalPin(object):
         assert self.test_class._isclose(a, b, 1e-9, 1e-9) is res
 
     def test_ros_hal_pin_attrs(self, obj, mock_comp_obj):
-        '''Test that attributes are set as expected, including defaults
-        '''
+        """Test that attributes are set as expected, including defaults"""
         assert obj.pin_name == self.obj_test_name(obj)
         assert obj.hal_comp is mock_comp_obj
         assert type(obj.hal_type) is HalPinType
@@ -231,15 +230,13 @@ class TestRosHalPin(object):
         assert obj.hal_dir == HalPinDir(self.hal_dir(obj))
 
     def test_ros_hal_pin_pin_name(self, obj):
-        '''Test pin_name generation
-        '''
+        """Test pin_name generation"""
         assert obj.pin_name == self.obj_test_name(obj)
 
     newpin_calls = 1
 
     def test_ros_hal_pin_newpin(self, obj, mock_comp_obj):
-        '''Test that hal.component.newpin() is called
-        '''
+        """Test that hal.component.newpin() is called"""
         print(mock_comp_obj.newpin.mock_calls)
         mock_comp_obj.newpin.assert_any_call(
             self.obj_test_name(obj),
@@ -249,8 +246,7 @@ class TestRosHalPin(object):
         assert mock_comp_obj.newpin.call_count == self.newpin_calls
 
     def test_ros_hal_pin_default_attr_hal_type(self, all_patches):
-        '''Test default hal_type
-        '''
+        """Test default hal_type"""
         # This one creates the object in the test, so `all_patches`
         # needed
         if self.default_hal_type is None:
@@ -282,8 +278,7 @@ class TestRosHalPinPublisher(TestRosHalPin):
         assert obj.pub_topic == self.pub_topic(obj)
 
     def test_ros_hal_pin_publisher_init(self, obj, mock_objs):
-        '''Test that __init__() creates rospy.Publisher object
-        '''
+        """Test that __init__() creates rospy.Publisher object"""
         print(mock_objs['rospy_Publisher'].mock_calls)
         assert obj.pub_topic == self.pub_topic(obj)
         mock_objs['rospy_Publisher'].assert_called_with(
@@ -292,8 +287,7 @@ class TestRosHalPinPublisher(TestRosHalPin):
         assert obj.pub is mock_objs['rospy_Publisher_obj']
 
     def test_ros_hal_pin_publisher_value_changed(self, obj, data, mock_objs):
-        '''Test _value_changed() function
-        '''
+        """Test _value_changed() function"""
         assert obj.get_ros_param('relative_tolerance', 1e-9) == 1e-9
         assert obj.get_ros_param('absolute_tolerance', 1e-9) == 1e-9
 
@@ -334,16 +328,14 @@ class TestRosHalPinSubscriber(TestRosHalPinPublisher):
         assert obj.sub_topic == self.sub_topic(obj)
 
     def test_ros_hal_pin_subscriber_init(self, obj, mock_objs):
-        '''Test that __init__() creates rospy.Subscriber object
-        '''
+        """Test that __init__() creates rospy.Subscriber object"""
         mock_objs['rospy_Subscriber'].assert_called_with(
             self.sub_topic(obj), self.msg_type(obj), obj._subscriber_cb
         )
         assert obj.sub is mock_objs['rospy_Subscriber_obj']
 
     def test_ros_hal_pin_subscriber_cb(self, obj, data, mock_comp_obj):
-        '''Test that HAL pin is set in subscriber callback
-        '''
+        """Test that HAL pin is set in subscriber callback"""
         other_value = self.other_value(obj, data)
         obj._subscriber_cb(self.msg_type(obj)(other_value))
         mock_comp_obj.__setitem__.assert_called_with(
@@ -351,8 +343,7 @@ class TestRosHalPinSubscriber(TestRosHalPinPublisher):
         )
 
     def test_ros_hal_pin_subscriber_bad_msg_type(self, obj):
-        '''Test that invalid message types are caught
-        '''
+        """Test that invalid message types are caught"""
         msg = UInt16(42)
         with pytest.raises(HalHWInterfaceException):
             obj._subscriber_cb(msg)
@@ -385,8 +376,7 @@ class TestRosHalPinService(TestRosHalPinPublisher):
         assert obj.service_msg_type == self.service_msg_type(obj)
 
     def test_ros_hal_pin_service_init(self, obj, mock_objs):
-        '''Test that __init__() creates rospy.Service object
-        '''
+        """Test that __init__() creates rospy.Service object"""
         assert obj.service_name == self.service_name(obj)
         mock_objs['rospy_Service'].assert_called_with(
             self.service_name(obj), self.service_msg_type(obj), obj._svc_cb
@@ -394,8 +384,7 @@ class TestRosHalPinService(TestRosHalPinPublisher):
         assert obj.service is mock_objs['rospy_Service_obj']
 
     def test_ros_hal_pin_service_cb(self, obj, data):
-        '''Test that the HAL pin is set during callback
-        '''
+        """Test that the HAL pin is set during callback"""
         msg = self.service_msg_type(obj)
         call_value = self.other_value(obj, data)
         msg.data = call_value

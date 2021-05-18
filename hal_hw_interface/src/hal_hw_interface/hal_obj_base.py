@@ -52,7 +52,7 @@ class HalObjBase(object):
         return self._cached_objs['hal_comp']
 
     def get_ros_param(self, suffix, default=None):
-        '''Retrieve a parameter from the ROS param server, key name prefixed
+        """Retrieve a parameter from the ROS param server, key name prefixed
         with HAL component name
 
         This is shorthand for retrieving a ROS param server key
@@ -64,7 +64,7 @@ class HalObjBase(object):
         :type default: any
         :returns: parameter value
         :rtype: XmlRpcLegalValue
-        '''
+        """
         return self._cached_objs.setdefault(
             suffix,
             rospy.get_param('{}/{}'.format(self.compname, suffix), default),

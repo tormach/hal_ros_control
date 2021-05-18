@@ -35,8 +35,7 @@ class TestRosHalComponent(object):
     def test_ros_hal_component_init(
         self, obj, mock_rospy, mock_comp_obj, mock_objs
     ):
-        '''Test RosHalComponent.__init__()
-        '''
+        """Test RosHalComponent.__init__()"""
         # ROS node initialized
         mock_rospy['init_node'].assert_called_with(obj.compname)
         # obj.rate was created from rospy.Rate with param value
@@ -55,17 +54,16 @@ class TestRosHalComponent(object):
         obj.hal_comp.ready.assert_called_once_with()
 
     def test_ros_hal_component_get_param(self, obj, mock_objs):
-        '''Test get_param()
-        '''
+        """Test get_param()"""
         res = obj.get_ros_param('relative_tolerance', 42)
         assert res == 1e-9
         res = obj.get_ros_param('bogus_key', 88)
         assert res == 88
 
     def test_ros_hal_component_run(self, obj, mock_objs):
-        '''Test run() (fixture loops three times); should call update() and
+        """Test run() (fixture loops three times); should call update() and
         rate.sleep()
-        '''
+        """
         obj.run()
         assert obj.count == 3
         assert mock_objs['rospy_Rate_obj'].sleep.call_count == 3

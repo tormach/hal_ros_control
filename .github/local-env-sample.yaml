@@ -3,16 +3,13 @@
 #
 # DO NOT COMMIT THIS TO GIT.  It stores sensitive secrets.
 
-# GitHub user/organization and repository name
-DOCKER_REGISTRY_USER: my_github_id
-DOCKER_REGISTRY_REPO: my_github_repo
-
 # Docker registry settings
 #
 # docker.pkg.github.com registry needs API key
 # https://docs.github.com/en/packages/using-github-packages-with-your-projects-ecosystem/configuring-docker-for-use-with-github-packages
 DOCKER_REGISTRY_URL: https://docker.pkg.github.com
 DOCKER_REGISTRY_USER: my_github_id
+DOCKER_REGISTRY_REPO: my_github_repo
 # DANGER:  Putting a password in this script is dangerous!  Look for a
 # more secure way to set this environment variable.
 #DOCKER_REGISTRY_PASSWORD: adc83b19e793491b1c6ea0fd8b46cd9f32e592fc

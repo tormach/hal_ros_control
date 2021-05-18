@@ -47,22 +47,21 @@ __AUTHOR__="Jeroen de Bruijn"
 # Re-run in Docker if $DOCKER_IMAGE is set
 if test -n "$DOCKER_IMAGE"; then
     exec docker run \
-         --rm -t \
-         -v $HOME:$HOME -w $(pwd) \
-         -e UID=`id -u` \
-         -e GID=`id -g` \
-         -e HOME \
-         -e USER=${USER} \
-         -e TRAVIS_REPO_SLUG \
-         -e TRAVIS_BUILD_NUMBER \
-         -e TRAVIS_COMMIT \
-         -e DOC_SUBDIRS \
-         -e GH_REPO_TOKEN \
-         -e NO_CLEAN \
-         ${DOCKER_IMAGE} \
-         $0 "$@"
+        --rm -t \
+        -v $HOME:$HOME -w $(pwd) \
+        -e UID=$(id -u) \
+        -e GID=$(id -g) \
+        -e HOME \
+        -e USER=${USER} \
+        -e TRAVIS_REPO_SLUG \
+        -e TRAVIS_BUILD_NUMBER \
+        -e TRAVIS_COMMIT \
+        -e DOC_SUBDIRS \
+        -e GH_REPO_TOKEN \
+        -e NO_CLEAN \
+        ${DOCKER_IMAGE} \
+        $0 "$@"
 fi
-
 
 ################################################################################
 ##### Setup this script and get the current gh-pages branch.               #####
@@ -75,8 +74,8 @@ cd "$(dirname $0)"
 # Computed parameters
 #
 # - GitHub repo variables from $TRAVIS_REPO_SLUG
-GH_REPO_ID=${GH_REPO_ID:-${TRAVIS_REPO_SLUG#/*}}  # my_ghid/my_repo -> my_ghid
-GH_REPO_NAME=${GH_REPO_NAME:-${TRAVIS_REPO_SLUG#*/}}  # my_ghid/my_repo -> my_repo
+GH_REPO_ID=${GH_REPO_ID:-${TRAVIS_REPO_SLUG#/*}}     # my_ghid/my_repo -> my_ghid
+GH_REPO_NAME=${GH_REPO_NAME:-${TRAVIS_REPO_SLUG#*/}} # my_ghid/my_repo -> my_repo
 GH_REPO_URI=${GH_REPO_URI:-github.com/$TRAVIS_REPO_SLUG}
 GH_REPO_PULL_URL=${GH_REPO_PULL_URL:-https://${GH_REPO_URI}.git}
 GH_REPO_PUSH_URL=${GH_REPO_PUSH_URL:-https://${GH_REPO_TOKEN}@${GH_REPO_URI}}
@@ -165,7 +164,7 @@ for subdir in ${DOC_SUBDIRS}; do
     echo "Running rosdoc_lite for $subdir" >&2
     rosdoc_lite . 2>&1 | tee doc/rosdoc.log
     cd -
-    cp -a  src/${GH_REPO_NAME}/$subdir/doc/html/* doc/
+    cp -a src/${GH_REPO_NAME}/$subdir/doc/html/* doc/
 done
 
 ################################################################################
@@ -194,7 +193,7 @@ if [ -f "index.html" ]; then
         # Force push to the remote gh-pages branch.
         # The ouput is redirected to /dev/null to hide any sensitive credential data
         # that might otherwise be exposed.
-        git push --force "${GH_REPO_PUSH_URL}" > /dev/null 2>&1
+        git push --force "${GH_REPO_PUSH_URL}" >/dev/null 2>&1
     else
         echo 'Not pushing docs with no $GH_REPO_TOKEN set' >&2
     fi

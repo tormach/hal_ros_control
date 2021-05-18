@@ -3,9 +3,9 @@ import hal
 
 
 class HalPinAttrBase(int):
-    '''Subclass int to make a simple interface for accessing
+    """Subclass int to make a simple interface for accessing
     hal.HAL_<suffix> enums by integer or string
-    '''
+    """
 
     _suffixes = []  # hal.HAL_%s; define in subclasses
     _updated = False
@@ -22,8 +22,7 @@ class HalPinAttrBase(int):
         _bwd_map[attr_short] = value
 
     def __new__(cls, value):
-        '''Create new object, translating strings to ints and validating value
-        '''
+        """Create new object, translating strings to ints and validating value"""
         if isinstance(value, int):
             if cls._fwd_map.get(value, None) not in cls._suffixes:
                 raise ValueError("Illegal value '{}'".format(value))

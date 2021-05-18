@@ -66,12 +66,15 @@ void HalHWInterface::init_hal(void (*funct)(void*, long))
     HAL_ROS_LOG_INFO(CNAME, "%s: Init joint #%zu %s", CNAME, ix,
                      joint_names_[ix].c_str());
 
-    if (!create_joint_float_pins(ix, &joint_pos_cmd_ptrs_, HAL_OUT, "pos-"
-                                                                    "cmd") ||
-        !create_joint_float_pins(ix, &joint_vel_cmd_ptrs_, HAL_OUT, "vel-"
-                                                                    "cmd") ||
-        !create_joint_float_pins(ix, &joint_eff_cmd_ptrs_, HAL_OUT, "eff-"
-                                                                    "cmd") ||
+    if (!create_joint_float_pins(ix, &joint_pos_cmd_ptrs_, HAL_OUT,
+                                 "pos-"
+                                 "cmd") ||
+        !create_joint_float_pins(ix, &joint_vel_cmd_ptrs_, HAL_OUT,
+                                 "vel-"
+                                 "cmd") ||
+        !create_joint_float_pins(ix, &joint_eff_cmd_ptrs_, HAL_OUT,
+                                 "eff-"
+                                 "cmd") ||
         !create_joint_float_pins(ix, &joint_pos_fb_ptrs_, HAL_IN, "pos-fb") ||
         !create_joint_float_pins(ix, &joint_vel_fb_ptrs_, HAL_IN, "vel-fb") ||
         !create_joint_float_pins(ix, &joint_eff_fb_ptrs_, HAL_IN, "eff-fb"))
@@ -212,4 +215,4 @@ void HalHWInterface::shutdown()
   }
 }
 
-}  // namespace
+}  // namespace hal_hw_interface

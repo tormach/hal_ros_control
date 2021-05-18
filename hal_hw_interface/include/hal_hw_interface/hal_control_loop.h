@@ -40,21 +40,21 @@
 namespace hal_hw_interface
 {
 /**
-* \brief A `ros_control_boilerplate::GenericHWControlLoop`-like class for
-* Machinekit HAL
-*
-* Implements the ROS node and ros_control `read()`/`update()`/`write()` loop
-* running in a Machinekit HAL component
-*
-* This class does the messy work of managing a C++ ROS node linked into a C HAL
-* component.  It sets up the control loop object in the component's
-* `rtapi_app_main()` init function, runs the ros_control `read(); update();
-* write()` in the update function, and finally shuts down the node and
-* component.
-*
-* Most of the real time work is done in the `hal_hw_interface::HalHWInterface`
-* class.
-*/
+ * \brief A `ros_control_boilerplate::GenericHWControlLoop`-like class for
+ * Machinekit HAL
+ *
+ * Implements the ROS node and ros_control `read()`/`update()`/`write()` loop
+ * running in a Machinekit HAL component
+ *
+ * This class does the messy work of managing a C++ ROS node linked into a C HAL
+ * component.  It sets up the control loop object in the component's
+ * `rtapi_app_main()` init function, runs the ros_control `read(); update();
+ * write()` in the update function, and finally shuts down the node and
+ * component.
+ *
+ * Most of the real time work is done in the `hal_hw_interface::HalHWInterface`
+ * class.
+ */
 
 class HalRosControlLoop
 {
@@ -128,6 +128,6 @@ protected:
 
 };  // class
 
-}  // namespace
+}  // namespace hal_hw_interface
 
 #endif  // HAL_HW_INTERFACE_HAL_CONTROL_LOOP_H

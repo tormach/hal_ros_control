@@ -49,9 +49,12 @@ class TestRedisStoreHalPin(TestRosHalPin):
         )
 
     def test_redis_store_pin_set_pin_no_defaults(self, all_patches):
-        mock_comp_obj, mock_rospy, mock_objs, mock_redis_client_obj = (
-            all_patches
-        )
+        (
+            mock_comp_obj,
+            mock_rospy,
+            mock_objs,
+            mock_redis_client_obj,
+        ) = all_patches
         # Fake a redis param value and set the pin from redis
         obj = self.test_class('unconfigured_redis_pin', 'FLOAT')
         self.setup_hal_obj_base(mock_comp_obj)
