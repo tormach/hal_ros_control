@@ -1,11 +1,10 @@
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.1.0
+    rev: v4.0.1
     hooks:
       - id: check-ast
-      - id: check-byte-order-marker
+      - id: fix-byte-order-marker
       - id: trailing-whitespace
-        exclude: '.*\.patch'
       - id: check-docstring-first
       - id: check-executables-have-shebangs
       - id: check-json
@@ -14,7 +13,6 @@ repos:
       - id: check-xml
       - id: check-yaml
       - id: end-of-file-fixer
-      - id: fix-encoding-pragma
 
 - repo: local
   hooks:
@@ -34,21 +32,6 @@ repos:
         language: system
         types: [file, c++]
         # note: formatting style in .clang-format
-
-    -   id: qmllint
-        name: Run qmllint
-        description: QML linter
-        entry: qmllint
-        language: system
-        files: .*\.qml
-
-    -   id: qmlfmt
-        name: Run qmlfmt
-        description: qmlfmt QML code formatter.
-        entry: qmlfmt -w -e
-        args: [-i 2, -t 2]
-        language: system
-        files: .*\.qml
 
     -   id: shfmt
         name: Run shfmt
