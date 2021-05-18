@@ -166,24 +166,26 @@ class RosHalPinPublisher(RosHalPin):
     _default_hal_dir = 'IN'
     pub_topic = attr.ib()
     msg_type = attr.ib()
-    last_value = attr.ib(default=None)
 
     # Attribute default factories
     @pub_topic.default
     def _pub_topic_default(self):
         return '{}/{}'.format(self.compname, self.pin_name)
 
+    _pin_to_msg_type_map = {
+        HalPinType('BIT'): Bool,
+        HalPinType('U32'): UInt32,
+        HalPinType('S32'): Int32,
+        HalPinType('FLOAT'): Float64,
+    }
+
     @msg_type.default
     def _msg_type_default(self):
-        return {
-            HalPinType('BIT'): Bool,
-            HalPinType('U32'): UInt32,
-            HalPinType('S32'): Int32,
-            HalPinType('FLOAT'): Float64,
-        }[self.hal_type]
+        return self._pin_to_msg_type_map[self.hal_type]
 
     def _ros_init(self):
         self._ros_publisher_init()
+        self._msg = self._pin_to_msg_type_map[self.hal_type](self.get_pin())
 
     def _ros_publisher_init(self):
         rospy.loginfo('Creating publisher on topic "{}"'.format(self.pub_topic))
@@ -193,26 +195,27 @@ class RosHalPinPublisher(RosHalPin):
 
     def _value_changed(self, value):
         if self.hal_type == HalPinType('FLOAT'):
-            changed = self.last_value is None or not self._isclose(
-                self.last_value,
+            changed = not self._isclose(
+                self._msg.data,
                 value,
                 rel_tol=self.get_ros_param('relative_tolerance', 1e-9),
                 abs_tol=self.get_ros_param('absolute_tolerance', 1e-9),
             )
         else:
-            changed = self.last_value != value
+            changed = self._msg.data != value
         return changed
 
     def update(self):
         """If pin value has changed, publish to ROS topic
         """
-        # rospy.logdebug(
-        #     "publish_pins:  Publishing pin '%s' value '%s'" %
-        #     (self.pin_name, self.get_pin()))
         value = self.get_pin()
         if self._value_changed(value):
-            self.last_value = value
-            self.pub.publish(value)
+            rospy.logdebug(
+                "publish_pins:  Publishing pin '%s' value '%s'" %
+                (self.pin_name, self.get_pin()))
+            rospy.loginfo(f'Pin {self.pin_name} changed:  old={self._msg.data}; new={value}')
+            self._msg.data = value
+            self.pub.publish(self._msg)
 
 
 @attr.s
@@ -249,7 +252,7 @@ class RosHalPinSubscriber(RosHalPinPublisher):
         return '{}/{}'.format(self.compname, self.pin_name)
 
     def _ros_init(self):
-        self._ros_publisher_init()
+        super()._ros_init()
         self._ros_subscriber_init()
 
     def _ros_subscriber_init(self):
@@ -269,7 +272,10 @@ class RosHalPinSubscriber(RosHalPinPublisher):
                 % (type(msg), self.pin_name, self.msg_type)
             )
 
-        self.set_pin(msg.data)
+        if self._value_changed(msg.data):
+            rospy.loginfo(f'Pin {self.pin_name} subscriber change:  old={self._msg.data}; new={msg.data}')
+            self.set_pin(msg.data)
+            self.update()
 
 
 @attr.s
@@ -309,19 +315,20 @@ class RosHalPinService(RosHalPinPublisher):
     def _service_name_default(self):
         return '{}/{}'.format(self.compname, self.pin_name)
 
+    _pin_to_service_msg_type_map = {
+        HalPinType('BIT'): SetBool,
+        HalPinType('U32'): SetUInt32,
+        HalPinType('S32'): SetInt32,
+        HalPinType('FLOAT'): SetFloat64,
+    }
+
     @service_msg_type.default
     def _service_msg_type_default(self):
-        return {
-            HalPinType('BIT'): SetBool,
-            HalPinType('U32'): SetUInt32,
-            HalPinType('S32'): SetInt32,
-            HalPinType('FLOAT'): SetFloat64,
-        }[self.hal_type]
+        return self._pin_to_service_msg_type_map[self.hal_type]
 
     def _ros_init(self):
+        super()._ros_init()
         self._ros_service_init()
-        # Publish the value on a topic, too
-        self._ros_publisher_init()
 
     def _ros_service_init(self):
         self.service = rospy.Service(
