@@ -62,11 +62,6 @@ public:
   /**
    * \brief Constructor
    *
-   * The constructor:
-   * * Sets up the ROS node
-   * * Runs the ROS spinner thread
-   * * Initializes the `hal_hw_interface::HalHWInterface` object
-   * * Initializes the `controller_manager::ControllerManager` object
    */
   HalRosControlLoop();
 
@@ -76,6 +71,16 @@ public:
    * Calls `shutdown()`
    */
   ~HalRosControlLoop();
+
+  /**
+   * \brief Initialize control loop object
+   *
+   * * Set up the ROS node
+   * * Run the ROS spinner thread
+   * * Initialize the `hal_hw_interface::HalHWInterface` object
+   * * Initialize the `controller_manager::ControllerManager` object
+   */
+  int init();
 
   /**
    * \brief Run one ros_control `read()/update()/write()` cycle

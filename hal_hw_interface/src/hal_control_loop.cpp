@@ -41,6 +41,10 @@ namespace hal_hw_interface
 {
 HalRosControlLoop::HalRosControlLoop() : node_is_shutdown(0)
 {
+}
+
+int HalRosControlLoop::init()
+{
   // ROS node handle
   nh_.reset(new ros::NodeHandle(""));
 
@@ -74,13 +78,16 @@ HalRosControlLoop::HalRosControlLoop() : node_is_shutdown(0)
                    CNAME);
 
   // Init HAL hardware interface
-  hardware_interface_->init_hal(&funct);
+  if (hardware_interface_->init_hal(&funct) != 0)
+    return 1;  // Failure
 
   HAL_ROS_LOG_INFO(CNAME, "%s: Done initializing HAL hardware interface",
                    CNAME);
 
   HAL_ROS_LOG_INFO(CNAME, "HAL control loop ready.");
-}  // constructor
+
+  return 0;  // Success
+}  // init
 
 // Non-RT thread CB function
 void HalRosControlLoop::serviceNonRtRosQueue()
@@ -157,8 +164,7 @@ int rtapi_app_main(void)
 
   // Create HAL controller and hardware interface
   control_loop_.reset(new hal_hw_interface::HalRosControlLoop());
-
-  return 0;
+  return control_loop_->init();
 }
 
 void funct(void* arg, long period)

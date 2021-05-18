@@ -95,9 +95,8 @@ public:
    *
    * Initializes the HAL component and sets up HAL pins for each joint.
    */
-  //* \todo Give this an int return value for reporting failure
   //* \todo Make the `reset` pin an IO pin
-  void init_hal(void (*funct)(void*, long));
+  int init_hal(void (*funct)(void*, long));
 
   /**
    * \brief Create float-type HAL pins for each joint

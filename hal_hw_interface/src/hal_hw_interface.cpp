@@ -39,7 +39,7 @@ HalHWInterface::HalHWInterface(ros::NodeHandle& nh, urdf::Model* urdf_model)
 {
 }
 
-void HalHWInterface::init_hal(void (*funct)(void*, long))
+int HalHWInterface::init_hal(void (*funct)(void*, long))
 {
   HAL_ROS_LOG_INFO(CNAME, "%s: Initializing HAL hardware interface", CNAME);
 
@@ -53,8 +53,7 @@ void HalHWInterface::init_hal(void (*funct)(void*, long))
   if (comp_id_ < 0)
   {
     HAL_ROS_LOG_ERR(CNAME, "%s:  ERROR: Component creation ABORTED", CNAME);
-    // return false; // FIXME
-    return;
+    return false;
   }
 
   HAL_ROS_LOG_INFO(CNAME, "%s: Initialized HAL component", CNAME);
@@ -81,17 +80,15 @@ void HalHWInterface::init_hal(void (*funct)(void*, long))
     {
       HAL_ROS_LOG_ERR(CNAME, "%s: Failed to initialize joint %zu %s.%s", CNAME,
                       ix, CNAME, joint_names_[ix].c_str());
-      // return false; // FIXME
-      return;
+      return false;
     }
   }
 
-  // Initialize started pin
+  // Initialize reset pin
   if (!create_bit_pin(&reset_ptr_, HAL_IN, "reset"))
   {
     HAL_ROS_LOG_ERR(CNAME, "%s: Failed to initialize reset pin", CNAME);
-    // return false; // FIXME
-    return;
+    return false;
   }
 
   HAL_ROS_LOG_INFO(CNAME, "%s:  Initialized HAL pins", CNAME);
@@ -101,8 +98,7 @@ void HalHWInterface::init_hal(void (*funct)(void*, long))
   {
     HAL_ROS_LOG_INFO(CNAME, "%s: ERROR: hal_export_functf failed", CNAME);
     hal_exit(comp_id_);
-    // return false; // FIXME
-    return;
+    return false;
   }
   HAL_ROS_LOG_INFO(CNAME, "%s:  Exported HAL function", CNAME);
 
@@ -111,7 +107,7 @@ void HalHWInterface::init_hal(void (*funct)(void*, long))
 
   HAL_ROS_LOG_INFO(CNAME, "%s:  HAL component ready!", CNAME);
 
-  // return true; // FIXME
+  return true;
 }  // init()
 
 bool HalHWInterface::create_joint_float_pins(const std::size_t ix,
