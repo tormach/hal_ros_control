@@ -4,3 +4,7 @@
 .. moduleauthor:: John Morris <john@dovetail-automata.com>
 
 """
+
+__all__ = ('loadrt_local', 'hal', 'rtapi')
+
+from .loadrt_local import loadrt_local, hal, rtapi
