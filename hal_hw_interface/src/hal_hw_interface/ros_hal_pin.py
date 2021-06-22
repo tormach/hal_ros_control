@@ -182,14 +182,15 @@ class RosHalPinPublisher(RosHalPin):
         return self._pin_to_msg_type_map[self.hal_type]
 
     def _ros_init(self):
-        self._ros_publisher_init()
         self._msg = self._pin_to_msg_type_map[self.hal_type](self.get_pin())
+        self._ros_publisher_init()
 
     def _ros_publisher_init(self):
         rospy.loginfo('Creating publisher on topic "{}"'.format(self.pub_topic))
         self.pub = rospy.Publisher(
             self.pub_topic, self.msg_type, queue_size=1, latch=True
         )
+        self.pub.publish(self._msg)
 
     def _value_changed(self, value):
         if self.hal_type == HalPinType('FLOAT'):
