@@ -1,0 +1,8 @@
+- git:
+    local-name: redis_store
+    uri: https://github.com/zultron/redis_store.git
+    version: noetic-devel
+- git:
+    local-name: redis_store_msgs
+    uri: https://github.com/zultron/redis_store_msgs.git
+    version: noetic-devel
