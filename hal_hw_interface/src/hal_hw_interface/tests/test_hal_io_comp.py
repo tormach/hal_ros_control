@@ -76,15 +76,13 @@ class TestHalIO(object):
         get_param, test_pins = pin_params
         obj.setup_component()
 
-        # Put pins in dict and set values
+        # Set pin values
         for pin in obj.pins:
             mock_comp_obj.set_pin(pin.name, 1)
-            pin.last_value = 0
 
         # Run update() and check that pins changed
         print("----------- Running obj.update()")
         obj.update()
         for pin in obj.pins:
-            print("- pin %s" % pin)
-            assert pin.last_value == 1
-            pin.pub.publish.assert_called_with(1)
+            print(f"- pin {pin}")
+            pin.pub.publish.assert_called()

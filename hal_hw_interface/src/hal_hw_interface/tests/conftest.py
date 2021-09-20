@@ -12,23 +12,23 @@ def mock_objs():
 
 
 @pytest.fixture()
-def mock_comp_obj():
+def mock_comp_obj(request):
     # Mock hal.component and returned object
     # - Settable and readable pins
-    pin_value_map = dict(__default=0xDEADBEEF)
+    request.instance.pin_values = pin_values = dict(__default=0xDEADBEEF)
 
     def get_pin(key):
-        if key in pin_value_map:
-            value = pin_value_map[key]
+        if key in pin_values:
+            value = pin_values[key]
             print("Returning pin %s value=%s" % (key, value))
         else:
-            value = pin_value_map['__default']
+            value = pin_values['__default']
             print("Returning pin %s DEFAULT value=0x%x" % (key, value))
         return value
 
     def set_pin(key, value):
         print("Setting pin %s value=%s" % (key, value))
-        pin_value_map[key] = value
+        pin_values[key] = value
 
     mock_objs_dict['comp_name'] = 'test_comp'
     comp_getprefix = MagicMock(side_effect=lambda: mock_objs_dict['comp_name'])
@@ -140,10 +140,10 @@ def mock_rospy():
 
 
 @pytest.fixture()
-def mock_redis_client_obj():
+def mock_redis_client_obj(request):
     # Mock redis_store.ConfigClient method and returned object
     # - Settable and readable pins
-    key_value_map = dict(__default=0)
+    request.instance.key_value_map = key_value_map = dict(__default=0)
 
     def get_key(key):
         value = key_value_map.get(key, key_value_map['__default'])
@@ -158,6 +158,7 @@ def mock_redis_client_obj():
     mock_client_obj.configure_mock(
         name='mock_redis_client_obj',
         set_key=set_key,  # Won't increment mock_calls
+        on_update_received=list(),
         **{'get_param.side_effect': get_key, 'set_param.side_effect': set_key}
     )
 

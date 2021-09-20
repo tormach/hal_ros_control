@@ -21,55 +21,6 @@ from hal_hw_interface.ros_hal_pin import (
 )
 from std_msgs.msg import UInt16  # For invalid test case
 
-# List of object fixture parameter test cases to run for each class;
-# contains enough attributes for superset of all classes
-obj_cases = [
-    dict(  # 0 Test BIT, IO, names
-        name='reset',
-        hal_type='BIT',
-        hal_dir='IO',
-        sub_topic='/robot/reset',
-        pub_topic='/robot/reset',
-        service_name='/robot/reset',
-    ),
-    dict(name='bool', hal_type='BIT', hal_dir='OUT'),  # 1 Test BIT OUT
-    dict(name='bool', hal_type='BIT'),  # 2 Test BIT defaults
-    dict(name='u32_out', hal_type='U32', hal_dir='OUT'),  # 3 Test U32 OUT
-    dict(name='u32_out', hal_type='U32', hal_dir='IO'),  # 4 Test U32 IN
-    dict(name='u32_out', hal_type='U32'),  # 5 Test U32 default
-    dict(name='s32_out', hal_type='S32'),  # 6 Test S32 default
-    dict(name='float_io', hal_type='FLOAT', hal_dir='IO'),  # 7 Test FLOAT IO
-]
-
-# Message and pin data cases
-# Values are (bit, u32, s32, float)
-data_cases = [
-    dict(  # 0 Test random
-        pin_value=(False, 23, -4, 1e-9), other_value=(True, 27, 49, 3.98)
-    ),
-    dict(  # 1 Test random
-        pin_value=(True, 0, -39958, 54.7),
-        other_value=(False, 199, -33399, 149.33285),
-    ),
-    dict(  # 2 Test zeros -> random
-        pin_value=(False, 0, 0, 0.0),
-        other_value=(False, 0, 0, 0.0),
-        changed=False,
-    ),
-    dict(  # 3 Test data unchanged
-        pin_value=(True, 199, -33399, 149.33285),
-        other_value=(True, 199, -33399, 149.33285),
-        changed=False,
-    ),
-]
-
-isclose_cases = [
-    (0.0, 1.0, False),
-    (100, 10, False),
-    (0.0, 0.0, True),
-    (1e-9, 1.5e-9, True),
-]
-
 
 class TestRosHalPin(object):
     test_class = RosHalPin
@@ -81,12 +32,34 @@ class TestRosHalPin(object):
     #
     # Object and data fixtures
     #
+
+    # List of object fixture parameter test cases to run for each class;
+    # contains enough attributes for superset of all classes
+    obj_cases = [
+        dict(  # 0 Test BIT, IO, names
+            name='reset',
+            hal_type='BIT',
+            hal_dir='IO',
+            sub_topic='/robot/reset',
+            pub_topic='/robot/reset',
+            service_name='/robot/reset',
+        ),
+        dict(name='bool', hal_type='BIT', hal_dir='OUT'),  # 1 Test BIT OUT
+        dict(name='bool', hal_type='BIT'),  # 2 Test BIT defaults
+        dict(name='u32_out', hal_type='U32', hal_dir='OUT'),  # 3 Test U32 OUT
+        dict(name='u32_out', hal_type='U32', hal_dir='IO'),  # 4 Test U32 IN
+        dict(name='u32_out', hal_type='U32'),  # 5 Test U32 default
+        dict(name='s32_out', hal_type='S32'),  # 6 Test S32 default
+        dict(name='float_io', hal_type='FLOAT', hal_dir='IO'),  # 7 Test FLOAT IO
+    ]
+
     @pytest.fixture(params=obj_cases)
     def obj(self, request, mock_comp_obj, mock_rospy, mock_redis_client_obj):
         self.setup_hal_obj_base(mock_comp_obj)
         mock_comp_obj.setprefix(self.compname)
         attrs = dict()
         params = request.param.copy()
+        params.setdefault('hal_dir', self.default_hal_dir)
         name = params.pop('name')
         attr_names = ['hal_comp', 'hal_type', 'hal_dir', 'msg_type']
         attr_names += self.extra_attrs
@@ -97,11 +70,39 @@ class TestRosHalPin(object):
         obj._p = request.param  # Send test params in
         return obj
 
+    # Message and pin data cases
+    # Values are (bit, u32, s32, float)
+    data_cases = [
+        dict(  # 0 Test random
+            pin_value=(False, 23, -4, 1e-9), other_value=(True, 27, 49, 3.98)
+        ),
+        dict(  # 1 Test random
+            pin_value=(True, 0, -39958, 54.7),
+            other_value=(False, 199, -33399, 149.33285),
+        ),
+        dict(  # 2 Test zeros -> random
+            pin_value=(False, 0, 0, 0.0),
+            other_value=(False, 0, 0, 0.0),
+            changed=False,
+        ),
+        dict(  # 3 Test data unchanged
+            pin_value=(True, 199, -33399, 149.33285),
+            other_value=(True, 199, -33399, 149.33285),
+            changed=False,
+        ),
+    ]
+
     @pytest.fixture(params=data_cases)
     def data(self, request):
-        if 'changed' not in request.param:
-            request.param['changed'] = True
+        request.param.setdefault('changed', True)
         return request.param
+
+    isclose_cases = [
+        (0.0, 1.0, False),
+        (100, 10, False),
+        (0.0, 0.0, True),
+        (1e-9, 1.5e-9, True),
+    ]
 
     @pytest.fixture(params=isclose_cases)
     def isclose_case(self, request):
@@ -184,8 +185,7 @@ class TestRosHalPin(object):
         print(mock_comp_obj.mock_calls)
         assert mock_comp_obj.getprefix.call_count == 1
 
-    def test_ros_hal_pin_obj_fixture(self, obj, all_patches):
-        mock_comp_obj, mock_rospy, mock_objs = all_patches[:3]
+    def test_ros_hal_pin_obj_fixture(self, obj, mock_comp_obj, mock_rospy, mock_objs):
         assert hasattr(obj, '_p')
         params = obj._p
         assert obj.name == params['name']
@@ -268,6 +268,12 @@ class TestRosHalPinPublisher(TestRosHalPin):
     def pub_topic(self, obj):
         return self.get_obj_test_param(obj, 'pub_topic', self.ros_name(obj))
 
+    def set_last_value(self, obj, param):
+        # Set msg.data
+        value = super().set_last_value(obj, param)
+        obj._msg.data = value
+        return value
+
     #
     # Tests
     #
@@ -301,8 +307,10 @@ class TestRosHalPinPublisher(TestRosHalPin):
         self.set_last_value(obj, data)
         cur_value = self.set_pin(obj, data)
         obj.update()
+        assert obj._msg.data == cur_value
+        print(f'pub.publish calls:  {obj.pub.publish.mock_calls}')
         if data.get('changed'):
-            obj.pub.publish.assert_called_with(cur_value)
+            obj.pub.publish.assert_called_with(obj._msg)
         else:
             obj.pub.publish.assert_not_called
 
