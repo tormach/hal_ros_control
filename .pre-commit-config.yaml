@@ -21,7 +21,7 @@ repos:
         description: This hook formats Python code.
         entry: env LC_ALL=C.UTF-8 black -q
         language: system
-        args: [-S, -l, "80"]
+        args: [-l, "80"]
         types: [python]
 
     -   id: clang-format
