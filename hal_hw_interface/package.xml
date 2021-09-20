@@ -24,10 +24,13 @@
   <build_depend>message_generation</build_depend>
   <build_depend>python3-catkin-pkg</build_depend>
   <build_depend>redis_store</build_depend>
-  <build_depend>roslaunch</build_depend>
   <build_depend>machinekit-dev</build_depend>
 
-  <!-- Packages building HAL comps need machinekit-dev -->
+  <build_export_depend>ros_control_boilerplate</build_export_depend>
+  <build_export_depend>controller_manager</build_export_depend>
+  <build_export_depend>roscpp</build_export_depend>
+  <build_export_depend>rospy</build_export_depend>
+  <build_export_depend>redis_store</build_export_depend>
   <build_export_depend>machinekit-dev</build_export_depend>
 
   <exec_depend>ros_control_boilerplate</exec_depend>
@@ -42,8 +45,10 @@
   <exec_depend>rosbash</exec_depend>
   <exec_depend>machinekit</exec_depend>
 
+  <test_depend>rostest</test_depend>
   <test_depend>ros_pytest</test_depend>
   <test_depend>python3-mock</test_depend>
+  <test_depend>roslaunch</test_depend>
 
   <export>
     <rosdoc config="rosdoc.yaml" />
