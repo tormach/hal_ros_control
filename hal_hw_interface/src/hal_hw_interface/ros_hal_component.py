@@ -67,7 +67,7 @@ class RosHalComponent(HalObjBase):
         rospy.loginfo("Initializing '%s' component" % self.compname)
 
         # Publisher update rate in Hz
-        self.update_rate = self.get_ros_param('update_rate', 10)
+        self.update_rate = self.get_ros_param("update_rate", 10)
         self.rate = rospy.Rate(self.update_rate)
         rospy.logdebug("Publish update rate = %.1f" % self.update_rate)
 
@@ -124,7 +124,7 @@ class RosHalComponent(HalObjBase):
         Executes the list of callbacks defined by calls to
         :py:func:`hal_hw_interface.hal_obj_base.HalObjBase.add_shutdown_callback`.
         """
-        for cb in self._cached_objs.setdefault('shutdown_cbs', []):
+        for cb in self._cached_objs.setdefault("shutdown_cbs", []):
             cb()
 
     def main(self):

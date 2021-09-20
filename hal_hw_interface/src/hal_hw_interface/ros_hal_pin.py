@@ -44,7 +44,7 @@ class RosHalPin(HalObjBase):
     """
 
     _default_hal_type = None
-    _default_hal_dir = 'IN'  # Subclasses may override for hal_dir attribute
+    _default_hal_dir = "IN"  # Subclasses may override for hal_dir attribute
 
     name = attr.ib()
     hal_type = attr.ib(converter=HalPinType)
@@ -58,7 +58,7 @@ class RosHalPin(HalObjBase):
     @hal_type.default
     def _hal_type_default(self):
         if self._default_hal_type is None:
-            raise TypeError('%s requires hal_type= argument' % self.__class__)
+            raise TypeError("%s requires hal_type= argument" % self.__class__)
         return HalPinType(self._default_hal_type)
 
     @property
@@ -161,20 +161,20 @@ class RosHalPinPublisher(RosHalPin):
     .. todo::  Link documentation to ROS ``srv`` messages
     """
 
-    _default_hal_dir = 'IN'
+    _default_hal_dir = "IN"
     pub_topic = attr.ib()
     msg_type = attr.ib()
 
     # Attribute default factories
     @pub_topic.default
     def _pub_topic_default(self):
-        return '{}/{}'.format(self.compname, self.pin_name)
+        return "{}/{}".format(self.compname, self.pin_name)
 
     _pin_to_msg_type_map = {
-        HalPinType('BIT'): Bool,
-        HalPinType('U32'): UInt32,
-        HalPinType('S32'): Int32,
-        HalPinType('FLOAT'): Float64,
+        HalPinType("BIT"): Bool,
+        HalPinType("U32"): UInt32,
+        HalPinType("S32"): Int32,
+        HalPinType("FLOAT"): Float64,
     }
 
     @msg_type.default
@@ -192,12 +192,12 @@ class RosHalPinPublisher(RosHalPin):
         )
 
     def _value_changed(self, value):
-        if self.hal_type == HalPinType('FLOAT'):
+        if self.hal_type == HalPinType("FLOAT"):
             changed = not self._isclose(
                 self._msg.data,
                 value,
-                rel_tol=self.get_ros_param('relative_tolerance', 1e-9),
-                abs_tol=self.get_ros_param('absolute_tolerance', 1e-9),
+                rel_tol=self.get_ros_param("relative_tolerance", 1e-9),
+                abs_tol=self.get_ros_param("absolute_tolerance", 1e-9),
             )
         else:
             changed = self._msg.data != value
@@ -212,7 +212,8 @@ class RosHalPinPublisher(RosHalPin):
                 % (self.pin_name, self.get_pin())
             )
             rospy.loginfo(
-                f'Pin {self.pin_name} changed:  old={self._msg.data}; new={value}'
+                f"Pin {self.pin_name} changed:"
+                "  old={self._msg.data}; new={value}"
             )
             self._msg.data = value
             self.pub.publish(self._msg)
@@ -243,13 +244,13 @@ class RosHalPinSubscriber(RosHalPinPublisher):
     :type sub_topic: str
     """
 
-    _default_hal_dir = 'OUT'
+    _default_hal_dir = "OUT"
     sub_topic = attr.ib()
 
     # Attribute default factories
     @sub_topic.default
     def _sub_topic_default(self):
-        return '{}/{}'.format(self.compname, self.pin_name)
+        return "{}/{}".format(self.compname, self.pin_name)
 
     def _ros_init(self):
         super()._ros_init()
@@ -304,7 +305,7 @@ class RosHalPinService(RosHalPinPublisher):
     :type service_name: str
     """
 
-    _default_hal_dir = 'OUT'
+    _default_hal_dir = "OUT"
 
     service_name = attr.ib()
     service_msg_type = attr.ib()
@@ -312,13 +313,13 @@ class RosHalPinService(RosHalPinPublisher):
     # Attribute default factories
     @service_name.default
     def _service_name_default(self):
-        return '{}/{}'.format(self.compname, self.pin_name)
+        return "{}/{}".format(self.compname, self.pin_name)
 
     _pin_to_service_msg_type_map = {
-        HalPinType('BIT'): SetBool,
-        HalPinType('U32'): SetUInt32,
-        HalPinType('S32'): SetInt32,
-        HalPinType('FLOAT'): SetFloat64,
+        HalPinType("BIT"): SetBool,
+        HalPinType("U32"): SetUInt32,
+        HalPinType("S32"): SetInt32,
+        HalPinType("FLOAT"): SetFloat64,
     }
 
     @service_msg_type.default
@@ -337,4 +338,4 @@ class RosHalPinService(RosHalPinPublisher):
 
     def _svc_cb(self, req):
         self.set_pin(req.data)
-        return True, 'OK'
+        return True, "OK"

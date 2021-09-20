@@ -45,30 +45,30 @@ class RedisStoreHalPin(RosHalPin):
     # Attribute default factories
     @key.default
     def _key_default(self):
-        return '{}/{}'.format(self.compname, self.pin_name)
+        return "{}/{}".format(self.compname, self.pin_name)
 
     redis_service_timeout_default = 20.0  # seconds to wait for service
 
     @property
     def _redis_config(self):
-        if 'redis_config_client' in self._cached_objs:
-            return self._cached_objs['redis_config_client']
+        if "redis_config_client" in self._cached_objs:
+            return self._cached_objs["redis_config_client"]
 
         # Autovivify
         timeout = self.get_ros_param(
-            'redis_service_timeout', self.redis_service_timeout_default
+            "redis_service_timeout", self.redis_service_timeout_default
         )
         rospy.loginfo(f"Connecting to redis database, timeout {timeout}s")
         client = redis_config.ConfigClient(subscribe=True)
         client.wait_for_service(timeout=timeout)
-        self._cached_objs['redis_config_client'] = client
+        self._cached_objs["redis_config_client"] = client
         # Disconnect from redis at shutdown
         self.add_shutdown_callback(client.stop)
 
         return client
 
     def _ros_init(self):
-        if self.hal_dir == HalPinDir('IN'):
+        if self.hal_dir == HalPinDir("IN"):
             # Input pins write value out to redis
             self._prev_pin_val = self.get_pin()
             self._prev_redis_val = None
@@ -93,7 +93,7 @@ class RedisStoreHalPin(RosHalPin):
     def update(self):
         """Write changed pin value to redis for input and IO pins"""
         new_val = self.get_pin()
-        if self.hal_dir == HalPinDir('OUT') or self._prev_pin_val == new_val:
+        if self.hal_dir == HalPinDir("OUT") or self._prev_pin_val == new_val:
             return  # Not applicable
         self._redis_config.set_param(self.key, new_val)
         self._prev_pin_val = self._prev_redis_val = new_val

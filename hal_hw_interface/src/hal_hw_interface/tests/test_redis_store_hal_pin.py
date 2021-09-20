@@ -7,7 +7,7 @@ from test_ros_hal_pin import TestRosHalPin, HalPinDir
 
 
 class TestRedisStoreHalPin(TestRosHalPin):
-    default_hal_dir = HalPinDir('OUT')
+    default_hal_dir = HalPinDir("OUT")
     test_class = RedisStoreHalPin
 
     @pytest.fixture(params=TestRosHalPin.obj_cases)
@@ -16,9 +16,9 @@ class TestRedisStoreHalPin(TestRosHalPin):
         mock_comp_obj.setprefix(self.compname)
         attrs = dict()
         params = request.param.copy()
-        params.setdefault('hal_dir', self.default_hal_dir)
-        name = params.pop('name')
-        attr_names = ['hal_comp', 'hal_type', 'hal_dir', 'msg_type']
+        params.setdefault("hal_dir", self.default_hal_dir)
+        name = params.pop("name")
+        attr_names = ["hal_comp", "hal_type", "hal_dir", "msg_type"]
         attr_names += self.extra_attrs
         for attr_name in attr_names:
             if attr_name in params:
@@ -47,9 +47,9 @@ class TestRedisStoreHalPin(TestRosHalPin):
     ):
         # Check that redis client is created and cached
         self.setup_hal_obj_base(mock_comp_obj)
-        c1 = self.test_class('test_redis_pin', 'FLOAT')._redis_config
+        c1 = self.test_class("test_redis_pin", "FLOAT")._redis_config
         assert c1 is mock_redis_client_obj
-        c2 = self.test_class('test_redis_pin2', 'FLOAT')._redis_config
+        c2 = self.test_class("test_redis_pin2", "FLOAT")._redis_config
         assert c1 is c2
 
     def test_redis_store_pin_update_fm_redis(self, obj):
@@ -59,7 +59,7 @@ class TestRedisStoreHalPin(TestRosHalPin):
         assert obj._prev_pin_val == 42
         assert obj._prev_redis_val == 42
         # When key doesn't match, no change
-        obj._update_fm_redis('foo', 13)
+        obj._update_fm_redis("foo", 13)
         assert self.pin_values[obj.pin_name] == 42
 
     def test_redis_store_pin_ros_init(
@@ -68,13 +68,13 @@ class TestRedisStoreHalPin(TestRosHalPin):
         # obj._redis_config.on_update_received = list()  # Clear out setup entry
         # Fake a redis param value & run function under test
         test_val = self.set_mock_redis_param(obj, data)
-        self.set_pin(obj, data['pin_value'])
+        self.set_pin(obj, data["pin_value"])
         obj._ros_init()
 
-        if str(obj.hal_dir) != 'HAL_IN':
+        if str(obj.hal_dir) != "HAL_IN":
             # Check that redis was read
             print(
-                'get_param calls:', mock_redis_client_obj.get_param.mock_calls
+                "get_param calls:", mock_redis_client_obj.get_param.mock_calls
             )
             mock_redis_client_obj.get_param.assert_called_once_with(obj.key)
             # Check the returned value
@@ -102,7 +102,7 @@ class TestRedisStoreHalPin(TestRosHalPin):
         print("--------- Calling method")
         obj.update()
 
-        if str(obj.hal_dir) == 'HAL_OUT':
+        if str(obj.hal_dir) == "HAL_OUT":
             obj._redis_config.set_param.assert_not_called()
             return
 

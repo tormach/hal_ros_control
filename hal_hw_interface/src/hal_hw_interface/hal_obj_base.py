@@ -31,11 +31,11 @@ class HalObjBase(object):
         :py:class:`hal_hw_interface.ros_hal_pin.RosHalComponent`
         object setup to initialize the new HAL component
         """
-        if not hasattr(self, 'compname'):
+        if not hasattr(self, "compname"):
             raise RuntimeError('No "compname" attribute configured')
-        if 'hal_comp' in self._cached_objs:
-            raise RuntimeError('HAL component already initialized')
-        self._cached_objs['hal_comp'] = hal.component(self.compname)
+        if "hal_comp" in self._cached_objs:
+            raise RuntimeError("HAL component already initialized")
+        self._cached_objs["hal_comp"] = hal.component(self.compname)
 
     @property
     def hal_comp(self):
@@ -47,9 +47,9 @@ class HalObjBase(object):
         :returns: HAL component object
         :rtype: :py:class:`hal.component`
         """
-        if 'hal_comp' not in self._cached_objs:
-            raise RuntimeError('No HAL component initialized')
-        return self._cached_objs['hal_comp']
+        if "hal_comp" not in self._cached_objs:
+            raise RuntimeError("No HAL component initialized")
+        return self._cached_objs["hal_comp"]
 
     def get_ros_param(self, suffix, default=None):
         """Retrieve a parameter from the ROS param server, key name prefixed
@@ -67,7 +67,7 @@ class HalObjBase(object):
         """
         return self._cached_objs.setdefault(
             suffix,
-            rospy.get_param('{}/{}'.format(self.compname, suffix), default),
+            rospy.get_param("{}/{}".format(self.compname, suffix), default),
         )
 
     def add_shutdown_callback(self, cb):
@@ -78,4 +78,4 @@ class HalObjBase(object):
         :py:func:`hal_hw_interface.ros_hal_component.RosHalComponent.shutdown_component`
         at component shut down time.
         """
-        self._cached_objs.setdefault('shutdown_cbs', []).append(cb)
+        self._cached_objs.setdefault("shutdown_cbs", []).append(cb)

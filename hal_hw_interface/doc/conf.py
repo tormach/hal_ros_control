@@ -39,36 +39,36 @@ catkin_package = catkin_pkg.package.parse_package(
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.doctest',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.todo',
-    'sphinx.ext.coverage',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.githubpages',
-    'sphinx.ext.inheritance_diagram',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.doctest",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.todo",
+    "sphinx.ext.coverage",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.githubpages",
+    "sphinx.ext.inheritance_diagram",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['.templates']
+templates_path = [".templates"]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
 # source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = ".rst"
 
 # The encoding of source files.
 #
 # source_encoding = 'utf-8-sig'
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = "index"
 
 # General information about the project.
-project = u'hal_hw_interface'
-copyright = u'2019, John Morris'
-author = u'John Morris'
+project = u"hal_hw_interface"
+copyright = u"2019, John Morris"
+author = u"John Morris"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -101,7 +101,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['.build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = [".build", "Thumbs.db", ".DS_Store"]
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -123,7 +123,7 @@ exclude_patterns = ['.build', 'Thumbs.db', '.DS_Store']
 # show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = "sphinx"
 
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
@@ -142,7 +142,7 @@ todo_include_todos = True
 #
 # Added according to http://wiki.ros.org/Sphinx
 # html_theme = 'alabaster'
-html_theme = 'agogo'
+html_theme = "agogo"
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
@@ -255,7 +255,7 @@ html_theme = 'agogo'
 # html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'hal_hw_interfacedoc'
+htmlhelp_basename = "hal_hw_interfacedoc"
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -280,10 +280,10 @@ latex_elements = {
 latex_documents = [
     (
         master_doc,
-        'hal_hw_interface.tex',
-        u'hal\\_hw\\_interface Documentation',
-        u'John Morris',
-        'manual',
+        "hal_hw_interface.tex",
+        u"hal\\_hw\\_interface Documentation",
+        u"John Morris",
+        "manual",
     )
 ]
 
@@ -327,8 +327,8 @@ latex_documents = [
 man_pages = [
     (
         master_doc,
-        'hal_hw_interface',
-        u'hal_hw_interface Documentation',
+        "hal_hw_interface",
+        u"hal_hw_interface Documentation",
         [author],
         1,
     )
@@ -347,12 +347,12 @@ man_pages = [
 texinfo_documents = [
     (
         master_doc,
-        'hal_hw_interface',
-        u'hal_hw_interface Documentation',
+        "hal_hw_interface",
+        u"hal_hw_interface Documentation",
         author,
-        'hal_hw_interface',
-        'One line description of project.',
-        'Miscellaneous',
+        "hal_hw_interface",
+        "One line description of project.",
+        "Miscellaneous",
     )
 ]
 
@@ -374,9 +374,9 @@ texinfo_documents = [
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/': None}
+intersphinx_mapping = {"https://docs.python.org/": None}
 
 
 # -- Options for inheritance graphs ---------------------------------------
 
-inheritance_graph_attrs = dict(rankdir='TB')
+inheritance_graph_attrs = dict(rankdir="TB")

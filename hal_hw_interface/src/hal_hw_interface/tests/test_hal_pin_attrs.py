@@ -6,14 +6,14 @@ from hal_hw_interface.hal_pin_attrs import HalPinDir, HalPinType
 
 valid_cases = [
     # Pin direction
-    (HalPinDir, 'IN', hal.HAL_IN),
-    (HalPinDir, 'OUT', hal.HAL_OUT),
-    (HalPinDir, 'IO', hal.HAL_IO),
+    (HalPinDir, "IN", hal.HAL_IN),
+    (HalPinDir, "OUT", hal.HAL_OUT),
+    (HalPinDir, "IO", hal.HAL_IO),
     # Pin type
-    (HalPinType, 'BIT', hal.HAL_BIT),
-    (HalPinType, 'U32', hal.HAL_U32),
-    (HalPinType, 'S32', hal.HAL_S32),
-    (HalPinType, 'FLOAT', hal.HAL_FLOAT),
+    (HalPinType, "BIT", hal.HAL_BIT),
+    (HalPinType, "U32", hal.HAL_U32),
+    (HalPinType, "S32", hal.HAL_S32),
+    (HalPinType, "FLOAT", hal.HAL_FLOAT),
 ]
 
 
@@ -27,7 +27,7 @@ def test_hal_pin_attrs_valid_case_fixture(valid_case):
     assert len(valid_case) == 3
     obj_type, short_name, int_val = valid_case
     assert obj_type in (HalPinDir, HalPinType)
-    assert short_name in ('IN', 'OUT', 'IO', 'BIT', 'U32', 'S32', 'FLOAT')
+    assert short_name in ("IN", "OUT", "IO", "BIT", "U32", "S32", "FLOAT")
 
 
 def test_hal_pin_attr_new_from_short_name(valid_case):
@@ -40,7 +40,7 @@ def test_hal_pin_attr_new_from_short_name(valid_case):
 def test_hal_pin_attr_new_from_long(valid_case):
     # Test init from long name, e.g. 'HAL_IN'
     obj_type, short_name, int_val = valid_case
-    test_val = obj_type('HAL_' + short_name)
+    test_val = obj_type("HAL_" + short_name)
     assert test_val == int_val
 
 
@@ -55,20 +55,20 @@ def test_hal_pin_attr_repr(valid_case):
     # Test __repr__ returns e.g. 'HAL_IN'
     obj_type, short_name, int_val = valid_case
     test_val = obj_type(int_val)
-    assert repr(test_val) == 'HAL_' + short_name
+    assert repr(test_val) == "HAL_" + short_name
 
 
 def test_hal_pin_attr_str(valid_case):
     # Test __str__ returns e.g. 'HAL_IN'
     obj_type, short_name, int_val = valid_case
     test_val = obj_type(int_val)
-    assert str(test_val) == 'HAL_' + short_name
+    assert str(test_val) == "HAL_" + short_name
 
 
 invalid_cases = [
     # Pin direction
-    (HalPinDir, 'INY'),
-    (HalPinDir, 'in'),
+    (HalPinDir, "INY"),
+    (HalPinDir, "in"),
     (HalPinDir, hal.HAL_BIT),
     (HalPinDir, hal.HAL_U32),
     (HalPinDir, hal.HAL_S32),
@@ -77,8 +77,8 @@ invalid_cases = [
     (HalPinDir, None),
     (HalPinDir, float(hal.HAL_IN)),
     # Pin type
-    (HalPinType, 'BITY'),
-    (HalPinType, 'bit'),
+    (HalPinType, "BITY"),
+    (HalPinType, "bit"),
     (HalPinType, hal.HAL_IN),
     (HalPinType, hal.HAL_OUT),
     (HalPinType, hal.HAL_IO),

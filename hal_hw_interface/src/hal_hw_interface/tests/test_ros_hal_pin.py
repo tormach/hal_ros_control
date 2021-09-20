@@ -25,8 +25,8 @@ from std_msgs.msg import UInt16  # For invalid test case
 class TestRosHalPin(object):
     test_class = RosHalPin
     default_hal_type = None
-    default_hal_dir = HalPinDir('IN')
-    compname = 'mock_hal_comp_obj'  # conftest.py
+    default_hal_dir = HalPinDir("IN")
+    compname = "mock_hal_comp_obj"  # conftest.py
     extra_attrs = []
 
     #
@@ -37,21 +37,21 @@ class TestRosHalPin(object):
     # contains enough attributes for superset of all classes
     obj_cases = [
         dict(  # 0 Test BIT, IO, names
-            name='reset',
-            hal_type='BIT',
-            hal_dir='IO',
-            sub_topic='/robot/reset',
-            pub_topic='/robot/reset',
-            service_name='/robot/reset',
+            name="reset",
+            hal_type="BIT",
+            hal_dir="IO",
+            sub_topic="/robot/reset",
+            pub_topic="/robot/reset",
+            service_name="/robot/reset",
         ),
-        dict(name='bool', hal_type='BIT', hal_dir='OUT'),  # 1 Test BIT OUT
-        dict(name='bool', hal_type='BIT'),  # 2 Test BIT defaults
-        dict(name='u32_out', hal_type='U32', hal_dir='OUT'),  # 3 Test U32 OUT
-        dict(name='u32_out', hal_type='U32', hal_dir='IO'),  # 4 Test U32 IN
-        dict(name='u32_out', hal_type='U32'),  # 5 Test U32 default
-        dict(name='s32_out', hal_type='S32'),  # 6 Test S32 default
+        dict(name="bool", hal_type="BIT", hal_dir="OUT"),  # 1 Test BIT OUT
+        dict(name="bool", hal_type="BIT"),  # 2 Test BIT defaults
+        dict(name="u32_out", hal_type="U32", hal_dir="OUT"),  # 3 Test U32 OUT
+        dict(name="u32_out", hal_type="U32", hal_dir="IO"),  # 4 Test U32 IN
+        dict(name="u32_out", hal_type="U32"),  # 5 Test U32 default
+        dict(name="s32_out", hal_type="S32"),  # 6 Test S32 default
         dict(
-            name='float_io', hal_type='FLOAT', hal_dir='IO'
+            name="float_io", hal_type="FLOAT", hal_dir="IO"
         ),  # 7 Test FLOAT IO
     ]
 
@@ -61,9 +61,9 @@ class TestRosHalPin(object):
         mock_comp_obj.setprefix(self.compname)
         attrs = dict()
         params = request.param.copy()
-        params.setdefault('hal_dir', self.default_hal_dir)
-        name = params.pop('name')
-        attr_names = ['hal_comp', 'hal_type', 'hal_dir', 'msg_type']
+        params.setdefault("hal_dir", self.default_hal_dir)
+        name = params.pop("name")
+        attr_names = ["hal_comp", "hal_type", "hal_dir", "msg_type"]
         attr_names += self.extra_attrs
         for attr_name in attr_names:
             if attr_name in params:
@@ -96,7 +96,7 @@ class TestRosHalPin(object):
 
     @pytest.fixture(params=data_cases)
     def data(self, request):
-        request.param.setdefault('changed', True)
+        request.param.setdefault("changed", True)
         return request.param
 
     isclose_cases = [
@@ -134,13 +134,13 @@ class TestRosHalPin(object):
         return obj._p.get(param, default)
 
     def obj_test_name(self, obj):
-        return self.get_obj_test_param(obj, 'name')
+        return self.get_obj_test_param(obj, "name")
 
     def hal_dir(self, obj):
-        return self.get_obj_test_param(obj, 'hal_dir', self.default_hal_dir)
+        return self.get_obj_test_param(obj, "hal_dir", self.default_hal_dir)
 
     def hal_type(self, obj):
-        return self.get_obj_test_param(obj, 'hal_type')
+        return self.get_obj_test_param(obj, "hal_type")
 
     def msg_type(self, obj):
         return dict(BIT=Bool, FLOAT=Float64, U32=UInt32, S32=Int32)[
@@ -148,22 +148,22 @@ class TestRosHalPin(object):
         ]
 
     data_indexes = {
-        HalPinType('BIT'): 0,
-        HalPinType('U32'): 1,
-        HalPinType('S32'): 2,
-        HalPinType('FLOAT'): 3,
+        HalPinType("BIT"): 0,
+        HalPinType("U32"): 1,
+        HalPinType("S32"): 2,
+        HalPinType("FLOAT"): 3,
     }
 
     def set_last_value(self, obj, param):
         index = self.data_indexes.get(obj.hal_type)
-        value = param['other_value'][index]
+        value = param["other_value"][index]
         obj.last_value = value
         return value
 
     def set_pin(self, obj, param):
         if isinstance(param, dict):
             index = self.data_indexes.get(obj.hal_type)
-            value = param['pin_value'][index]
+            value = param["pin_value"][index]
         else:
             value = param
         obj.hal_comp.set_pin(self.obj_test_name(obj), value)
@@ -171,17 +171,17 @@ class TestRosHalPin(object):
 
     def other_value(self, obj, param):
         index = self.data_indexes.get(obj.hal_type)
-        return param['other_value'][index]
+        return param["other_value"][index]
 
     def ros_name(self, obj):
-        return '{}/{}'.format(self.compname, self.obj_test_name(obj))
+        return "{}/{}".format(self.compname, self.obj_test_name(obj))
 
     #
     # Base class tests
     #
     def test_ros_hal_pin_compname(self, mock_comp_obj, all_patches):
         self.setup_hal_obj_base(mock_comp_obj)
-        obj = self.test_class('test_pin', 'BIT')
+        obj = self.test_class("test_pin", "BIT")
         mock_comp_obj.reset_mock()
         obj.compname
         print(mock_comp_obj.mock_calls)
@@ -190,24 +190,24 @@ class TestRosHalPin(object):
     def test_ros_hal_pin_obj_fixture(
         self, obj, mock_comp_obj, mock_rospy, mock_objs
     ):
-        assert hasattr(obj, '_p')
+        assert hasattr(obj, "_p")
         params = obj._p
-        assert obj.name == params['name']
+        assert obj.name == params["name"]
         assert obj.hal_type == HalPinType(
-            params.get('hal_type', self.default_hal_type)
+            params.get("hal_type", self.default_hal_type)
         )
         assert obj.hal_dir == HalPinDir(
-            params.get('hal_dir', self.default_hal_dir)
+            params.get("hal_dir", self.default_hal_dir)
         )
-        if 'sub_topic' in params and hasattr(obj, 'sub_topic'):
-            assert obj.sub_topic == params.get('sub_topic')
-        if 'pub_topic' in params and hasattr(obj, 'pub_topic'):
-            assert obj.pub_topic == params.get('pub_topic')
-        if 'service_name' in params and hasattr(obj, 'service_name'):
-            assert obj.pub_topic == params.get('service_name')
+        if "sub_topic" in params and hasattr(obj, "sub_topic"):
+            assert obj.sub_topic == params.get("sub_topic")
+        if "pub_topic" in params and hasattr(obj, "pub_topic"):
+            assert obj.pub_topic == params.get("pub_topic")
+        if "service_name" in params and hasattr(obj, "service_name"):
+            assert obj.pub_topic == params.get("service_name")
 
     def test_ros_hal_pin_data_fixture(self, data):
-        for key in ('other_value', 'pin_value'):
+        for key in ("other_value", "pin_value"):
             assert key in data
             assert len(data[key]) == 4
             assert isinstance(data[key][0], bool)
@@ -255,22 +255,22 @@ class TestRosHalPin(object):
         # needed
         if self.default_hal_type is None:
             with pytest.raises(TypeError):
-                self.test_class('default_hal_type')
+                self.test_class("default_hal_type")
         else:
-            obj = self.test_class('default_hal_type')
+            obj = self.test_class("default_hal_type")
             assert obj.hal_type == self.default_hal_type
 
 
 class TestRosHalPinPublisher(TestRosHalPin):
-    default_hal_dir = HalPinDir('IN')
+    default_hal_dir = HalPinDir("IN")
     test_class = RosHalPinPublisher
-    extra_attrs = ['pub_topic']
+    extra_attrs = ["pub_topic"]
 
     #
     # Helpers
     #
     def pub_topic(self, obj):
-        return self.get_obj_test_param(obj, 'pub_topic', self.ros_name(obj))
+        return self.get_obj_test_param(obj, "pub_topic", self.ros_name(obj))
 
     def set_last_value(self, obj, param):
         # Set msg.data
@@ -289,46 +289,46 @@ class TestRosHalPinPublisher(TestRosHalPin):
 
     def test_ros_hal_pin_publisher_init(self, obj, mock_objs):
         """Test that __init__() creates rospy.Publisher object"""
-        print(mock_objs['rospy_Publisher'].mock_calls)
+        print(mock_objs["rospy_Publisher"].mock_calls)
         assert obj.pub_topic == self.pub_topic(obj)
-        mock_objs['rospy_Publisher'].assert_called_with(
+        mock_objs["rospy_Publisher"].assert_called_with(
             self.pub_topic(obj), self.msg_type(obj), queue_size=1, latch=True
         )
-        assert obj.pub is mock_objs['rospy_Publisher_obj']
+        assert obj.pub is mock_objs["rospy_Publisher_obj"]
 
     def test_ros_hal_pin_publisher_value_changed(self, obj, data, mock_objs):
         """Test _value_changed() function"""
-        assert obj.get_ros_param('relative_tolerance', 1e-9) == 1e-9
-        assert obj.get_ros_param('absolute_tolerance', 1e-9) == 1e-9
+        assert obj.get_ros_param("relative_tolerance", 1e-9) == 1e-9
+        assert obj.get_ros_param("absolute_tolerance", 1e-9) == 1e-9
 
         last_value = self.set_last_value(obj, data)
         cur_value = self.set_pin(obj, data)
         same = last_value == cur_value
-        assert same is not data.get('changed')
-        assert obj._value_changed(cur_value) is data.get('changed')
+        assert same is not data.get("changed")
+        assert obj._value_changed(cur_value) is data.get("changed")
 
     def test_ros_hal_pin_publisher_update(self, obj, data):
         self.set_last_value(obj, data)
         cur_value = self.set_pin(obj, data)
         obj.update()
         assert obj._msg.data == cur_value
-        print(f'pub.publish calls:  {obj.pub.publish.mock_calls}')
-        if data.get('changed'):
+        print(f"pub.publish calls:  {obj.pub.publish.mock_calls}")
+        if data.get("changed"):
             obj.pub.publish.assert_called_with(obj._msg)
         else:
             obj.pub.publish.assert_not_called
 
 
 class TestRosHalPinSubscriber(TestRosHalPinPublisher):
-    default_hal_dir = HalPinDir('OUT')
+    default_hal_dir = HalPinDir("OUT")
     test_class = RosHalPinSubscriber
-    extra_attrs = ['pub_topic', 'sub_topic']
+    extra_attrs = ["pub_topic", "sub_topic"]
 
     #
     # Helpers
     #
     def sub_topic(self, obj):
-        return self.get_obj_test_param(obj, 'sub_topic', self.ros_name(obj))
+        return self.get_obj_test_param(obj, "sub_topic", self.ros_name(obj))
 
     #
     # Tests
@@ -341,10 +341,10 @@ class TestRosHalPinSubscriber(TestRosHalPinPublisher):
 
     def test_ros_hal_pin_subscriber_init(self, obj, mock_objs):
         """Test that __init__() creates rospy.Subscriber object"""
-        mock_objs['rospy_Subscriber'].assert_called_with(
+        mock_objs["rospy_Subscriber"].assert_called_with(
             self.sub_topic(obj), self.msg_type(obj), obj._subscriber_cb
         )
-        assert obj.sub is mock_objs['rospy_Subscriber_obj']
+        assert obj.sub is mock_objs["rospy_Subscriber_obj"]
 
     def test_ros_hal_pin_subscriber_cb(self, obj, data, mock_comp_obj):
         """Test that HAL pin is set in subscriber callback"""
@@ -362,15 +362,15 @@ class TestRosHalPinSubscriber(TestRosHalPinPublisher):
 
 
 class TestRosHalPinService(TestRosHalPinPublisher):
-    default_hal_dir = HalPinDir('OUT')
+    default_hal_dir = HalPinDir("OUT")
     test_class = RosHalPinService
-    extra_attrs = ['pub_topic', 'service_name']
+    extra_attrs = ["pub_topic", "service_name"]
 
     #
     # Helpers
     #
     def service_name(self, obj):
-        return self.get_obj_test_param(obj, 'service_name', self.ros_name(obj))
+        return self.get_obj_test_param(obj, "service_name", self.ros_name(obj))
 
     def service_msg_type(self, obj):
         return dict(BIT=SetBool, FLOAT=SetFloat64, U32=SetUInt32, S32=SetInt32)[
@@ -390,10 +390,10 @@ class TestRosHalPinService(TestRosHalPinPublisher):
     def test_ros_hal_pin_service_init(self, obj, mock_objs):
         """Test that __init__() creates rospy.Service object"""
         assert obj.service_name == self.service_name(obj)
-        mock_objs['rospy_Service'].assert_called_with(
+        mock_objs["rospy_Service"].assert_called_with(
             self.service_name(obj), self.service_msg_type(obj), obj._svc_cb
         )
-        assert obj.service is mock_objs['rospy_Service_obj']
+        assert obj.service is mock_objs["rospy_Service_obj"]
 
     def test_ros_hal_pin_service_cb(self, obj, data):
         """Test that the HAL pin is set during callback"""
@@ -404,4 +404,4 @@ class TestRosHalPinService(TestRosHalPinPublisher):
         obj.hal_comp.__setitem__.assert_called_with(
             self.obj_test_name(obj), call_value
         )
-        assert reply == (True, 'OK')
+        assert reply == (True, "OK")

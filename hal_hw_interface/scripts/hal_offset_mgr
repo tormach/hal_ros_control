@@ -3,5 +3,5 @@
 
 from hal_hw_interface.hal_offset_mgr import HalOffsetMgr
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     HalOffsetMgr().main()

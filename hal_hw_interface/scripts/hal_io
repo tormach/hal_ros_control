@@ -34,5 +34,5 @@
 
 from hal_hw_interface.hal_io_comp import HalIO
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     HalIO().main()

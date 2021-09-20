@@ -44,10 +44,11 @@ class HalIO(RosHalComponent):
     :py:func:`update` functions, if any.
     """
 
-    compname = 'hal_io'
+    compname = "hal_io"
 
     def setup_component(self):
-        """Load pin configuration from ROS param server and create pin objects"""
+        """Load pin configuration from ROS param server and create pin
+        objects"""
         self.pins = []
         pin_class_map = dict(
             subscribe_pins=RosHalPinSubscriber,

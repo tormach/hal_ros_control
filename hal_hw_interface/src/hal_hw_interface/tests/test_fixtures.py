@@ -10,7 +10,7 @@ keys2 = dict(pin1=False, pin2=1.88e42, pin4=0)
 class TestFixtures:
     def test_mock_comp_obj_fixture(self, mock_comp_obj, mock_objs):
         # Test hal.component returns mock_comp_obj
-        assert mock_objs['hal_comp']() is mock_comp_obj
+        assert mock_objs["hal_comp"]() is mock_comp_obj
 
         # Set each pin (with out-of-band method) and check
         for name, value in keys1.items():
@@ -33,27 +33,27 @@ class TestFixtures:
             assert mock_comp_obj[name] == value
 
         # Default case
-        assert mock_comp_obj['bogus'] == 0xDEADBEEF
+        assert mock_comp_obj["bogus"] == 0xDEADBEEF
 
     def test_mock_rospy_fixture(self, mock_rospy, mock_objs):
         # Test mock rospy.get_param()
-        gp = mock_objs['rospy_get_param']
-        gp.set_key('foo', 1)
-        gp.set_key('bar', 2)
-        assert gp('foo') == 1
-        assert gp('bar') == 2
-        gp.set_key('baz', 3)
-        assert gp('foo') == 1
-        assert gp('bar') == 2
-        assert gp('baz') == 3
+        gp = mock_objs["rospy_get_param"]
+        gp.set_key("foo", 1)
+        gp.set_key("bar", 2)
+        assert gp("foo") == 1
+        assert gp("bar") == 2
+        gp.set_key("baz", 3)
+        assert gp("foo") == 1
+        assert gp("bar") == 2
+        assert gp("baz") == 3
 
         # Test rospy.Rate() returns expected object
-        assert mock_objs['rospy_Rate']() is mock_objs['rospy_Rate_obj']
+        assert mock_objs["rospy_Rate"]() is mock_objs["rospy_Rate_obj"]
 
         # Test rospy.is_shutdown() returns True values, then False
         found_false = False
         for i in range(10):
-            val = mock_objs['rospy_is_shutdown']()
+            val = mock_objs["rospy_is_shutdown"]()
             print("iter {} val {}".format(i, val))
             if val is False:
                 found_false = True
@@ -65,14 +65,14 @@ class TestFixtures:
             raise Exception("is_shutdown never returned False")
 
         # Test returned objects
-        for name in ('Subscriber', 'Publisher', 'Service'):
-            method = mock_objs['rospy_{}'.format(name)]
-            obj = mock_objs['rospy_{}_obj'.format(name)]
+        for name in ("Subscriber", "Publisher", "Service"):
+            method = mock_objs["rospy_{}".format(name)]
+            obj = mock_objs["rospy_{}_obj".format(name)]
             assert method() == obj
 
     def test_mock_redis_client_obj(self, mock_redis_client_obj, mock_objs):
         # Test redis_store.ConfigClient() returns object
-        assert mock_objs['redis_store']() is mock_redis_client_obj
+        assert mock_objs["redis_store"]() is mock_redis_client_obj
 
         # Set each param (with out-of-band method) and check
         for name, value in keys1.items():
@@ -95,4 +95,4 @@ class TestFixtures:
             assert mock_redis_client_obj.get_param(name) == value
 
         # Default case
-        assert mock_redis_client_obj.get_param('bogus') == 0
+        assert mock_redis_client_obj.get_param("bogus") == 0

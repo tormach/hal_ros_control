@@ -36,12 +36,12 @@ import os
 
 from hal_hw_interface import hal_mgr
 
-MAIN_HAL = 'main.py'
-NAME = 'hal_mgr'
-HAL_IO = 'hal_io'
+MAIN_HAL = "main.py"
+NAME = "hal_mgr"
+HAL_IO = "hal_io"
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     os.chdir(SCRIPT_DIR)
     hal_mgr.main()

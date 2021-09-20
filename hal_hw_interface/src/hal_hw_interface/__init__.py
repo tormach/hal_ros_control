@@ -5,6 +5,6 @@
 
 """
 
-__all__ = ('loadrt_local', 'hal', 'rtapi')
+__all__ = ("loadrt_local", "hal", "rtapi")
 
 from .loadrt_local import loadrt_local, hal, rtapi

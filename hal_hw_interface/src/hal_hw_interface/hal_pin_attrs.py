@@ -14,7 +14,7 @@ class HalPinAttrBase(int):
     _fwd_map = dict()  # 16 -> 'IO'
     _bwd_map = dict()  # 'HAL_IN' -> 16; 'IN' -> 16
     for attr in dir(hal):
-        if not attr.startswith('HAL_'):
+        if not attr.startswith("HAL_"):
             continue
         value = getattr(hal, attr)
         attr_short = attr[4:]
@@ -22,13 +22,14 @@ class HalPinAttrBase(int):
         _bwd_map[attr_short] = value
 
     def __new__(cls, value):
-        """Create new object, translating strings to ints and validating value"""
+        """Create new object, translating strings to ints and validating
+        value"""
         if isinstance(value, int):
             if cls._fwd_map.get(value, None) not in cls._suffixes:
                 raise ValueError("Illegal value '{}'".format(value))
             return int.__new__(cls, value)
         elif isinstance(value, str):
-            if value.startswith('HAL_'):
+            if value.startswith("HAL_"):
                 value = value[4:]
             if value not in cls._suffixes:
                 raise ValueError("Illegal value '{}'".format(value))
@@ -37,7 +38,7 @@ class HalPinAttrBase(int):
             raise ValueError("Illegal value '{}'".format(value))
 
     def __repr__(self):
-        return 'HAL_' + self._fwd_map[self]
+        return "HAL_" + self._fwd_map[self]
 
     def __str__(self):
         return self.__repr__()
@@ -54,7 +55,7 @@ class HalPinDir(HalPinAttrBase):
     .. inheritance-diagram:: hal_hw_interface.hal_pin_attrs.HalPinDir
     """
 
-    _suffixes = set(['IN', 'OUT', 'IO'])
+    _suffixes = set(["IN", "OUT", "IO"])
 
 
 class HalPinType(HalPinAttrBase):
@@ -69,4 +70,4 @@ class HalPinType(HalPinAttrBase):
     .. inheritance-diagram:: hal_hw_interface.hal_pin_attrs.HalPinType
     """
 
-    _suffixes = set(['BIT', 'U32', 'S32', 'FLOAT'])
+    _suffixes = set(["BIT", "U32", "S32", "FLOAT"])
