@@ -42,7 +42,9 @@ class TestRedisStoreHalPin(TestRosHalPin):
     def test_redis_store_pin_key(self, obj):
         assert obj.key == self.redis_param_key(obj)
 
-    def test_redis_store_pin_redis_config(self, mock_redis_client_obj, mock_comp_obj, mock_rospy):
+    def test_redis_store_pin_redis_config(
+        self, mock_redis_client_obj, mock_comp_obj, mock_rospy
+    ):
         # Check that redis client is created and cached
         self.setup_hal_obj_base(mock_comp_obj)
         c1 = self.test_class('test_redis_pin', 'FLOAT')._redis_config
@@ -71,14 +73,18 @@ class TestRedisStoreHalPin(TestRosHalPin):
 
         if str(obj.hal_dir) != 'HAL_IN':
             # Check that redis was read
-            print('get_param calls:', mock_redis_client_obj.get_param.mock_calls)
+            print(
+                'get_param calls:', mock_redis_client_obj.get_param.mock_calls
+            )
             mock_redis_client_obj.get_param.assert_called_once_with(obj.key)
             # Check the returned value
             assert obj._prev_pin_val == test_val
             assert obj._prev_redis_val == test_val
             assert self.pin_values[obj.pin_name] == test_val
             # Check the callback list
-            assert obj._redis_config.on_update_received[-1] == obj._update_fm_redis
+            assert (
+                obj._redis_config.on_update_received[-1] == obj._update_fm_redis
+            )
 
         else:  # HAL_IN pins
             assert obj._prev_pin_val == self.pin_values[obj.pin_name]

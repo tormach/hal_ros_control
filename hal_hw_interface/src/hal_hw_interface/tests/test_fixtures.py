@@ -8,7 +8,6 @@ keys2 = dict(pin1=False, pin2=1.88e42, pin4=0)
 
 
 class TestFixtures:
-
     def test_mock_comp_obj_fixture(self, mock_comp_obj, mock_objs):
         # Test hal.component returns mock_comp_obj
         assert mock_objs['hal_comp']() is mock_comp_obj
@@ -35,7 +34,6 @@ class TestFixtures:
 
         # Default case
         assert mock_comp_obj['bogus'] == 0xDEADBEEF
-
 
     def test_mock_rospy_fixture(self, mock_rospy, mock_objs):
         # Test mock rospy.get_param()
@@ -71,7 +69,6 @@ class TestFixtures:
             method = mock_objs['rospy_{}'.format(name)]
             obj = mock_objs['rospy_{}_obj'.format(name)]
             assert method() == obj
-
 
     def test_mock_redis_client_obj(self, mock_redis_client_obj, mock_objs):
         # Test redis_store.ConfigClient() returns object

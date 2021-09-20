@@ -28,7 +28,7 @@ apt-get update
 rm -f /etc/ros/rosdep/sources.list.d/20-default.list
 rosdep init
 UPSTREAM_ROSDEP_YML=/etc/ros/rosdep/upstream-rosdep.yaml
-cat > $UPSTREAM_ROSDEP_YML <<-EOF
+cat >$UPSTREAM_ROSDEP_YML <<-EOF
 	machinekit:
 	  debian: [machinekit-hal]
 	  ubuntu: [machinekit-hal]

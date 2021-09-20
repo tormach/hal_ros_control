@@ -50,7 +50,9 @@ class TestRosHalPin(object):
         dict(name='u32_out', hal_type='U32', hal_dir='IO'),  # 4 Test U32 IN
         dict(name='u32_out', hal_type='U32'),  # 5 Test U32 default
         dict(name='s32_out', hal_type='S32'),  # 6 Test S32 default
-        dict(name='float_io', hal_type='FLOAT', hal_dir='IO'),  # 7 Test FLOAT IO
+        dict(
+            name='float_io', hal_type='FLOAT', hal_dir='IO'
+        ),  # 7 Test FLOAT IO
     ]
 
     @pytest.fixture(params=obj_cases)
@@ -185,7 +187,9 @@ class TestRosHalPin(object):
         print(mock_comp_obj.mock_calls)
         assert mock_comp_obj.getprefix.call_count == 1
 
-    def test_ros_hal_pin_obj_fixture(self, obj, mock_comp_obj, mock_rospy, mock_objs):
+    def test_ros_hal_pin_obj_fixture(
+        self, obj, mock_comp_obj, mock_rospy, mock_objs
+    ):
         assert hasattr(obj, '_p')
         params = obj._p
         assert obj.name == params['name']
