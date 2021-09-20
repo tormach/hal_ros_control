@@ -43,6 +43,7 @@
   <exec_depend>machinekit</exec_depend>
 
   <test_depend>ros_pytest</test_depend>
+  <test_depend>python3-mock</test_depend>
 
   <export>
     <rosdoc config="rosdoc.yaml" />
