@@ -1,4 +1,4 @@
-#!/usr/bin/bash -xe
+#!/bin/bash -xe
 
 # Install tools
 apt-get update
