@@ -77,7 +77,8 @@ class HalMgr(object):
             if not os.path.exists(fpath):
                 self.shutdown(
                     "No file '%s' in directory '%s'"
-                    % (fname, hal_mgr_config["hal_file_dir"])
+                    % (fname, hal_mgr_config["hal_file_dir"]),
+                    res=1,
                 )
             rospy.loginfo("hal_mgr:  Loading hal file '%s'" % fname)
             launcher.load_hal_file(fpath)
