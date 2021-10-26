@@ -16,7 +16,7 @@
     <!-- Load URDF:  rrbot from rrbot_description; gripper from here -->
     <param
         name="robot_description"
-        command="$(find xacro)/xacro --inorder '$(find hal_rrbot_control)/urdf/hal_rrbot.xacro'"
+        command="$(find xacro)/xacro '$(find hal_rrbot_control)/urdf/hal_rrbot.xacro'"
         />
 
     <!-- Load all settings into ROS parameter server -->

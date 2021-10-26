@@ -6,7 +6,7 @@
   <!-- Load example URDF -->
   <param
       name="robot_description"
-      command="$(find xacro)/xacro.py --inorder '$(find hal_rrbot_control)/urdf/hal_rrbot.xacro'"
+      command="$(find xacro)/xacro '$(find hal_rrbot_control)/urdf/hal_rrbot.xacro'"
       />
 
   <!-- Hopefully we can revert back to this someday -->
