@@ -213,7 +213,7 @@ class RosHalPinPublisher(RosHalPin):
             )
             rospy.loginfo(
                 f"Pin {self.pin_name} changed:"
-                "  old={self._msg.data}; new={value}"
+                f"  old={self._msg.data}; new={value}"
             )
             self._msg.data = value
             self.pub.publish(self._msg)
