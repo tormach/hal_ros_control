@@ -36,6 +36,7 @@
 #include <ros_control_boilerplate/generic_hw_interface.h>
 
 // HAL
+#define RTAPI 1
 #include <hal.h>
 
 // ROS

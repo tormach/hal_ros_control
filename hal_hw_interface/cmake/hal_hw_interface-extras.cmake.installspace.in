@@ -1,2 +1,0 @@
-# Append cmake modules from source directory to the cmake module path
-list(APPEND CMAKE_MODULE_PATH "${hal_hw_interface_DIR}/../../../@CATKIN_PACKAGE_SHARE_DESTINATION@/cmake")

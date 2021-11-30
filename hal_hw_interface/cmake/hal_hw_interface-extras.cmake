@@ -1,2 +1,2 @@
 # Append cmake modules from source directory to the cmake module path
-list(APPEND CMAKE_MODULE_PATH @CMAKE_CURRENT_SOURCE_DIR@/cmake)
+list(INSERT CMAKE_MODULE_PATH 0 "${hal_hw_interface_DIR}/cmake")

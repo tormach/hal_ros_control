@@ -1,134 +1,191 @@
-cmake_minimum_required(VERSION 3.0.2)
+# https://github.com/bponsler/ros2-support/blob/master/tutorials/creating-a-mixed-cpp-and-python-package.md
+# https://roboticsbackend.com/ros2-package-for-both-python-and-cpp-nodes/#CMakeListstxt
+# https://docs.ros.org/en/foxy/Contributing/Migration-Guide.html
+cmake_minimum_required(VERSION 3.5)
 project(hal_hw_interface)
 
-# C++ 11
-add_compile_options(-std=c++11 -Wall)
+# Default to C++17
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+endif()
 
-# Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS
-  controller_manager
-  ros_control_boilerplate
-  roscpp
-  rospy
-  std_msgs
-  std_srvs
-  message_generation
-  redis_store
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra)
+endif()
+
+# Machinekit HAL CMake find/use scripts
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
+
+# Find dependencies
+find_package(ament_cmake REQUIRED)
+# - RT
+find_package(hardware_interface REQUIRED)
+find_package(controller_manager REQUIRED)
+find_package(pluginlib REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rclcpp_lifecycle REQUIRED)
+find_package(HAL REQUIRED)
+# - Python
+find_package(ament_cmake_python REQUIRED)
+find_package(rclpy REQUIRED)
+# find_package(redis_store REQUIRED) # FIXME:  Not ported to ROS2 yet
+# - Services
+find_package(rosidl_default_generators REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
+
+#######################
+# ROS services
+
+rosidl_generate_interfaces(${PROJECT_NAME}_srvs
+  srv/SetFloat64.srv
+  srv/SetInt32.srv
+  srv/SetUInt32.srv
+  DEPENDENCIES std_srvs
+  ADD_LINTER_TESTS
 )
 
-# Find Machinekit HAL
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
-find_package(
+#######################
+# HAL RT component build definitions
+
+# Build HAL control_node component
+add_library(
+  hal_control_node MODULE
+  src/hal_control_node.cpp
+)
+
+# Remove 'lib' prefix from comp name
+set_target_properties(hal_control_node PROPERTIES PREFIX "")
+
+# Header files
+# - Specify additional header locations
+target_include_directories(
+  hal_control_node
+  PRIVATE
+  include/
+  ${HAL_INCLUDE_PATH}
+)
+
+# Libs
+link_directories(${rclcpp_LIBRARY_DIRS})
+
+# Linked libs
+target_link_libraries(hal_control_node ${rclcpp_LIBRARIES})
+
+ament_target_dependencies(
+  hal_control_node
+  hardware_interface
+  pluginlib
+  rclcpp
+  rclcpp_lifecycle
   HAL
   )
 
-# Install packages with setup.py
-catkin_python_setup()
 
-add_service_files(
-  FILES
-  SetUInt32.srv
-  SetInt32.srv
-  SetFloat64.srv
-)
-generate_messages()
-
-# This package
-catkin_package(
-  INCLUDE_DIRS
-  include
-
-  CATKIN_DEPENDS
-  controller_manager
-  ros_control_boilerplate
-  roscpp
-  rospy
-  message_runtime
-  redis_store
-
-  CFG_EXTRAS
-  ${PROJECT_NAME}-extras.cmake
+# Build HAL system hardware plugin
+add_library(
+  hal_system_interface MODULE
+  src/hal_system_interface.cpp
 )
 
 # Header files
 # - Specify additional header locations
-include_directories(
+target_include_directories(
+  hal_system_interface
+  PRIVATE
   include/
   ${HAL_INCLUDE_PATH}
-  ${catkin_INCLUDE_DIRS}
 )
-# - Install our headers
-install(
-  DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+
+ament_target_dependencies(
+  hal_system_interface
+  pluginlib
+  rclcpp
+  # rclcpp_lifecycle
+  HAL
   )
+
+pluginlib_export_plugin_description_file(
+  hardware_interface hal_hw_interface.xml
+  )
+
+# Install libraries
+install(
+  TARGETS hal_control_node
+  LIBRARY
+  DESTINATION lib/${PROJECT_NAME}
+  )
+
+# Install C++ headers
+install(
+  DIRECTORY include/
+  DESTINATION include
+)
+
+# Exports
+ament_export_include_directories(
+  include
+)
+
+ament_export_libraries(
+  hal_control_node
+)
 
 #######################
-# HAL component build definitions
+# Python
 
-# Build HAL component
-add_library(
-  ${PROJECT_NAME} MODULE
-  src/hal_control_loop.cpp
-  src/${PROJECT_NAME}.cpp
-)
+# Install python modules
+ament_python_install_package(${PROJECT_NAME})
 
-# CFLAGS
-target_compile_definitions(
-  ${PROJECT_NAME} PRIVATE
-  RTAPI=1
-  THREAD_FLAVOR_ID=1
-  )
-
-# Linked libs
-target_link_libraries(
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  )
-
-# Remove 'lib' prefix from comp name
-set_target_properties(
-  ${PROJECT_NAME} PROPERTIES
-  PREFIX ""
+# Install python scripts
+install(PROGRAMS
+  scripts/hal_mgr
+  scripts/hal_io
+  DESTINATION lib/${PROJECT_NAME}  # or bin?
   )
 
 #######################
 # Install
 
-# Install libraries
-install(
-  TARGETS ${PROJECT_NAME}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  )
-
-# Install python executables
-catkin_install_python(
-  PROGRAMS
-  scripts/hal_mgr
-  scripts/hal_io
-  scripts/hal_offset_mgr
-
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-  )
-
-# Install header files
-install(
-  DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
-
 # Install launch files
 install(DIRECTORY launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+  DESTINATION share/${PROJECT_NAME}/launch)
 
 # Install CMake files
+# FIXME:  This belongs in Machinekit HAL!
 install(FILES cmake/FindHAL.cmake cmake/UseHALComp.cmake
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/cmake)
+  DESTINATION share/${PROJECT_NAME}/cmake)
 
-if(CATKIN_ENABLE_TESTING)
-  find_package(rostest REQUIRED)
-  find_package(ros_pytest REQUIRED)
-  add_rostest(tests/tests.launch)
-  # Check launch file; see http://wiki.ros.org/roslaunch
-  find_package(roslaunch REQUIRED)
-  roslaunch_add_file_check(launch)
+#######################
+# Tests
+
+if(BUILD_TESTING)
+
+  # Must explicitly add tests, and can't use ament_lint_common.  The
+  # uncrustify test breaks unfixably because of setting conflicts with
+  # the clang checker.  Because the `rosidl` rules pull in the
+  # `ament_cmake_uncrustify` test, the
+  # `set(ament_cmake_uncrustify_FOUND TRUE)` hack doesn't work in this
+  # package.
+  find_package(ament_cmake_cppcheck REQUIRED)
+  ament_cppcheck()
+  find_package(ament_cmake_cpplint REQUIRED)
+  ament_cpplint()
+  find_package(ament_cmake_flake8 REQUIRED)
+  ament_flake8()
+  # FIXME Add back in after Python ROS2 port
+  # find_package(ament_cmake_pep257 REQUIRED)
+  # ament_pep257()
+  # find_package(ament_cmake_lint_cmake REQUIRED)
+  # ament_lint_cmake()
+  find_package(ament_cmake_xmllint REQUIRED)
+  ament_xmllint()
+
 endif()
+
+#######################
+# Finalize package
+
+ament_package(
+  CONFIG_EXTRAS cmake/${PROJECT_NAME}-extras.cmake
+)
