@@ -1,8 +1,5 @@
+# Used in rrbot demo
 - git:
-    local-name: redis_store
-    uri: https://github.com/zultron/redis_store.git
-    version: noetic-devel
-- git:
-    local-name: redis_store_msgs
-    uri: https://github.com/zultron/redis_store_msgs.git
-    version: noetic-devel
+    local-name: ros2_control_demos
+    uri: https://github.com/ros-controls/ros2_control_demos.git
+    version: foxy
