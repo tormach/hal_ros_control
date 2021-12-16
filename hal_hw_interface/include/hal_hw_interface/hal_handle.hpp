@@ -78,9 +78,9 @@ public:
     return **value_ptr_ptr_;
   }
 
-  std::string pin_name()
+  const std::string pin_name() const
   {
-    return name_ == "" ? interface_name_ : (name_ + '.' + interface_name_);
+    return name_.empty() ? interface_name_ : (name_ + '.' + interface_name_);
   }
 
   void alloc_and_init_hal_pin(std::string data_type)
@@ -93,33 +93,33 @@ public:
     switch (type_string_case_map.at(data_type))
     {
       case 1:  // double/float
-        _alloc_and_init_hal_pin<hal_float_t>();
+        alloc_and_init_hal_pin_typed<hal_float_t>();
         break;
       case 2:  // bit/bool
-        _alloc_and_init_hal_pin<hal_bit_t>();
+        alloc_and_init_hal_pin_typed<hal_bit_t>();
         break;
       case 3:  // int/s32
-        _alloc_and_init_hal_pin<hal_s32_t>();
+        alloc_and_init_hal_pin_typed<hal_s32_t>();
         break;
       case 4:  // uint/u32
-        _alloc_and_init_hal_pin<hal_u32_t>();
+        alloc_and_init_hal_pin_typed<hal_u32_t>();
         break;
     }
   }
 
 protected:
   template <class hal_t>
-  void _alloc_and_init_hal_pin()
+  void alloc_and_init_hal_pin_typed()
   {
     hal_t** ptr = (reinterpret_cast<hal_t**>(hal_malloc(sizeof(hal_t*))));
-    if (ptr == NULL)
+    if (ptr == nullptr)
     {
       HAL_ROS_ERR_NAMED(CNAME, "Failed to allocate HAL pin %s",
                         pin_name().c_str());
       throw std::runtime_error(std::string("Failed to init handle '") +
                                get_full_name() + "'");
     }
-    if (_init_hal_pin(&ptr))
+    if (hal_pin_newf(&ptr))
     {
       HAL_ROS_ERR_NAMED(CNAME, "New HAL pin %s failed", pin_name().c_str());
       throw std::runtime_error(std::string("Failed to init handle '") +
@@ -129,23 +129,23 @@ protected:
   }
 
   // Polymorphic member functions to create HAL pins of appropriate type
-  int _init_hal_pin(hal_bit_t*** ptr)
+  int hal_pin_newf(hal_bit_t*** ptr)
   {
     return hal_pin_bit_newf(pin_dir_, *ptr, comp_id_, "%s", pin_name().c_str());
   }
 
-  int _init_hal_pin(hal_float_t*** ptr)
+  int hal_pin_newf(hal_float_t*** ptr)
   {
     return hal_pin_float_newf(pin_dir_, *ptr, comp_id_, "%s",
                               pin_name().c_str());
   }
 
-  int _init_hal_pin(hal_u32_t*** ptr)
+  int hal_pin_newf(hal_u32_t*** ptr)
   {
     return hal_pin_u32_newf(pin_dir_, *ptr, comp_id_, "%s", pin_name().c_str());
   }
 
-  int _init_hal_pin(hal_s32_t*** ptr)
+  int hal_pin_newf(hal_s32_t*** ptr)
   {
     return hal_pin_s32_newf(pin_dir_, *ptr, comp_id_, "%s", pin_name().c_str());
   }

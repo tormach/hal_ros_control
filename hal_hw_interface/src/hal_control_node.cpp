@@ -37,10 +37,10 @@
 #include <string>
 
 // Controller manager pointer
-std::shared_ptr<controller_manager::ControllerManager> controller_manager_;
+std::shared_ptr<controller_manager::ControllerManager> CONTROLLER_MANAGER;
 
 // ROS asynch executor thread pointer
-std::shared_ptr<std::thread> executor_thread;
+std::shared_ptr<std::thread> EXECUTOR_THREAD;
 
 extern "C" {
 // Pre-declare the HAL function
@@ -51,11 +51,11 @@ int rtapi_app_main(void)
   // Init ROS node, delegating signal handling to rtapi_app
   auto init_opts = rclcpp::InitOptions();
   init_opts.shutdown_on_sigint = false;
-  rclcpp::init(0, NULL, init_opts);
+  rclcpp::init(0, nullptr, init_opts);
 
   // Init HAL component
-  int comp_id_ = hal_init(CNAME);
-  if (comp_id_ < 0)
+  int comp_id = hal_init(CNAME);
+  if (comp_id < 0)
   {
     HAL_ROS_ERR_NAMED(CNAME, "%s:  ERROR: Component creation ABORTED", CNAME);
     // return false; // FIXME
@@ -68,24 +68,24 @@ int rtapi_app_main(void)
   // - Resource manager & hardware interface loaded here; HAL pins initialized
   auto executor = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
   std::string manager_node_name = "controller_manager";
-  controller_manager_.reset(
+  CONTROLLER_MANAGER.reset(
       new controller_manager::ControllerManager(executor, manager_node_name));
 
   // Launch executor in asynch thread
-  executor_thread.reset(new std::thread([&executor]() { executor->spin(); }));
+  EXECUTOR_THREAD.reset(new std::thread([&executor]() { executor->spin(); }));
 
   // Export the function & mark component ready
-  if (hal_export_functf(funct, NULL, 1, 0, comp_id_, "%s.funct", CNAME) < 0)
+  if (hal_export_functf(funct, nullptr, 1, 0, comp_id, "%s.funct", CNAME) < 0)
   {
     HAL_ROS_INFO_NAMED(CNAME, "ERROR: hal_export_functf failed");
-    hal_exit(comp_id_);
+    hal_exit(comp_id);
     return -1;
   }
-  hal_ready(comp_id_);
+  hal_ready(comp_id);
 
   HAL_ROS_INFO_NAMED(CNAME, "%s:  HAL component ready!", CNAME);
 
-  rclcpp::Logger l = controller_manager_->get_logger();
+  rclcpp::Logger l = CONTROLLER_MANAGER->get_logger();
   HAL_ROS_INFO(l, "HAL controller manager initializing");
 
   return 0;  // Success
@@ -93,16 +93,16 @@ int rtapi_app_main(void)
 
 void funct([[maybe_unused]] void* arg, [[maybe_unused]] int64_t period)
 {
-  controller_manager_->read();
-  controller_manager_->update();
-  controller_manager_->write();
+  CONTROLLER_MANAGER->read();
+  CONTROLLER_MANAGER->update();
+  CONTROLLER_MANAGER->write();
 }
 
 void rtapi_app_exit(void)
 {
-  rclcpp::Logger l = controller_manager_->get_logger();
+  rclcpp::Logger l = CONTROLLER_MANAGER->get_logger();
   HAL_ROS_INFO(l, "HAL controller manager shutting down");
-  executor_thread->join();
+  EXECUTOR_THREAD->join();
 }
 
 }  // extern "C"
