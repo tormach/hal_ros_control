@@ -1,18 +1,19 @@
-# -*- coding: utf-8 -*-
-
 """
-   :synopsis: Boilerplate for HAL user components in ROS nodes
+:synopsis: Boilerplate for HAL user components in ROS nodes.
 
-   .. moduleauthor:: John Morris <john@dovetail-automata.com>
+.. moduleauthor:: John Morris <john@dovetail-automata.com>
 """
 
-import rospy
-from hal_hw_interface.hal_obj_base import HalObjBase
-from hal_hw_interface.exception import HalHWInterfaceException
+import abc
+import hal
+import rclpy
+from .hal_obj_base import HalObjBase
+from .exception import HalHWInterfaceException
 
 
-class RosHalComponent(HalObjBase):
-    """Base class implementing a HAL user component in a ROS node
+class RosHalComponent(HalObjBase, abc.ABC):
+    """
+    Base class implementing a HAL user component in a ROS node.
 
     This class provides the skeleton of a ROS node that runs a
     Machinekit HAL user component.  It does the tedious part of
@@ -51,84 +52,82 @@ class RosHalComponent(HalObjBase):
 
     # Override in subclasses
     compname = None
-    """The name of the HAL component
+    """
+    The name of the HAL component.
 
     This will also be used as a default prefix for ROS names.
     """
 
-    def __init__(self):
-        if self.compname is None:
-            raise NotImplementedError(
-                "Subclasses must set 'compname' class attribute"
-            )
+    def __init__(self, argv):
+        assert self.compname is not None
 
         # Create ROS node
-        rospy.init_node(self.compname)
-        rospy.loginfo("Initializing '%s' component" % self.compname)
+        self.init_ros_node(argv)
+        self.argv = argv
+        self.logger.info(f"Initializing '{self.compname}' component")
 
         # Publisher update rate in Hz
         self.update_rate = self.get_ros_param("update_rate", 10)
-        self.rate = rospy.Rate(self.update_rate)
-        rospy.logdebug("Publish update rate = %.1f" % self.update_rate)
+        self.logger.debug(f"Publish update rate = {self.update_rate:0.1f} Hz")
 
         # Init HAL component
         self.init_hal_comp()
 
-        # Let the submodule initialize the HAL component
-        self.setup_component()
+    def init_hal_comp(self):
+        """
+        Initialize a new HAL component.
 
-        # Finish initialization
-        self.hal_comp.ready()
-        rospy.loginfo("User component '%s' ready" % self.compname)
+        To be called from
+        :py:class:`hal_hw_interface.ros_hal_pin.RosHalComponent`
+        object setup to initialize the new HAL component
+        """
+        assert self.compname is not None
+        assert "hal_comp" not in self._cached_objs
+        self._cached_objs["hal_comp"] = hal.component(self.compname)
 
+    @abc.abstractmethod
     def setup_component(self):
-        """Set up the ROS node and HAL component
+        """
+        Set up the ROS node and HAL component.
 
         This MUST be defined in subclasses to perform all set up tasks
         for the ROS node and HAL component.  Much of this is automated
-        in the :py:mod:`hal_hw_interface.ros_hal_pin` classes,
-        which create HAL pins attached to ROS subscribers, publishers
-        and services.
+        in the :py:mod:`hal_hw_interface.ros_hal_pin` classes, which
+        create HAL pins attached to ROS subscribers, publishers and
+        services.
         """
-        raise NotImplementedError(
-            "Subclasses must define 'setup_component' method"
-        )
+        # Finish initialization
+        self.hal_comp.ready()
+        self.logger.info("User component '%s' ready" % self.compname)
 
     def run(self):
-        """Run the ROS node/HAL component
+        """
+        Run the ROS node/HAL component.
 
         Runs the component, calling the :py:func:`update` function in
         a loop until shutdown.
 
-        The :py:attr:`rospy.Rate` update rate will be taken from the
-        ROS parameter `<compname>/update_rate`, defaulting to 10 Hz.
+        The update rate will be taken from the ROS parameter
+        `<compname>/update_rate`, defaulting to 10 Hz.
         """
-        while not rospy.is_shutdown():
+        while self.node_context.ok():
             self.update()
-            self.rate.sleep()
+            rclpy.spin_once(self.node, timeout_sec=1 / self.update_rate)
 
+    @abc.abstractmethod
     def update(self):
-        """The ROS node and HAL component update routine
+        """
+        ROS node and HAL component update routine.
 
         This MUST be defined in subclasses.  It is run periodically
         from the :py:func:`run` function, and should take care of all
         updates, such as reading or writing pins and communication
         with ROS.
         """
-        # Override in subclasses
-        raise NotImplementedError("Subclasses must define 'update' method")
-
-    def shutdown_component(self):
-        """Perform extra shutdown actions
-
-        Executes the list of callbacks defined by calls to
-        :py:func:`hal_hw_interface.hal_obj_base.HalObjBase.add_shutdown_callback`.
-        """
-        for cb in self._cached_objs.setdefault("shutdown_cbs", []):
-            cb()
 
     def main(self):
-        """The ROS node and HAL component `main()` function
+        """
+        ROS node and HAL component `main` function.
 
         The ROS node executable python script should define or import
         the component class, and then initialize and run it like
@@ -147,9 +146,14 @@ class RosHalComponent(HalObjBase):
 
             loadusr -Wn my_comp rosrun my_ros_hal_pkg my_ros_hal_comp
         """
+        # Let the submodule initialize the HAL component
+        self.setup_component()
+
         try:
             self.run()
-        except rospy.ROSInterruptException:
-            pass
         except HalHWInterfaceException as e:
-            rospy.logfatal(e.message)
+            self.logger.fatal(f"Exiting on HW interface exception:  {e}")
+        except Exception as e:
+            self.logger.fatal(f"Exiting on exception:  {e}")
+        self._run_shutdown_cbs()
+        self.node_context.shutdown()

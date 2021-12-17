@@ -1,129 +1,109 @@
-# -*- coding: utf-8 -*-
-import sys
 import os
 import subprocess
-import signal
-
-from machinekit import launcher, config, rtapi
+from machinekit import config, rtapi
+from .ros_hal_component import RosHalComponent
 
 # ROS
-import rospy
 from std_msgs.msg import Bool
 
 
-class HalMgr(object):
-    NAME = "hal_mgr"
+class HalMgr(RosHalComponent):
+    compname = "hal_mgr"
     READY_TOPIC = "hal_mgr/ready"
     shutdown_begun = False
+    update_rate = 0.1  # sec
 
-    def __init__(self):
-        # Set up ROS node
-        rospy.init_node(self.NAME)
-        # Call end_session() on ROS shutdown; don't have the launcher
-        # register its own exit handler
-        rospy.on_shutdown(lambda: self.shutdown("Graceful shutdown via ROS"))
-        self._rate = rospy.Rate(1)  # 1hz
-        rospy.loginfo("hal_mgr:  Initialized node")
+    def init_hal_comp(self):
+        # Don't actually set up any HAL comp
+        pass
 
-        self._pub = rospy.Publisher(
-            self.READY_TOPIC, Bool, queue_size=1, latch=True
-        )
+    def setup_component(self):
+        # Not actually setting up HAL comp; don't call
+        # super().setup_component()
+        self.init_ready_topic_publisher()
+        self.start_realtime()
+        self.load_hal_config()
 
-    def start(self):
-        # Find the hal_hw_interface comp's directory in
-        # LD_LIBRARY_PATH and put it into $COMP_DIR
-        for path in os.environ.get("LD_LIBRARY_PATH", "").split(":"):
-            rospy.loginfo(f"Checking for hal_hw_interface.so in {path}")
-            if os.path.exists(os.path.join(path, "hal_hw_interface.so")):
-                comp_dir = path
-                break
-        else:
-            comp_dir = ""
-        os.environ["COMP_DIR"] = comp_dir
-        rospy.loginfo("hal_mgr:  COMP_DIR set to '%s'" % comp_dir)
+    def init_ready_topic_publisher(self):
+        """Set up "ready" status publisher."""
+        self.ready_pub = self.node.create_publisher(Bool, self.READY_TOPIC, 1)
+        self.ready_msg = Bool()
+        self.publish_ready_topic(value=False)
 
-        # Get parameters
-        if not rospy.has_param(self.NAME):
-            self.shutdown("No parameters set for '%s'" % self.NAME, 1)
-        try:
-            hal_mgr_config = rospy.get_param(self.NAME)
-        except KeyError:
-            self.shutdown("No keys defined at %s" % self.NAME, 1)
-            return
+    def start_realtime(self):
+        """
+        Start new RTAPI/HAL session.
 
-        if "hal_files" not in hal_mgr_config:
-            self.shutdown("%s has no 'hal_files' key" % self.NAME, 1)
-        if "hal_file_dir" not in hal_mgr_config:
-            self.shutdown("%s has no 'hal_file_dir' key" % self.NAME, 1)
+        Start Machinekit `realtime` environment.  Register the
+        :py:func:`stop_realtime` shutdown callback.
+        """
+        os.environ.setdefault("DEBUG", "0")
+        if "MACHINEKIT_INI" not in os.environ:  # export for package installs
+            mkconfig = config.Config()
+            os.environ["MACHINEKIT_INI"] = mkconfig.MACHINEKIT_INI
+        subprocess.check_call("realtime start", shell=True)
+        self.add_shutdown_callback(self.stop_realtime, 999)  # run last
+        self.logger.info("hal_mgr:  Started realtime")
 
-        # Set up HAL
-        launcher.cleanup_session()  # kill any running Machinekit instances
-        launcher.start_realtime()
-        rospy.loginfo("hal_mgr:  Started realtime")
+    def stop_realtime(self):
+        self.logger.warn("Stopping realtime")
+        subprocess.check_call("realtime stop", shell=True)
+        self.logger.info("Realtime stopped")
 
-        # Load rtapi module and set up signal handlers
-        if not getattr(rtapi, "__rtapicmd"):
+    def load_hal_config(self):
+        # Be sure rtapi is initialized (used in python HAL configs)
+        if not getattr(rtapi, "__rtapicmd") or not rtapi.__rtapicmd:
             rtapi.init_RTAPI()
 
-        def shutdown_graceful(signum, frame):
-            self.shutdown("Gracefully shutting down after interrupt signal")
+        # Load the hal_hw_interface
+        hal_comp_dir = self.get_ros_param("hal_comp_dir")
+        assert hal_comp_dir
+        hal_hw_interface_path = os.path.join(hal_comp_dir, "hal_control_node")
+        self.logger.info(f"hal_hw_interface_path:  {hal_hw_interface_path}")
+        rtapi.loadrt(hal_hw_interface_path, ARGV=",".join(self.argv))
+        self.logger.info("rosctl_intf comp loaded successfully")
 
-        signal.signal(signal.SIGINT, shutdown_graceful)
-        signal.signal(signal.SIGTERM, shutdown_graceful)
+        # Get HAL config directory and filename list from ROS parameters
+        hal_file_dir = self.get_ros_param("hal_file_dir")
+        assert hal_file_dir is not None
+        hal_files = self.get_ros_param("hal_files")
+        assert isinstance(hal_files, list)
 
-        # Load HAL configuration
-        for fname in hal_mgr_config["hal_files"]:
-            fpath = os.path.join(hal_mgr_config["hal_file_dir"], fname)
-            if not os.path.exists(fpath):
-                self.shutdown(
-                    "No file '%s' in directory '%s'"
-                    % (fname, hal_mgr_config["hal_file_dir"]),
-                    res=1,
-                )
-            rospy.loginfo("hal_mgr:  Loading hal file '%s'" % fname)
-            launcher.load_hal_file(fpath)
-            rospy.loginfo("hal_mgr:  Loading hal file '%s' complete" % fpath)
+        # Munge directory and filenames into paths
+        hal_file_paths = list()
+        for hal_file in hal_files:
+            hal_file_path = os.path.join(hal_file_dir, hal_file)
+            assert os.path.exists(hal_file_path)
+            hal_file_paths.append(hal_file_path)
 
-        # Spin until ROS shutdown event
-        rospy.loginfo("ROS node and HAL started successfully")
-        self._pub.publish(True)
+        # Load HAL configuration from HAL files
+        for fpath in hal_file_paths:
+            self.logger.info(f"Loading hal file '{fpath}'")
+            if fpath.endswith(".py"):
+                with open(fpath, "r") as f:
+                    data = compile(f.read(), fpath, "exec")
+                globals_ = {}
+                exec(data, globals_)
+            else:
+                subprocess.check_call(["halcmd", "-f", fpath])
 
-    def loop(self):
-        while not rospy.is_shutdown():
-            launcher.check_processes()
-            self._rate.sleep()
+        # Signal readiness
+        self.publish_ready_topic(value=True)
+        self.logger.info("HAL configuration loaded")
 
-    def shutdown(self, msg="Shutting down for unknown reason", res=0):
-        # Only run this once
-        if self.shutdown_begun:
-            return
-        self.shutdown_begun = True
+    def update(self):
+        self.publish_ready_topic()
 
-        if res:
-            rospy.logerr("hal_mgr:  %s" % msg)
-        else:
-            rospy.loginfo("hal_mgr:  %s" % msg)
-        self._pub.publish(False)
-        launcher.end_session()
-        rospy.signal_shutdown(msg)
-        sys.exit(res)
+    def publish_ready_topic(self, value=None):
+        """
+        Publish the HAL config "ready" status.
 
+        This topic coming `True` indicates the HAL configuration is
+        complete.
 
-def main():
-    debug = int(os.environ.get("DEBUG", 0))
-    launcher.set_debug_level(debug)
-
-    if "MACHINEKIT_INI" not in os.environ:  # export for package installs
-        mkconfig = config.Config()
-        os.environ["MACHINEKIT_INI"] = mkconfig.MACHINEKIT_INI
-
-    hal_mgr = HalMgr()
-    try:
-        hal_mgr.start()
-        hal_mgr.loop()
-    except subprocess.CalledProcessError as e:
-        hal_mgr.shutdown("Process error:  %s" % e, 1)
-    except rospy.ROSInterruptException as e:
-        hal_mgr.shutdown("Interrupt:  %s" % e, 0)
-    else:
-        hal_mgr.shutdown("Shutting down", 0)
+        Change published value by setting the `value` param to `True`
+        or `False.
+        """
+        if value is not None:
+            self.ready_msg.data = value
+        self.ready_pub.publish(self.ready_msg)

@@ -1,16 +1,21 @@
-import rospy
+import rclpy
 import os
 from machinekit import rtapi, hal
 
 
 def loadrt_local(modname):
-    """Load a locally-built HAL component not installed in the standard
-    module directory
+    """
+    Load a RT HAL component.
+
+    Load a locally-built HAL component installed outside standard
+    module directories.  Uses the `LD_LIBRARY_PATH` environment
+    variable as a search path.
     """
     if modname in hal.components:
         return
+    logger = rclpy.logging.get_logger("loadrt_local")
     for path in os.environ.get("LD_LIBRARY_PATH", "").split(":"):
-        rospy.logdebug(f"Checking for {modname}.so in {path}")
+        logger.debug(f"Checking for {modname}.so in {path}")
         modpath = os.path.join(path, f"{modname}")
         if os.path.exists(f"{modpath}.so"):
             break

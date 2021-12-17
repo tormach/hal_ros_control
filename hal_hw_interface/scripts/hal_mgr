@@ -31,16 +31,8 @@
 # OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-import os
-
-from hal_hw_interface import hal_mgr
-
-MAIN_HAL = "main.py"
-NAME = "hal_mgr"
-HAL_IO = "hal_io"
-SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
-
+from hal_hw_interface.hal_mgr import HalMgr
+import sys
 
 if __name__ == "__main__":
-    os.chdir(SCRIPT_DIR)
-    hal_mgr.main()
+    HalMgr(sys.argv).main()
