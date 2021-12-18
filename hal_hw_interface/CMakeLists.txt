@@ -68,7 +68,7 @@ ament_target_dependencies(
   rclcpp
   rclcpp_lifecycle
   HAL
-  )
+)
 
 
 # Build HAL system hardware plugin
@@ -92,18 +92,18 @@ ament_target_dependencies(
   rclcpp
   # rclcpp_lifecycle
   HAL
-  )
+)
 
 pluginlib_export_plugin_description_file(
   hardware_interface hal_hw_interface.xml
-  )
+)
 
 # Install libraries
 install(
   TARGETS hal_control_node
   LIBRARY
   DESTINATION lib/${PROJECT_NAME}
-  )
+)
 
 # Install C++ headers
 install(
@@ -131,7 +131,7 @@ install(PROGRAMS
   scripts/hal_mgr
   scripts/hal_io
   DESTINATION lib/${PROJECT_NAME}  # or bin?
-  )
+)
 
 #######################
 # Install
