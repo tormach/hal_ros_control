@@ -1,6 +1,3 @@
-# https://github.com/bponsler/ros2-support/blob/master/tutorials/creating-a-mixed-cpp-and-python-package.md
-# https://roboticsbackend.com/ros2-package-for-both-python-and-cpp-nodes/#CMakeListstxt
-# https://docs.ros.org/en/foxy/Contributing/Migration-Guide.html
 cmake_minimum_required(VERSION 3.5)
 project(hal_hw_interface)
 
@@ -144,23 +141,16 @@ install(FILES cmake/FindHAL.cmake cmake/UseHALComp.cmake
 
 if(BUILD_TESTING)
 
-  # Must explicitly add tests, and can't use ament_lint_common.  The
-  # uncrustify test breaks unfixably because of setting conflicts with
-  # the clang checker.  Because the `rosidl` rules pull in the
-  # `ament_cmake_uncrustify` test, the
-  # `set(ament_cmake_uncrustify_FOUND TRUE)` hack doesn't work in this
-  # package.
   find_package(ament_cmake_cppcheck REQUIRED)
   ament_cppcheck()
   find_package(ament_cmake_cpplint REQUIRED)
   ament_cpplint()
   find_package(ament_cmake_flake8 REQUIRED)
   ament_flake8()
-  # FIXME Add back in after Python ROS2 port
-  # find_package(ament_cmake_pep257 REQUIRED)
-  # ament_pep257()
-  # find_package(ament_cmake_lint_cmake REQUIRED)
-  # ament_lint_cmake()
+  find_package(ament_cmake_pep257 REQUIRED)
+  ament_pep257()
+  find_package(ament_cmake_lint_cmake REQUIRED)
+  ament_lint_cmake()
   find_package(ament_cmake_xmllint REQUIRED)
   ament_xmllint()
 
