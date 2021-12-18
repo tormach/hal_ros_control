@@ -30,20 +30,9 @@ find_package(ament_cmake_python REQUIRED)
 find_package(rclpy REQUIRED)
 # find_package(redis_store REQUIRED) # FIXME:  Not ported to ROS2 yet
 # - Services
-find_package(rosidl_default_generators REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
-
-#######################
-# ROS services
-
-rosidl_generate_interfaces(${PROJECT_NAME}_srvs
-  srv/SetFloat64.srv
-  srv/SetInt32.srv
-  srv/SetUInt32.srv
-  DEPENDENCIES std_srvs
-  ADD_LINTER_TESTS
-)
+find_package(hal_hw_interface_msgs REQUIRED)
 
 #######################
 # HAL RT component build definitions
