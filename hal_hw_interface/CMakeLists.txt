@@ -63,17 +63,16 @@ target_link_libraries(hal_control_node ${rclcpp_LIBRARIES})
 
 ament_target_dependencies(
   hal_control_node
+  controller_manager
   hardware_interface
-  pluginlib
   rclcpp
-  rclcpp_lifecycle
   HAL
 )
 
 
 # Build HAL system hardware plugin
 add_library(
-  hal_system_interface MODULE
+  hal_system_interface SHARED
   src/hal_system_interface.cpp
 )
 
@@ -100,9 +99,9 @@ pluginlib_export_plugin_description_file(
 
 # Install libraries
 install(
-  TARGETS hal_control_node
+  TARGETS hal_control_node hal_system_interface
   LIBRARY
-  DESTINATION lib/${PROJECT_NAME}
+  DESTINATION lib
 )
 
 # Install C++ headers
@@ -114,10 +113,6 @@ install(
 # Exports
 ament_export_include_directories(
   include
-)
-
-ament_export_libraries(
-  hal_control_node
 )
 
 #######################
@@ -138,7 +133,7 @@ install(PROGRAMS
 
 # Install launch files
 install(DIRECTORY launch
-  DESTINATION share/${PROJECT_NAME}/launch)
+  DESTINATION share/${PROJECT_NAME})
 
 # Install CMake files
 # FIXME:  This belongs in Machinekit HAL!
@@ -174,6 +169,18 @@ endif()
 
 #######################
 # Finalize package
+
+ament_export_include_directories(
+  include
+)
+ament_export_libraries(
+  hal_system_interface
+)
+ament_export_dependencies(
+  hardware_interface
+  pluginlib
+  rclcpp
+)
 
 ament_package(
   CONFIG_EXTRAS cmake/${PROJECT_NAME}-extras.cmake
