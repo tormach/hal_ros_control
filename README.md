@@ -81,7 +81,7 @@ URDF is added, and a `hal_io` service pin open the gripper when
 
 Run the simulated hardware interface:
 
-    roslaunch hal_rrbot_control hal_rrbot_simulation.launch
+    ros2 launch hal_rrbot_control rrbot.launch.py
     # Debugging: append `hal_debug_output:=1 hal_debug_level:=5`
 
 Run `halscope` to visualize HAL joint commands and feedback; in the
@@ -89,16 +89,11 @@ GUI, set the "Run Mode" to "Roll" for continuous updating:
 
     halscope -i hal_rrbot_control/config/hal_hw_interface.halscope
 
-The rviz and simulated trajectories are launched identically to the
-`rrbot_control` package:
+The simulated trajectories are launched directly from the
+`ros2_control_demo_bringup` package:
 
-    roslaunch hal_rrbot_control rrbot_visualize.launch
-    roslaunch hal_rrbot_control rrbot_test_trajectory.launch
-
-Open and close the gripper with the ROS service:
-
-    rosservice call /rrbot/hal_io/gripper_cmd True
-    rosservice call /rrbot/hal_io/gripper_cmd False
+    ros2 launch ros2_control_demo_bringup test_forward_position_controller.launch.py
+    ros2 launch ros2_control_demo_bringup test_joint_trajectory_controller.launch.py
 
 -----
 ## Configuration
