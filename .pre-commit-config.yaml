@@ -38,14 +38,6 @@ repos:
     files: \.(c|cpp|h|hpp)$
     args: ['-fallback-style=none', '-i']
 
-  - id: shfmt
-    name: Run shfmt
-    description: shfmt Shell code formatter.
-    entry: shfmt -w
-    args: [-i=4]
-    language: system
-    types: [file, shell]
-
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v2.1.0
   hooks:
