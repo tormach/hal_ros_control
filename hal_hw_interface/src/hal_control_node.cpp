@@ -29,6 +29,7 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
+#include <stdlib.h>
 #include <rclcpp/rclcpp.hpp>
 #include <controller_manager/controller_manager.hpp>
 #include <hal_hw_interface/hal_ros_logging.hpp>
@@ -48,6 +49,16 @@ void funct(void* arg, int64_t period);
 
 int rtapi_app_main(void)
 {
+  // Apparently rcl searches through $LD_LIBRARY_PATH to find
+  // librmw_fastrtps_cpp.so and related libs.  :P Since HAL's rtapi_app runs
+  // setuid, $LD_LIBRARY_PATH is ignored, so we have to artificially reconstruct
+  // it.  Can't go through the ROS params, since no node yet, so fake it with
+  // the single /opt/ros/$ROS_DISTRO/lib entry.
+  char LD_LIBRARY_PATH_buf[256];
+  snprintf(LD_LIBRARY_PATH_buf, sizeof(LD_LIBRARY_PATH_buf), "/opt/ros/%s/lib",
+           getenv("ROS_DISTRO"));
+  setenv("LD_LIBRARY_PATH", LD_LIBRARY_PATH_buf, 1);
+
   // Init ROS node, delegating signal handling to rtapi_app
   auto init_opts = rclcpp::InitOptions();
   init_opts.shutdown_on_sigint = false;
