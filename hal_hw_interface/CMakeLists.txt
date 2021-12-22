@@ -100,6 +100,10 @@ install(
   DESTINATION lib
 )
 
+# Template parameters file pointing to HAL component install path
+configure_file(config/hal_hw_interface.yaml.in
+  ${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}/config/hal_hw_interface.yaml @ONLY)
+
 # Install C++ headers
 install(
   DIRECTORY include/
