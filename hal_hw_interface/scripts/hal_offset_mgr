@@ -1,7 +1,0 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-from hal_hw_interface.hal_offset_mgr import HalOffsetMgr
-
-if __name__ == "__main__":
-    HalOffsetMgr().main()

@@ -20,33 +20,21 @@ ROS.  It is expected to realize these benefits:
 This package provides two main HAL components for interfacing with
 ROS, plus infrastructure to configure and run the system.  The
 `hal_hw_interface` HAL RT component enables robot joint control by
-extending [`ros_control_boilerplate`][ros_control_boilerplate].  The
-`hal_io` user component (non-real-time) enables simple robot I/O by
-connecting HAL input and output pins with `std_msgs` publishers and
-subscribers, respectively.
+extending [`ros2_control`][ros2_control].  The `hal_io` user component
+(non-real-time) enables simple robot I/O by connecting HAL input and
+output pins with `std_msgs` publishers and subscribers, respectively.
 
 [machinekit]:  http://machinekit.io
-[ros_control_boilerplate]: https://github.com/davetcoleman/ros_control_boilerplate
+[ros2_control]: https://github.com/ros-controls/ros2_control
 
 ## The `hal_hw_interface` real-time component
 
 The `hal_hw_interface` HAL component is a ROS
-`hardware_interface::RobotHW` implementation for controlling robot
-joints in a real-time context.
+`hardware_interface::SystemInterface` implementation for controlling
+robot joints in a real-time context.
 
-The hardware interface is a subclass of Dave Coleman's
-`ros_control_boilerplate` hardware interface.  The C++ HAL integration
-was done following examples by Bas de Bruijn and Mick Grant of the
-Machinekit project.  The control loop runs in a HAL thread, and its
-design is inspired by the
-[`rtt_ros_control_example`][rtt_ros_control_example] and related
-[discussion][ros_control-130].  The `hal_mgr` ROS node, which starts
-up the RTAPI and HAL apparatus, is based on Alexander Roessler's
-[`python-hal-seed`][python-hal-seed].
-
-[rtt_ros_control_example]: https://github.com/skohlbr/rtt_ros_control_example
-[ros_control-130]: https://github.com/ros-controls/ros_control/issues/130
-[python-hal-seed]: https://github.com/machinekoder/python-hal-seed
+The `controller_manager::ControllerManager` update loop runs in a HAL
+thread.
 
 ## `hal_io`
 
@@ -196,3 +184,42 @@ configuration has three main parameters:
 # TODO
 
 - Expose joint limits through pins
+
+
+# FIXME  ROS2 build
+
+```
+sudo apt-get install machinekit-hal-dev
+# VERBOSE=1 \
+colcon build \
+    --cmake-args -DCMAKE_BUILD_TYPE=Release \
+    --cmake-args -DCMAKE_VERBOSE_MAKEFILE=TRUE \
+    --event-handlers console_cohesion+ \
+    --packages-up-to hal_hw_interface
+```
+
+Tests:
+```
+colcon test \
+    --event-handlers console_cohesion+ \
+    --executor sequential
+colcon test-result --verbose
+```
+
+## Acknowledements
+
+This work was sponsored by [Tormach][tormach] for use in its ZA6 6DOF
+robot arm.
+
+The original ROS(1) C++ HAL integration was done following examples by
+Bas de Bruijn and Mick Grant of the [Machinekit project][machinekit].
+The `hal_mgr` ROS node, which starts up the RTAPI and HAL apparatus,
+is based on Alexander Roessler's [`python-hal-seed`][python-hal-seed].
+The control loop was inspired by the
+[`rtt_ros_control_example`][rtt_ros_control_example] and related
+[discussion][ros_control-130]
+
+[tormach]:  https://www.tormach.com/
+[python-hal-seed]: https://github.com/machinekoder/python-hal-seed
+[rtt_ros_control_example]: https://github.com/skohlbr/rtt_ros_control_example
+[ros_control-130]: https://github.com/ros-controls/ros_control/issues/130

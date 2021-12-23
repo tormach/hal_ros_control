@@ -35,12 +35,6 @@ cat >$UPSTREAM_ROSDEP_YML <<-EOF
 	machinekit-dev:
 	  debian: [machinekit-hal-dev]
 	  ubuntu: [machinekit-hal-dev]
-	python3-redis:
-	  debian: [python3-redis]
-	  ubuntu: [python3-redis]
-	python3-attrs:
-	  debian: [python3-attr]
-	  ubuntu: [python3-attr]
 	EOF
 echo "yaml file://$UPSTREAM_ROSDEP_YML" > \
     /etc/ros/rosdep/sources.list.d/10-local.list

@@ -1,48 +1,53 @@
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.0.1
-    hooks:
-      - id: check-ast
-      - id: fix-byte-order-marker
-      - id: trailing-whitespace
-      - id: check-docstring-first
-      - id: check-executables-have-shebangs
-      - id: check-json
-      - id: check-merge-conflict
-      - id: check-symlinks
-      - id: check-xml
-      - id: check-yaml
-      - id: end-of-file-fixer
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.0.1
+  hooks:
+  - id: check-added-large-files
+  - id: check-ast
+  - id: check-docstring-first
+  - id: check-executables-have-shebangs
+  - id: check-json
+  - id: check-merge-conflict
+  - id: check-symlinks
+  - id: check-xml
+  - id: check-yaml
+  - id: debug-statements
+  - id: destroyed-symlinks
+  - id: detect-private-key
+  - id: end-of-file-fixer
+  - id: fix-byte-order-marker
+  - id: mixed-line-ending
+  - id: pretty-format-json
+  - id: trailing-whitespace
 
 - repo: local
   hooks:
-    -   id: black
-        name: Run black code formatter
-        description: This hook formats Python code.
-        entry: env LC_ALL=C.UTF-8 black -q
-        language: system
-        args: [-l, "80"]
-        types: [python]
+  - id: black
+    name: Run black code formatter
+    description: This hook formats Python code.
+    entry: env LC_ALL=C.UTF-8 black -q
+    language: system
+    args: [-l, "80"]
+    types: [python]
 
-    -   id: clang-format
-        name: Run clang-format
-        description: Clang C/C++ code formatter.
-        entry: clang-format -i
-        args: [-style=file]
-        language: system
-        types: [file, c++]
-        # note: formatting style in .clang-format
+  - id: clang-format
+    name: clang-format
+    description: Format files with ClangFormat.
+    entry: clang-format-10
+    language: system
+    files: \.(c|cpp|h|hpp)$
+    args: ['-fallback-style=none', '-i']
 
-    -   id: shfmt
-        name: Run shfmt
-        description: shfmt Shell code formatter.
-        entry: shfmt -w
-        args: [-i=4]
-        language: system
-        types: [file, shell]
+  - id: shfmt
+    name: Run shfmt
+    description: shfmt Shell code formatter.
+    entry: shfmt -w
+    args: [-i=4]
+    language: system
+    types: [file, shell]
 
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.1.0
-    hooks:
-      - id: flake8
-        # note: ignores and excluded files in .flake8
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v2.1.0
+  hooks:
+  - id: flake8
+    # note: ignores and excluded files in .flake8

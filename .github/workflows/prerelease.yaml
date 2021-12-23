@@ -5,34 +5,22 @@ name: pre-release
 
 on:
   workflow_dispatch:
-  push:
 
 jobs:
   default:
     strategy:
+      fail-fast: false
       matrix:
-        distro: [noetic]
+        distro: [foxy]
 
     env:
-      # https://github.com/ros-industrial/industrial_ci/issues/666
-      BUILDER: catkin_make_isolated
       ROS_DISTRO: ${{ matrix.distro }}
       PRERELEASE: true
       BASEDIR: ${{ github.workspace }}/.work
 
-    if: github.event_name == 'workflow_dispatch' # only allow manual triggering
     name: "${{ matrix.distro }}"
     runs-on: ubuntu-latest
     steps:
-      - name: "Free up disk space"
-        run: |
-          sudo apt-get -qq purge build-essential "ghc*"
-          sudo apt-get clean
-          # cleanup docker images not used by us
-          docker system prune -af
-          # free up a lot of stuff from /usr/local
-          sudo rm -rf /usr/local
-          df -h
       - uses: actions/checkout@v2
       - name: industrial_ci
         uses: ros-industrial/industrial_ci@master
