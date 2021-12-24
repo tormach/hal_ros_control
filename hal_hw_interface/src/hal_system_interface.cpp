@@ -29,12 +29,89 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
+// Disable warnings that need to be fixed in external headers
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#define RTAPI 1
+#include <hal.h>       // HAL public API decls
+#include <hal_priv.h>  // halpr_find_comp_by_name
+#pragma GCC diagnostic pop
+
 #include <hal_hw_interface/hal_system_interface.hpp>
-#include <hal_hw_interface/hal_handle.hpp>
 #include <hal_hw_interface/hal_ros_logging.hpp>
+
+#include <string>
+#include <vector>
 
 namespace hal_system_interface
 {
+static inline std::string joint_intf_name(std::string joint_name,
+                                          std::string intf_name,
+                                          std::string suffix = "")
+{
+  return joint_name + "/" + intf_name + suffix;
+}
+
+hal_float_t** HalSystemInterface::alloc_and_init_hal_pin(
+    std::string base_name, std::string interface_name, std::string suffix,
+    hal_pin_dir_t pin_dir)
+{
+  std::string pin_name =
+      info_.name + '.' + base_name + '.' + interface_name + suffix;
+
+  hal_float_t** ptr =
+      (reinterpret_cast<hal_float_t**>(hal_malloc(sizeof(hal_float_t*))));
+  if (ptr == nullptr)
+  {
+    HAL_ROS_ERR_NAMED(LOG_NAME, "Failed to allocate HAL pin %s",
+                      pin_name.c_str());
+    throw std::runtime_error(std::string("Failed to init HAL pin '") +
+                             pin_name + "'");
+  }
+  if (hal_pin_float_newf(pin_dir, ptr, comp_id_, "%s", pin_name.c_str()))
+  {
+    HAL_ROS_ERR_NAMED(LOG_NAME, "New HAL pin %s failed", pin_name.c_str());
+    throw std::runtime_error("Failed to init HAL pin '" + pin_name + "'");
+  }
+  HAL_ROS_INFO_NAMED(LOG_NAME, "New HAL pin %s succeeded", pin_name.c_str());
+
+  return ptr;
+}
+
+void HalSystemInterface::init_command_interface(std::string joint_name,
+                                                std::string interface_name,
+                                                std::string data_type
+                                                __attribute__((unused)))
+{
+  assert(data_type == "double");
+  auto name = joint_intf_name(joint_name, interface_name, "_cmd");
+  storage_.push_back(0);
+  double** hal_pin_storage =
+      alloc_and_init_hal_pin(joint_name, interface_name, "_cmd", HAL_OUT);
+  std::vector<double>::size_type handle_storage = storage_.size() - 1;
+  command_intf_data_map_[name] = { .base_name = joint_name,
+                                   .interface_name = interface_name,
+                                   .hal_pin_storage = hal_pin_storage,
+                                   .handle_storage = handle_storage };
+}
+
+void HalSystemInterface::init_state_interface(std::string joint_name,
+                                              std::string interface_name,
+                                              std::string data_type
+                                              __attribute__((unused)))
+{
+  assert(data_type == "double");
+  auto name = joint_intf_name(joint_name, interface_name, "_fb");
+  storage_.push_back(0);
+  double** hal_pin_storage =
+      alloc_and_init_hal_pin(joint_name, interface_name, "_fb", HAL_IN);
+  std::vector<double>::size_type handle_storage = storage_.size() - 1;
+  state_intf_data_map_[name] = { .base_name = joint_name,
+                                 .interface_name = interface_name,
+                                 .hal_pin_storage = hal_pin_storage,
+                                 .handle_storage = handle_storage };
+}
+
 hardware_interface::return_type
 HalSystemInterface::configure(const hardware_interface::HardwareInfo& info)
 {
@@ -43,17 +120,11 @@ HalSystemInterface::configure(const hardware_interface::HardwareInfo& info)
     return hardware_interface::return_type::ERROR;
   }
 
-  HAL_ROS_INFO_NAMED(CNAME, "Initializing HAL hardware interface");
+  HAL_ROS_INFO_NAMED(LOG_NAME, "Initializing HAL hardware interface");
 
-  // Initialize component
-  comp_id_ = hal_init(CNAME);
-  if (comp_id_ < 0)
-  {
-    HAL_ROS_ERR_NAMED(CNAME, "ERROR: Component creation ABORTED");
-    return hardware_interface::return_type::ERROR;
-  }
-
-  HAL_ROS_INFO_NAMED(CNAME, "Initialized HAL component");
+  // Get HAL comp id
+  comp_id_ = halpr_find_comp_by_name(CNAME)->hdr._id;
+  HAL_ROS_INFO_NAMED(LOG_NAME, "HAL component %s ID:  %d", CNAME, comp_id_);
 
   // Initialize joints
   for (const auto& joint : info_.joints)
@@ -61,16 +132,13 @@ HalSystemInterface::configure(const hardware_interface::HardwareInfo& info)
     // Initialize joint command interfaces
     for (const auto& interface : joint.command_interfaces)
     {
-      command_interfaces_.emplace_back(
-          hal_hardware_interface::HalCommandInterface(
-              joint.name, interface.name, interface.data_type, comp_id_));
+      init_command_interface(joint.name, interface.name, interface.data_type);
     }
 
     // Initialize joint state interfaces
     for (const auto& interface : joint.state_interfaces)
     {
-      state_interfaces_.emplace_back(hal_hardware_interface::HalStateInterface(
-          joint.name, interface.name, interface.data_type, comp_id_));
+      init_state_interface(joint.name, interface.name, interface.data_type);
     }
   }
 
@@ -79,15 +147,64 @@ HalSystemInterface::configure(const hardware_interface::HardwareInfo& info)
   {
     for (const auto& interface : sensor.state_interfaces)
     {
-      state_interfaces_.emplace_back(hal_hardware_interface::HalStateInterface(
-          sensor.name, interface.name, interface.data_type, comp_id_));
+      init_state_interface(sensor.name, interface.name, interface.data_type);
     }
   }
 
-  HAL_ROS_INFO_NAMED(CNAME, "Initialized HAL pins");
+  HAL_ROS_INFO_NAMED(LOG_NAME, "Initialized HAL pins");
 
   return hardware_interface::return_type::OK;
 }  // configure()
+
+std::vector<hardware_interface::StateInterface>
+HalSystemInterface::export_state_interfaces()
+{
+  HAL_ROS_INFO_NAMED(LOG_NAME, "Exporting state interfaces");
+  std::vector<hardware_interface::StateInterface> interfaces;
+  for (const auto& [name, intf_data] : state_intf_data_map_)
+    interfaces.emplace_back(intf_data.base_name, intf_data.interface_name,
+                            &storage_.at(intf_data.handle_storage));
+  return interfaces;
+}
+
+std::vector<hardware_interface::CommandInterface>
+HalSystemInterface::export_command_interfaces()
+{
+  HAL_ROS_INFO_NAMED(LOG_NAME, "Exporting command interfaces");
+  std::vector<hardware_interface::CommandInterface> interfaces;
+  for (const auto& [name, intf_data] : command_intf_data_map_)
+    interfaces.emplace_back(intf_data.base_name, intf_data.interface_name,
+                            &storage_.at(intf_data.handle_storage));
+  return interfaces;
+}
+
+hardware_interface::return_type HalSystemInterface::read()
+{
+  for (const auto& [name, intf_data] : state_intf_data_map_)
+    // Copy to handle from HAL pin
+    storage_.at(intf_data.handle_storage) = **intf_data.hal_pin_storage;
+  return hardware_interface::return_type::OK;
+}
+
+hardware_interface::return_type HalSystemInterface::write()
+{
+  for (const auto& [name, intf_data] : command_intf_data_map_)
+    // Copy to HAL pin from handle
+    **intf_data.hal_pin_storage = storage_.at(intf_data.handle_storage);
+  return hardware_interface::return_type::OK;
+}
+
+hardware_interface::return_type HalSystemInterface::start()
+{
+  HAL_ROS_INFO_NAMED(LOG_NAME, "Starting HAL system interface");
+  return hardware_interface::return_type::OK;
+}
+
+hardware_interface::return_type HalSystemInterface::stop()
+{
+  HAL_ROS_INFO_NAMED(LOG_NAME, "Stopping HAL system interface");
+  return hardware_interface::return_type::OK;
+}
 
 }  // namespace hal_system_interface
 

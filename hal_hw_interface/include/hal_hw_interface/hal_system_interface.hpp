@@ -36,7 +36,12 @@
 #define RTAPI 1
 #include <hal.h>
 
+#include <string>
 #include <vector>
+#include <utility>
+#include <unordered_map>
+
+#include "hardware_interface/handle.hpp"
 #include "hardware_interface/base_interface.hpp"
 #include "hardware_interface/system_interface.hpp"
 #include "rclcpp_lifecycle/node_interfaces/lifecycle_node_interface.hpp"
@@ -44,10 +49,19 @@
 #include "rclcpp/macros.hpp"
 #include "hal_hw_interface/hal_def.hpp"
 #include "hal_hw_interface/visibility_control.h"
-#include "hal_hw_interface/hal_handle.hpp"
+
+#define LOG_NAME (CNAME "_system_interface")
 
 using CallbackReturn =
     rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
+
+typedef struct
+{
+  std::string base_name;
+  std::string interface_name;
+  double** hal_pin_storage;
+  std::vector<double>::size_type handle_storage;
+} intf_data_t;
 
 namespace hal_system_interface
 {
@@ -126,14 +140,26 @@ public:
   hardware_interface::return_type write() override;
 
 protected:
+  hal_float_t** alloc_and_init_hal_pin(std::string /*joint_name*/,
+                                       std::string /*interface_name*/,
+                                       std::string /*suffix*/,
+                                       hal_pin_dir_t /*pin_dir*/);
+  void init_command_interface(std::string /*joint_name*/,
+                              std::string /*interface_name*/,
+                              std::string /*data_type*/);
+  void init_state_interface(std::string /*joint_name*/,
+                            std::string /*interface_name*/,
+                            std::string /*data_type*/);
+
   /**
    * \brief HAL component ID
    */
   int comp_id_;
 
-  // Interfaces
-  std::vector<hal_hardware_interface::HalCommandInterface> command_interfaces_;
-  std::vector<hal_hardware_interface::HalStateInterface> state_interfaces_;
+  // Interface data
+  std::vector<double> storage_;
+  std::unordered_map<std::string, intf_data_t> command_intf_data_map_;
+  std::unordered_map<std::string, intf_data_t> state_intf_data_map_;
 };  // HalSystemInterface
 
 }  // namespace hal_system_interface

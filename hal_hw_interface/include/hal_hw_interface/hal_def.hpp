@@ -32,7 +32,7 @@
 #ifndef HAL_HW_INTERFACE__HAL_DEF_HPP_
 #define HAL_HW_INTERFACE__HAL_DEF_HPP_
 
-// Component name, nice & short leaving room in 40 char limit
-#define CNAME "ros_intf"
+// Component name
+#define CNAME "hal_control_node"
 
 #endif  // HAL_HW_INTERFACE__HAL_DEF_HPP_
