@@ -67,9 +67,21 @@ def generate_launch_description():
     hal_debug_output_exp = PythonExpression(
         ["'1' if '", hal_debug_output, "' == 'true' else ''"]
     )
+    fastrtps_disable_shm = PathJoinSubstitution(
+        [
+            # Use UDP discovery; rtapi_app runs as root, which breaks
+            # shm-based discovery
+            # https://github.com/eProsima/Fast-DDS/issues/1750
+            FindPackageShare("hal_hw_interface"),
+            "config",
+            "fastrtps_disable_shm.xml",
+        ]
+    )
+
     node_env = dict(
         SYSLOG_TO_STDERR=hal_debug_output_exp,
         DEBUG=hal_debug_level,
+        FASTRTPS_DEFAULT_PROFILES_FILE=fastrtps_disable_shm,
     )
 
     # Run the node

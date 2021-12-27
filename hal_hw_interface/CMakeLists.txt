@@ -140,6 +140,11 @@ install(DIRECTORY launch
 install(FILES cmake/FindHAL.cmake cmake/UseHALComp.cmake
   DESTINATION share/${PROJECT_NAME}/cmake)
 
+# Install config
+install(FILES config/fastrtps_disable_shm.xml
+  DESTINATION share/${PROJECT_NAME}/config)
+
+
 #######################
 # Tests
 
