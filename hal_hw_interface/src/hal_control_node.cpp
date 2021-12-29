@@ -47,8 +47,24 @@ extern "C" {
 // Pre-declare the HAL function
 void funct(void* arg, int64_t period);
 
+#define MAX_ARGS 255
+static char *argv[MAX_ARGS] = {0,};
+RTAPI_MP_ARRAY_STRING(argv, MAX_ARGS, "ROS command-line argv");
+
 int rtapi_app_main(void)
 {
+
+  // Init HAL component
+  int comp_id = hal_init(CNAME);
+  if (comp_id < 0)
+  {
+    HAL_ROS_ERR_NAMED(CNAME, "%s:  ERROR: Component creation ABORTED", CNAME);
+    // return false; // FIXME
+    return -1;
+  }
+
+  HAL_ROS_INFO_NAMED(CNAME, "%s: Initialized HAL component", CNAME);
+
   // Apparently rcl searches through $LD_LIBRARY_PATH to find
   // librmw_fastrtps_cpp.so and related libs.  :P Since HAL's rtapi_app runs
   // setuid, $LD_LIBRARY_PATH is ignored, so we have to artificially reconstruct
@@ -62,18 +78,13 @@ int rtapi_app_main(void)
   // Init ROS node, delegating signal handling to rtapi_app
   auto init_opts = rclcpp::InitOptions();
   init_opts.shutdown_on_sigint = false;
-  rclcpp::init(0, nullptr, init_opts);
-
-  // Init HAL component
-  int comp_id = hal_init(CNAME);
-  if (comp_id < 0)
-  {
-    HAL_ROS_ERR_NAMED(CNAME, "%s:  ERROR: Component creation ABORTED", CNAME);
-    // return false; // FIXME
-    return -1;
+  // 'hal_control_node', '--ros-args', '--params-file', '/tmp/launch_params_9hqq2one', '--params-file', '/home/zultron/git/picknik/hatci_ws/install/hal_hw_interface/share/hal_hw_interface/config/hal_hw_interface.yaml', '--params-file', '/home/zultron/git/picknik/hatci_ws/install/ros2_control_demo_bringup/share/ros2_control_demo_bringup/config/rrbot_controllers.yaml']
+  int argc;
+  for (argc=0; argv[argc] != nullptr; argc++) {
+    HAL_ROS_DBG_NAMED(CNAME, "  ROS args:  %d = '%s'", argc, argv[argc]);
   }
-
-  HAL_ROS_INFO_NAMED(CNAME, "%s: Initialized HAL component", CNAME);
+  rclcpp::init(argc, argv, init_opts);
+  std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("hal_control_node");
 
   // Init controller manager and asynch executor
   // - Resource manager & hardware interface loaded here; HAL pins initialized
