@@ -29,19 +29,29 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
+#define RTAPI 1
+
 #include <stdlib.h>
 #include <pthread.h>  // pthread_setname_np()
 #include <unistd.h>   // sleep()
+#include <hal.h>      // HAL public API decls
 #include <rclcpp/rclcpp.hpp>
 #include <controller_manager/controller_manager.hpp>
+#include <controller_manager_msgs/srv/switch_controller.hpp>
+#include <rclcpp/duration.hpp>
+#include <hardware_interface/macros.hpp>  // THROW_ON_NULLPTR
+#include <lifecycle_msgs/msg/state.hpp>
 #include <hal_hw_interface/hal_ros_logging.hpp>
 #include <hal_hw_interface/hal_def.hpp>
 #include <memory>
 #include <string>
+#include <vector>
 
 // Controller manager node and executor pointers
 std::shared_ptr<controller_manager::ControllerManager> CONTROLLER_MANAGER;
 std::shared_ptr<rclcpp::executors::MultiThreadedExecutor> EXECUTOR;
+rclcpp::TimerBase::SharedPtr RESET_TIMER;
+hal_bit_t** RESET_PIN_PTR;
 
 extern "C" {
 // Pre-declare the HAL function
@@ -52,6 +62,46 @@ static char* ARGV[MAX_ARGS] = {
   nullptr,
 };
 RTAPI_MP_ARRAY_STRING(ARGV, MAX_ARGS, "ROS command-line argv");
+
+// Reset HAL pin callback
+//
+// A high `reset` pin value means we want command reset to feedback.  Controller
+// `on_activate()` function should do so.
+//
+// Called periodically from non-RT thread timer, when `reset` pin is set,
+// request each active controller be deactivated & activated (and clear `reset`
+// pin).
+void reset_controller_cb(void)
+{
+  THROW_ON_NULLPTR(RESET_PIN_PTR);
+  THROW_ON_NULLPTR(*RESET_PIN_PTR);
+  if (!**RESET_PIN_PTR)
+    return;
+
+  uint64_t period = 10 * 1000 * 1000;  // 10ms
+
+  // reset pin went high; reset command to feedback by stopping and starting
+  // all active controllers during update()
+  HAL_ROS_INFO_NAMED(CNAME, "Reset pin high; reactivating controllers:");
+  **RESET_PIN_PTR = 0;  // clear reset pin
+  std::vector<std::string> start_controllers, stop_controllers;
+  for (const auto& controller : CONTROLLER_MANAGER->get_loaded_controllers())
+    if (controller.c->get_current_state().id() ==
+        lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE)
+    {
+      HAL_ROS_INFO_NAMED(CNAME, "  - %s", controller.info.name.c_str());
+      start_controllers.push_back(controller.info.name);
+      stop_controllers.push_back(controller.info.name);
+    }
+  CONTROLLER_MANAGER->switch_controller(
+      start_controllers, stop_controllers,
+      controller_manager_msgs::srv::SwitchController::Request::BEST_EFFORT,
+      true,  // start_asap
+      rclcpp::Duration((int32_t)(period >> 32),
+                       (uint32_t)(period))  // timeout
+  );
+  HAL_ROS_INFO_NAMED(CNAME, "  ...complete");
+}
 
 int rtapi_app_main(void)
 {
@@ -86,12 +136,24 @@ int rtapi_app_main(void)
   }
   rclcpp::init(argc, ARGV, init_opts);
 
+  // Set up reset HAL pin
+  HAL_ROS_DBG_NAMED(CNAME, "Initializing %s.reset HAL pin", CNAME);
+  RESET_PIN_PTR = reinterpret_cast<hal_bit_t**>(hal_malloc(sizeof(hal_bit_t*)));
+  THROW_ON_NULLPTR(RESET_PIN_PTR);
+  if (hal_pin_bit_newf(HAL_IO, RESET_PIN_PTR, comp_id, "%s.reset", CNAME))
+    throw std::runtime_error("Failed to init " + std::string(CNAME) +
+                             ".reset HAL pin");
+  THROW_ON_NULLPTR(*RESET_PIN_PTR);
+
   // Init controller manager and asynch executor
   // - Resource manager & hardware interface loaded here; HAL pins initialized
   EXECUTOR.reset(new rclcpp::executors::MultiThreadedExecutor());
   std::string manager_node_name = "controller_manager";
   CONTROLLER_MANAGER.reset(
       new controller_manager::ControllerManager(EXECUTOR, manager_node_name));
+  // - Timer for reactivating controllers when reset pin set
+  RESET_TIMER = CONTROLLER_MANAGER->create_wall_timer(
+      std::chrono::milliseconds(10), reset_controller_cb);
   EXECUTOR->add_node(CONTROLLER_MANAGER);
 
   // Some race condition causes segfault; this seems to take care of it.
