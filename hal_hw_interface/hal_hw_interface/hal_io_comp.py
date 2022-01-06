@@ -4,6 +4,8 @@ from hal_hw_interface.ros_hal_pin import (
     RosHalPinPublisher,
     RosHalPinService,
 )
+import os
+import yaml
 
 
 class HalIO(RosHalComponent):
@@ -45,14 +47,23 @@ class HalIO(RosHalComponent):
         service_pins=RosHalPinService,
     )
 
+    def read_config(self):
+        config_file = self.argv[0]
+        self.logger.info(f"Reading config file '{config_file}'")
+        assert os.path.exists(config_file)
+        with open(config_file, "r") as f:
+            self.config = yaml.safe_load(f)
+
     def setup_component(self):
         """Create pin objects from ROS param server configuration."""
+        self.read_config()
         self.pins = []
         for config_key, pin_class in self.pin_class_map.items():
-            pins = self.get_ros_param(config_key, dict())
+            pins = self.config.get(config_key, dict())
             for pin_name, pin_data in pins.items():
                 p = pin_class(pin_name, **pin_data)
                 self.pins.append(p)
+        super().setup_component()
 
     def update(self):
         """Run pin :py:func:`update` functions."""

@@ -24,6 +24,10 @@ from ..ros_hal_component import RosHalComponent
 class TestRosHalPin:
     test_class = RosHalPin
     comp_name = "mock_hal_comp"  # conftest.py
+    rclpy_patches = [
+        "hal_hw_interface.hal_obj_base.rclpy",
+        "hal_hw_interface.ros_hal_component.rclpy",
+    ]
 
     #
     # Object and data fixtures

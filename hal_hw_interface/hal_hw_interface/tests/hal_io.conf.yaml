@@ -1,0 +1,33 @@
+publish_pins:
+  bit_pub:
+    hal_type:  HAL_BIT
+  u32_pub:
+    hal_type:  HAL_U32
+  s32_pub:
+    hal_type:  HAL_S32
+    hal_dir:  HAL_IO
+  float_pub:
+    hal_type:  HAL_FLOAT
+    pub_topic:  float_topic
+subscribe_pins:
+  bit_sub:
+    hal_type:  HAL_BIT
+    sub_topic:  bit_topic
+  u32_sub:
+    hal_type:  HAL_U32
+    hal_dir:  HAL_IO
+  s32_sub:
+    hal_type:  HAL_S32
+  float_sub:
+    hal_type:  HAL_FLOAT
+service_pins:
+  bit_svc:
+    hal_type:  HAL_BIT
+  u32_svc:
+    hal_type:  HAL_U32
+    hal_dir:  HAL_IO
+  s32_svc:
+    hal_type:  HAL_S32
+    service_name:  s32_svc
+  float_svc:
+    hal_type:  HAL_FLOAT

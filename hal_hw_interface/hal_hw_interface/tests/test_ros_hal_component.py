@@ -18,6 +18,10 @@ class TestRosHalComponent:
 
     test_class = StubComp
     comp_name = test_class.compname
+    rclpy_patches = [
+        "hal_hw_interface.hal_obj_base.rclpy",
+        "hal_hw_interface.ros_hal_component.rclpy",
+    ]
 
     @pytest.fixture
     def obj(self, mock_hal_comp, mock_rclpy):

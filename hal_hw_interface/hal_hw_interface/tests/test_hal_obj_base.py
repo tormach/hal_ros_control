@@ -6,6 +6,9 @@ from hal_hw_interface.hal_obj_base import HalObjBase
 class TestHalObjBase:
     comp_name = "test_comp"
     test_class = HalObjBase
+    rclpy_patches = [
+        "hal_hw_interface.hal_obj_base.rclpy",
+    ]
 
     @pytest.fixture
     def obj(self, mock_rclpy, mock_hal_comp):

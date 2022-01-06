@@ -58,11 +58,11 @@ class RosHalComponent(HalObjBase, abc.ABC):
     This will also be used as a default prefix for ROS names.
     """
 
-    def __init__(self, argv):
+    def __init__(self, argv, node_kwargs=dict()):
         assert self.compname is not None, "`compname` not set"
 
         # Create ROS node
-        self.init_ros_node(argv)
+        self.init_ros_node(argv, node_kwargs=node_kwargs)
         self.argv = argv
         self.logger.info(f"Initializing '{self.compname}' component")
 
