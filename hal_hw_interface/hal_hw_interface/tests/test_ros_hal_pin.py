@@ -233,7 +233,7 @@ class TestRosHalPinPublisher(TestRosHalPin):
         assert obj.pub_topic == self.case["pub_topic"]
         print(self.node.create_publisher.mock_calls)
         self.node.create_publisher.assert_called_with(
-            self.msg_type, self.case["pub_topic"]
+            self.msg_type, self.case["pub_topic"], 1
         )
         assert obj.pub is self.publishers[self.case["pub_topic"]]
 
@@ -260,10 +260,7 @@ class TestRosHalPinPublisher(TestRosHalPin):
 
         # Check calls
         print(f"pub.publish calls:  {obj.pub.publish.mock_calls}")
-        if pvals["changed"]:
-            obj.pub.publish.assert_called_with(obj._msg)
-        else:
-            obj.pub.publish.assert_not_called()
+        obj.pub.publish.assert_called_with(obj._msg)
 
 
 class TestRosHalPinSubscriber(TestRosHalPinPublisher):
@@ -301,12 +298,7 @@ class TestRosHalPinSubscriber(TestRosHalPinPublisher):
         self.print_debug_info("msg.data", msg.data)
 
         obj._subscriber_cb(msg)
-        if pvals["changed"]:
-            self.hal_comp.__setitem__.assert_called_with(
-                self.pin_name, new_value
-            )
-        else:
-            self.hal_comp.__setitem__.assert_not_called()
+        self.hal_comp.__setitem__.assert_called_with(self.pin_name, new_value)
 
         # Test that wrong msg type raises exception
         with pytest.raises(HalHWInterfaceException):

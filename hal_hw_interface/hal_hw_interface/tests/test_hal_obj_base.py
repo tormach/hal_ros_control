@@ -39,7 +39,9 @@ class TestHalObjBase:
 
         # Check node
         self.rclpy.create_node.assert_called_once()
-        self.rclpy.create_node.assert_called_with(self.comp_name)
+        self.rclpy.create_node.assert_called_with(
+            self.comp_name, context=self.context
+        )
         assert hasattr(obj, "node")
         assert obj.node is self.node
 
