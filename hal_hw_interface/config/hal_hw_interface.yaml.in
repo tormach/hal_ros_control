@@ -1,5 +1,0 @@
-/**:
-  ros__parameters:
-    # Full install path of HAL components, set at build time
-    hal_comp_dir:
-      @CMAKE_INSTALL_PREFIX@/lib
