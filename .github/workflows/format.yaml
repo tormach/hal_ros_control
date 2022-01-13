@@ -19,13 +19,6 @@ jobs:
         run: sudo apt-get install clang-format-10
       - name: Install black
         run: sudo -H pip3 install black
-      - name: Install shfmt
-        run: |
-          wget -O /tmp/go.tgz https://golang.org/dl/go1.17.1.linux-amd64.tar.gz
-          sudo tar -C /usr/local -xzf /tmp/go.tgz
-          sudo ln -s ../go/bin/go /usr/local/bin/go
-          sudo GOPATH=/usr/local/go go install mvdan.cc/sh/v3/cmd/shfmt@latest
-          sudo ln -s ../go/bin/shfmt /usr/local/bin/shfmt
       - uses: pre-commit/action@v2.0.3
         id: precommit
       - name: Upload pre-commit changes

@@ -30,20 +30,9 @@ find_package(ament_cmake_python REQUIRED)
 find_package(rclpy REQUIRED)
 # find_package(redis_store REQUIRED) # FIXME:  Not ported to ROS2 yet
 # - Services
-find_package(rosidl_default_generators REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
-
-#######################
-# ROS services
-
-rosidl_generate_interfaces(${PROJECT_NAME}_srvs
-  srv/SetFloat64.srv
-  srv/SetInt32.srv
-  srv/SetUInt32.srv
-  DEPENDENCIES std_srvs
-  ADD_LINTER_TESTS
-)
+find_package(hal_hw_interface_msgs REQUIRED)
 
 #######################
 # HAL RT component build definitions
@@ -74,17 +63,16 @@ target_link_libraries(hal_control_node ${rclcpp_LIBRARIES})
 
 ament_target_dependencies(
   hal_control_node
+  controller_manager
   hardware_interface
-  pluginlib
   rclcpp
-  rclcpp_lifecycle
   HAL
-  )
+)
 
 
 # Build HAL system hardware plugin
 add_library(
-  hal_system_interface MODULE
+  hal_system_interface SHARED
   src/hal_system_interface.cpp
 )
 
@@ -103,18 +91,18 @@ ament_target_dependencies(
   rclcpp
   # rclcpp_lifecycle
   HAL
-  )
+)
 
 pluginlib_export_plugin_description_file(
   hardware_interface hal_hw_interface.xml
-  )
+)
 
 # Install libraries
 install(
-  TARGETS hal_control_node
+  TARGETS hal_control_node hal_system_interface
   LIBRARY
-  DESTINATION lib/${PROJECT_NAME}
-  )
+  DESTINATION lib
+)
 
 # Install C++ headers
 install(
@@ -125,10 +113,6 @@ install(
 # Exports
 ament_export_include_directories(
   include
-)
-
-ament_export_libraries(
-  hal_control_node
 )
 
 #######################
@@ -142,14 +126,14 @@ install(PROGRAMS
   scripts/hal_mgr
   scripts/hal_io
   DESTINATION lib/${PROJECT_NAME}  # or bin?
-  )
+)
 
 #######################
 # Install
 
 # Install launch files
 install(DIRECTORY launch
-  DESTINATION share/${PROJECT_NAME}/launch)
+  DESTINATION share/${PROJECT_NAME})
 
 # Install CMake files
 # FIXME:  This belongs in Machinekit HAL!
@@ -185,6 +169,18 @@ endif()
 
 #######################
 # Finalize package
+
+ament_export_include_directories(
+  include
+)
+ament_export_libraries(
+  hal_system_interface
+)
+ament_export_dependencies(
+  hardware_interface
+  pluginlib
+  rclcpp
+)
 
 ament_package(
   CONFIG_EXTRAS cmake/${PROJECT_NAME}-extras.cmake

@@ -27,13 +27,15 @@ find_path(
   HAL_INCLUDE_PATH hal.h
   PATH_SUFFIXES machinekit
   PATHS ${MACHINEKIT_RIP_PATH}/include
-  )
-if(HAL_INCLUDE_PATH)
-  message(STATUS "Found HAL includes:  ${HAL_INCLUDE_PATH}")
-  set(HAL_FOUND TRUE)
-else(HAL_INCLUDE_PATH)
-  message(FATAL_ERROR "Could not find HAL includes")
-endif(HAL_INCLUDE_PATH)
+)
 
 # HAL_EXECUTABLE:  instcomp python script path
 find_program(HAL_INSTCOMP NAMES instcomp)
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(
+  HAL
+  DEFAULT_MSG
+  HAL_INCLUDE_PATH
+  HAL_INSTCOMP
+)
