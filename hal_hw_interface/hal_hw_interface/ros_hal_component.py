@@ -59,7 +59,7 @@ class RosHalComponent(HalObjBase, abc.ABC):
     """
 
     def __init__(self, argv):
-        assert self.compname is not None
+        assert self.compname is not None, "`compname` not set"
 
         # Create ROS node
         self.init_ros_node(argv)
@@ -81,8 +81,8 @@ class RosHalComponent(HalObjBase, abc.ABC):
         :py:class:`hal_hw_interface.ros_hal_pin.RosHalComponent`
         object setup to initialize the new HAL component
         """
-        assert self.compname is not None
-        assert "hal_comp" not in self._cached_objs
+        assert self.compname is not None, "`compname` not set"
+        assert "hal_comp" not in self._cached_objs, "`init_hal_comp` called"
         self._cached_objs["hal_comp"] = hal.component(self.compname)
 
     @abc.abstractmethod
