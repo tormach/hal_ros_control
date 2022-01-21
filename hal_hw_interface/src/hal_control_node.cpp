@@ -109,12 +109,13 @@ int rtapi_app_main(void)
   int comp_id = hal_init(CNAME);
   if (comp_id < 0)
   {
-    HAL_ROS_ERR_NAMED(CNAME, "%s:  ERROR: Component creation ABORTED", CNAME);
+    HAL_ROS_ERR_NAMED(CNAME, "ERROR: Component '%s' creation ABORTED", CNAME);
     // return false; // FIXME
     return -1;
   }
 
-  HAL_ROS_INFO_NAMED(CNAME, "%s: Initialized HAL component %d", CNAME, comp_id);
+  HAL_ROS_INFO_NAMED(CNAME, "Initialized HAL component '%s' ID %d", CNAME,
+                     comp_id);
 
   // Apparently rcl searches through $LD_LIBRARY_PATH to find
   // librmw_fastrtps_cpp.so and related libs.  :P Since HAL's rtapi_app runs
@@ -146,6 +147,7 @@ int rtapi_app_main(void)
   THROW_ON_NULLPTR(*RESET_PIN_PTR);
 
   // Init controller manager and asynch executor
+  HAL_ROS_DBG_NAMED(CNAME, "Initializing node executor");
   // - Resource manager & hardware interface loaded here; HAL pins initialized
   EXECUTOR.reset(new rclcpp::executors::MultiThreadedExecutor());
   std::string manager_node_name = "controller_manager";
@@ -159,14 +161,17 @@ int rtapi_app_main(void)
   // Some race condition causes segfault; this seems to take care of it.
   // Related?
   // https://github.com/firesurfer/ros2_components/blob/master/src/ros2_components/ManagedNode.cpp#L200
+  HAL_ROS_DBG_NAMED(CNAME, "Sleeping to avoid segfault :P");
   sleep(2);
 
   // ROS asynch executor thread pointer
+  HAL_ROS_DBG_NAMED(CNAME, "Starting executor");
   auto executor_cb = []() { EXECUTOR->spin(); };
   auto executor_thread = new std::thread(executor_cb);
   pthread_setname_np(executor_thread->native_handle(), "ros2_ctl_mgr");
 
   // Export the function & mark component ready
+  HAL_ROS_DBG_NAMED(CNAME, "Exporting HAL function; marking component ready");
   if (hal_export_functf(funct, nullptr, 1, 0, comp_id, "%s.funct", CNAME) < 0)
   {
     HAL_ROS_INFO_NAMED(CNAME, "ERROR: hal_export_functf failed");
@@ -175,7 +180,7 @@ int rtapi_app_main(void)
   }
   hal_ready(comp_id);
 
-  HAL_ROS_INFO_NAMED(CNAME, "%s:  HAL component ready!", CNAME);
+  HAL_ROS_INFO_NAMED(CNAME, "HAL component ready!");
 
   rclcpp::Logger l = CONTROLLER_MANAGER->get_logger();
   HAL_ROS_INFO(l, "HAL controller manager initializing");
