@@ -60,7 +60,7 @@ typedef struct
   std::string base_name;
   std::string interface_name;
   double** hal_pin_storage;
-  size_t handle_storage;
+  double handle_storage;
 } intf_data_t;
 
 namespace hal_system_interface
@@ -157,7 +157,6 @@ protected:
   int comp_id_;
 
   // Interface data
-  std::vector<double> storage_;
   std::unordered_map<std::string, intf_data_t> command_intf_data_map_;
   std::unordered_map<std::string, intf_data_t> state_intf_data_map_;
 };  // HalSystemInterface
