@@ -140,16 +140,16 @@ public:
   hardware_interface::return_type write() override;
 
 protected:
-  hal_float_t** alloc_and_init_hal_pin(std::string /*joint_name*/,
-                                       std::string /*interface_name*/,
-                                       std::string /*suffix*/,
-                                       hal_pin_dir_t /*pin_dir*/);
-  void init_command_interface(std::string /*joint_name*/,
-                              std::string /*interface_name*/,
-                              std::string /*data_type*/);
-  void init_state_interface(std::string /*joint_name*/,
-                            std::string /*interface_name*/,
-                            std::string /*data_type*/);
+  hal_float_t** alloc_and_init_hal_pin(const std::string /*joint_name*/,
+                                       const std::string /*interface_name*/,
+                                       const std::string /*suffix*/,
+                                       const hal_pin_dir_t /*pin_dir*/);
+  void init_command_interface(const std::string /*joint_name*/,
+                              const std::string /*interface_name*/,
+                              const std::string /*data_type*/);
+  void init_state_interface(const std::string /*joint_name*/,
+                            const std::string /*interface_name*/,
+                            const std::string /*data_type*/);
 
   /**
    * \brief HAL component ID

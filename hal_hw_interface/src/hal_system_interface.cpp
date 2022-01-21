@@ -53,8 +53,8 @@ static inline std::string joint_intf_name(std::string joint_name,
 }
 
 hal_float_t** HalSystemInterface::alloc_and_init_hal_pin(
-    std::string base_name, std::string interface_name, std::string suffix,
-    hal_pin_dir_t pin_dir)
+    const std::string base_name, const std::string interface_name,
+    const std::string suffix, const hal_pin_dir_t pin_dir)
 {
   std::string pin_name =
       info_.name + '.' + base_name + '.' + interface_name + suffix;
@@ -78,10 +78,9 @@ hal_float_t** HalSystemInterface::alloc_and_init_hal_pin(
   return ptr;
 }
 
-void HalSystemInterface::init_command_interface(std::string joint_name,
-                                                std::string interface_name,
-                                                std::string data_type
-                                                __attribute__((unused)))
+void HalSystemInterface::init_command_interface(
+    const std::string joint_name, const std::string interface_name,
+    const std::string data_type __attribute__((unused)))
 {
   assert(data_type == "double");
   auto name = joint_intf_name(joint_name, interface_name, "_cmd");
@@ -95,9 +94,9 @@ void HalSystemInterface::init_command_interface(std::string joint_name,
                                    .handle_storage = handle_storage };
 }
 
-void HalSystemInterface::init_state_interface(std::string joint_name,
-                                              std::string interface_name,
-                                              std::string data_type
+void HalSystemInterface::init_state_interface(const std::string joint_name,
+                                              const std::string interface_name,
+                                              const std::string data_type
                                               __attribute__((unused)))
 {
   assert(data_type == "double");
