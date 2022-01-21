@@ -60,7 +60,7 @@ typedef struct
   std::string base_name;
   std::string interface_name;
   double** hal_pin_storage;
-  std::vector<double>::size_type handle_storage;
+  size_t handle_storage;
 } intf_data_t;
 
 namespace hal_system_interface

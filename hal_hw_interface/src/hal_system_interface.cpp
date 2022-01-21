@@ -87,7 +87,7 @@ void HalSystemInterface::init_command_interface(
   storage_.push_back(0);
   double** hal_pin_storage =
       alloc_and_init_hal_pin(joint_name, interface_name, "_cmd", HAL_OUT);
-  std::vector<double>::size_type handle_storage = storage_.size() - 1;
+  size_t handle_storage = storage_.size() - 1;
   command_intf_data_map_[name] = { .base_name = joint_name,
                                    .interface_name = interface_name,
                                    .hal_pin_storage = hal_pin_storage,
@@ -104,7 +104,7 @@ void HalSystemInterface::init_state_interface(const std::string joint_name,
   storage_.push_back(0);
   double** hal_pin_storage =
       alloc_and_init_hal_pin(joint_name, interface_name, "_fb", HAL_IN);
-  std::vector<double>::size_type handle_storage = storage_.size() - 1;
+  size_t handle_storage = storage_.size() - 1;
   state_intf_data_map_[name] = { .base_name = joint_name,
                                  .interface_name = interface_name,
                                  .hal_pin_storage = hal_pin_storage,
