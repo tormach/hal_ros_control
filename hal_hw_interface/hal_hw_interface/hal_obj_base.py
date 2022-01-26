@@ -156,7 +156,6 @@ class HalObjBase:
     def _run_shutdown_cbs(self):
         cb_map = self._cached_objs.setdefault("shutdown_cbs", {})
         if not cb_map:
-            self.logger.info("No more shutdown cbs to run")
             return  # Already run, or none added
         while cb_map:
             top_cb_key = list(cb_map.keys())[0]

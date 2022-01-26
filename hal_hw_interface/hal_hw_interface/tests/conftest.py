@@ -161,6 +161,7 @@ def mock_rclpy(request):
             create_publisher=MagicMock(side_effect=create_publisher),
             create_subscription=MagicMock(side_effect=create_subscription),
             create_service=MagicMock(side_effect=create_service),
+            create_timer=MagicMock(name="create_timer"),
         )
         return node
 
@@ -182,7 +183,7 @@ def mock_rclpy(request):
     rclpy.create_node.side_effect = create_node
     rclpy.utilities.get_default_context.return_value = ctx
     rclpy.logging.get_logger.side_effect = get_logger
-    # These don't really need to do anything:  spin_once, init
+    # These don't really need to do anything:  spin, init
 
     # Test instance storage attributes
     request.instance.rosparams = dict()  # Rosparam values by key

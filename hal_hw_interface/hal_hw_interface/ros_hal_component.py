@@ -110,9 +110,8 @@ class RosHalComponent(HalObjBase, abc.ABC):
         The update rate will be taken from the ROS parameter
         `<compname>/update_rate`, defaulting to 10 Hz.
         """
-        while self.node_context.ok():
-            self.update()
-            rclpy.spin_once(self.node, timeout_sec=1 / self.update_rate)
+        self.node.create_timer(1 / self.update_rate, self.update)
+        rclpy.spin(self.node)
 
     @abc.abstractmethod
     def update(self):
@@ -155,5 +154,7 @@ class RosHalComponent(HalObjBase, abc.ABC):
             self.logger.fatal(f"Exiting on HW interface exception:  {e}")
         except Exception as e:
             self.logger.fatal(f"Exiting on exception:  {e}")
+        except KeyboardInterrupt:
+            self.logger.warn("Shutting down on keyboard interrupt")
         self._run_shutdown_cbs()
         self.node_context.shutdown()
