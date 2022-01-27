@@ -5,6 +5,7 @@ from .ros_hal_component import RosHalComponent
 
 # ROS
 from std_msgs.msg import Bool
+from ament_index_python.packages import get_package_share_directory
 
 
 class HalMgr(RosHalComponent):
@@ -37,11 +38,22 @@ class HalMgr(RosHalComponent):
         # Set up console debug output and config
         d_out = "1" if self.get_ros_param("hal_debug_output", True) else "0"
         d_lev = str(self.get_ros_param("hal_debug_level", 1))
+        # - Use UDP discovery; rtapi_app runs as root, which breaks
+        #   shm-based discovery
+        #   https://github.com/eProsima/Fast-DDS/issues/1750
+        fastrtps_profiles = os.path.join(
+            get_package_share_directory("hal_hw_interface"),
+            "config",
+            "fastrtps_disable_shm.xml",
+        )
+        self.logger.info(f"Applying fastRTPS SHM hack:  {fastrtps_profiles}")
+
         self.logger.info(f"Starting hal_mgr; debug={d_out}/level={d_lev}")
         env = dict(
             DEBUG=d_lev,
             SYSLOG_TO_STDERR=d_out,
             MACHINEKIT_INI=config.Config().MACHINEKIT_INI,
+            FASTRTPS_DEFAULT_PROFILES_FILE=fastrtps_profiles,
             **os.environ,
         )
         subprocess.check_call(["realtime", "start"], env=env)
