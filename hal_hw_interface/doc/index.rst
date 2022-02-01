@@ -40,10 +40,7 @@ fully-functioning ``hal_rrbot_control`` example to demonstrate a basic
       :py:class:`hal_hw_interface.ros_hal_pin.RosHalPin` class.  Its
       subclasses communicate their pin values with ROS through
       publishing or subscribing to a ROS topic, or running a ROS
-      service.  A special
-      :py:class:`hal_hw_interface.redis_store_hal_pin.RedisStoreHalPin`
-      class persists its value in a redis kel-value store between
-      application restarts.
+      service.
 
   * :Out of the box Python HAL components:
 

@@ -56,7 +56,7 @@ class TestRosHalPin(object):
     ]
 
     @pytest.fixture(params=obj_cases)
-    def obj(self, request, mock_comp_obj, mock_rospy, mock_redis_client_obj):
+    def obj(self, request, mock_comp_obj, mock_rospy):
         self.setup_hal_obj_base(mock_comp_obj)
         mock_comp_obj.setprefix(self.compname)
         attrs = dict()

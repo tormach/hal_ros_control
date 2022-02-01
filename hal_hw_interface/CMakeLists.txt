@@ -28,7 +28,6 @@ find_package(HAL REQUIRED)
 # - Python
 find_package(ament_cmake_python REQUIRED)
 find_package(rclpy REQUIRED)
-# find_package(redis_store REQUIRED) # FIXME:  Not ported to ROS2 yet
 # - Services
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)

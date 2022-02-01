@@ -140,37 +140,5 @@ def mock_rospy():
 
 
 @pytest.fixture()
-def mock_redis_client_obj(request):
-    # Mock redis_store.ConfigClient method and returned object
-    # - Settable and readable pins
-    request.instance.key_value_map = key_value_map = dict(__default=0)
-
-    def get_key(key):
-        value = key_value_map.get(key, key_value_map["__default"])
-        print("Returning redis key %s value=%s" % (key, value))
-        return value
-
-    def set_key(key, value):
-        print("Setting redis key %s value=%s" % (key, value))
-        key_value_map[key] = value
-
-    mock_client_obj = MagicMock(name="ConfigClient_obj")
-    mock_client_obj.configure_mock(
-        name="mock_redis_client_obj",
-        set_key=set_key,  # Won't increment mock_calls
-        on_update_received=list(),
-        **{"get_param.side_effect": get_key, "set_param.side_effect": set_key}
-    )
-
-    patcher = patch(
-        "redis_store.config.ConfigClient", return_value=mock_client_obj
-    )
-    redis_store = patcher.start()
-    mock_objs_dict["redis_store"] = redis_store
-    yield mock_client_obj
-    patcher.stop()
-
-
-@pytest.fixture()
-def all_patches(mock_comp_obj, mock_rospy, mock_redis_client_obj):
-    return mock_comp_obj, mock_rospy, mock_objs, mock_redis_client_obj
+def all_patches(mock_comp_obj, mock_rospy):
+    return mock_comp_obj, mock_rospy, mock_objs

@@ -69,30 +69,3 @@ class TestFixtures:
             method = mock_objs["rospy_{}".format(name)]
             obj = mock_objs["rospy_{}_obj".format(name)]
             assert method() == obj
-
-    def test_mock_redis_client_obj(self, mock_redis_client_obj, mock_objs):
-        # Test redis_store.ConfigClient() returns object
-        assert mock_objs["redis_store"]() is mock_redis_client_obj
-
-        # Set each param (with out-of-band method) and check
-        for name, value in keys1.items():
-            mock_redis_client_obj.set_key(name, value)
-            assert mock_redis_client_obj.get_param(name) == value
-
-        # Recheck
-        for name, value in keys1.items():
-            assert mock_redis_client_obj.get_param(name) == value
-
-        # Set each param and check
-        for name, value in keys2.items():
-            mock_redis_client_obj.set_param(name, value)
-            assert mock_redis_client_obj.get_param(name) == value
-
-        # Recheck everything
-        params = keys1.copy()
-        params.update(keys2)
-        for name, value in params.items():
-            assert mock_redis_client_obj.get_param(name) == value
-
-        # Default case
-        assert mock_redis_client_obj.get_param("bogus") == 0
