@@ -29,7 +29,9 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-#define RTAPI 1
+#ifndef CNAME
+#error "CNAME must be defined"
+#endif
 
 #include <stdlib.h>
 #include <pthread.h>  // pthread_setname_np()
@@ -42,7 +44,6 @@
 #include <hardware_interface/macros.hpp>  // THROW_ON_NULLPTR
 #include <lifecycle_msgs/msg/state.hpp>
 #include <hal_hw_interface/hal_ros_logging.hpp>
-#include <hal_hw_interface/hal_def.hpp>
 #include <memory>
 #include <string>
 #include <vector>

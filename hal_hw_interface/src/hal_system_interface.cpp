@@ -32,7 +32,6 @@
 // Disable warnings that need to be fixed in external headers
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
-#define RTAPI 1
 #include <hal.h>       // HAL public API decls
 #include <hal_priv.h>  // halpr_find_comp_by_name
 #pragma GCC diagnostic pop

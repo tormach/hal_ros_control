@@ -32,8 +32,11 @@
 #ifndef HAL_HW_INTERFACE__HAL_SYSTEM_INTERFACE_HPP_
 #define HAL_HW_INTERFACE__HAL_SYSTEM_INTERFACE_HPP_
 
+#ifndef CNAME
+#error "CNAME must be defined"
+#endif
+
 // HAL
-#define RTAPI 1
 #include <hal.h>
 
 #include <string>
@@ -47,7 +50,6 @@
 #include "rclcpp_lifecycle/node_interfaces/lifecycle_node_interface.hpp"
 #include "rclcpp_lifecycle/state.hpp"
 #include "rclcpp/macros.hpp"
-#include "hal_hw_interface/hal_def.hpp"
 #include "hal_hw_interface/visibility_control.h"
 
 #define LOG_NAME (CNAME "_system_interface")
