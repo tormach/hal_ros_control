@@ -1,34 +1,33 @@
-# -*- coding: utf-8 -*-
-
 """
-   :synopsis: ROS-connected HAL pin objects for use in
-     :py:mod:`hal_hw_interface.ros_hal_component`
+:synopsis: ROS-connected HAL pin objects.
 
-   .. moduleauthor:: John Morris <john@dovetail-automata.com>
+.. moduleauthor:: John Morris <john@dovetail-automata.com>
 
-   .. inheritance-diagram::
-        hal_hw_interface.ros_hal_pin.RosHalPin
-        hal_hw_interface.ros_hal_pin.RosHalPinPublisher
-        hal_hw_interface.ros_hal_pin.RosHalPinSubscriber
-        hal_hw_interface.ros_hal_pin.RosHalPinService
+.. inheritance-diagram::
+    hal_hw_interface.ros_hal_pin.RosHalPin
+    hal_hw_interface.ros_hal_pin.RosHalPinPublisher
+    hal_hw_interface.ros_hal_pin.RosHalPinSubscriber
+    hal_hw_interface.ros_hal_pin.RosHalPinService
 """
 
 import attr
-import rospy
-from hal_hw_interface.hal_obj_base import HalObjBase
-from hal_hw_interface.exception import HalHWInterfaceException
-from hal_hw_interface.hal_pin_attrs import HalPinDir, HalPinType
-from std_msgs.msg import Bool, Float64, UInt32, Int32
+from .hal_obj_base import HalObjBase
+from .exception import HalHWInterfaceException
+from .hal_pin_attrs import HalPinDir, HalPinType
+from std_msgs.msg import Bool, UInt32, Int32, Float64
 from std_srvs.srv import SetBool
-from hal_hw_interface.srv import SetUInt32, SetInt32, SetFloat64
+from hal_hw_interface_msgs.srv import SetUInt32, SetInt32, SetFloat64
 from math import isclose
 
 
 @attr.s
 class RosHalPin(HalObjBase):
-    """Basic HAL pin for use in
+    """
+    Basic HAL pin for use in user components.
+
+    Intended for HAL "user" components built with the
     :py:class:`hal_hw_interface.ros_hal_component.RosHalComponent`
-    user components
+    class.
 
     This is a basic HAL pin with no special connection to ROS.  It may
     be used in a HAL component, and serves as a base class for other
@@ -63,7 +62,8 @@ class RosHalPin(HalObjBase):
 
     @property
     def pin_name(self):
-        """Return the pin_name; read-only property
+        """
+        Accessor for the read-only pin_name.
 
         In some subclasses, this may not be the same as the
         :code:`name` parameter supplied to the constructor.
@@ -81,7 +81,7 @@ class RosHalPin(HalObjBase):
             self.pin_name, self.hal_type, self.hal_dir
         )
 
-        rospy.loginfo(
+        self.logger.info(
             'Created pin "{}" type/dir "{}/{}"'.format(
                 self.pin_name, self.hal_type, self.hal_dir
             )
@@ -92,12 +92,15 @@ class RosHalPin(HalObjBase):
         pass
 
     def update(self):
-        """An update function; used in some subclasses"""
-        # May be implemented in subclasses
-        raise NotImplementedError()
+        """
+        Update the HAL pin object.
+
+        Overridden by some subclasses.
+        """
 
     def set_pin(self, value):
-        """Set the HAL pin's value
+        """
+        Set the HAL pin's value.
 
         Does not apply to pins initialized with :code:`hal_dir='IN'`.
 
@@ -106,7 +109,8 @@ class RosHalPin(HalObjBase):
         self.hal_comp[self.pin_name] = value
 
     def get_pin(self):
-        """Return the HAL pin's value
+        """
+        Get the HAL pin's value.
 
         :returns: HAL pin's value
         """
@@ -114,7 +118,8 @@ class RosHalPin(HalObjBase):
 
     @property
     def compname(self):
-        """The HAL component name; read-only property
+        """
+        Accessor for the read-only HAL component name.
 
         :returns: :py:class:`str` of component name
         """
@@ -127,11 +132,12 @@ class RosHalPin(HalObjBase):
 
 @attr.s
 class RosHalPinPublisher(RosHalPin):
-    """HAL pin with attached ROS publisher
+    """
+    HAL pin with attached ROS publisher.
 
     This HAL pin is set with publishes its value on a ROS topic,
-    :code:`<compname>/<name>` by default.  Its :py:func:`update` function
-    should be called from the
+    :code:`<compname>/<name>` by default.  Its :py:func:`update`
+    function should be called from the
     :py:func:`hal_hw_interface.ros_hal_component.RosHalComponent.update`
     function.
 
@@ -177,51 +183,60 @@ class RosHalPinPublisher(RosHalPin):
         HalPinType("FLOAT"): Float64,
     }
 
+    _pin_to_python_type_map = {
+        HalPinType("BIT"): bool,
+        HalPinType("U32"): int,
+        HalPinType("S32"): int,
+        HalPinType("FLOAT"): float,
+    }
+
     @msg_type.default
     def _msg_type_default(self):
         return self._pin_to_msg_type_map[self.hal_type]
 
     def _ros_init(self):
         self._ros_publisher_init()
-        self._msg = self._pin_to_msg_type_map[self.hal_type](self.get_pin())
+        msg_type = self._pin_to_msg_type_map[self.hal_type]
+        self._msg = msg_type()
+        self.update()
 
     def _ros_publisher_init(self):
-        rospy.loginfo('Creating publisher on topic "{}"'.format(self.pub_topic))
-        self.pub = rospy.Publisher(
-            self.pub_topic, self.msg_type, queue_size=1, latch=True
-        )
+        self.logger.info(f'Creating publisher on topic "{self.pub_topic}"')
+        self.pub = self.node.create_publisher(self.msg_type, self.pub_topic)
 
     def _value_changed(self, value):
         if self.hal_type == HalPinType("FLOAT"):
-            changed = not self._isclose(
-                self._msg.data,
+            return not self._isclose(
+                self.get_pin(),
                 value,
                 rel_tol=self.get_ros_param("relative_tolerance", 1e-9),
                 abs_tol=self.get_ros_param("absolute_tolerance", 1e-9),
             )
         else:
-            changed = self._msg.data != value
-        return changed
+            return self.get_pin() != value
 
     def update(self):
-        """If pin value has changed, publish to ROS topic"""
-        value = self.get_pin()
-        if self._value_changed(value):
-            rospy.logdebug(
-                "publish_pins:  Publishing pin '%s' value '%s'"
-                % (self.pin_name, self.get_pin())
-            )
-            rospy.loginfo(
-                f"Pin {self.pin_name} changed:"
-                f"  old={self._msg.data}; new={value}"
-            )
-            self._msg.data = value
-            self.pub.publish(self._msg)
+        """
+        Publish pin value to ROS topic.
+
+        Only publishes when pin value has changed.
+        """
+        if not self._value_changed(self._msg.data):
+            return
+
+        value = self._pin_to_python_type_map[self.hal_type](self.get_pin())
+        self.logger.info(
+            f"Pin {self.pin_name} changed:"
+            f"  old={self._msg.data}; new={value}"
+        )
+        self._msg.data = value
+        self.pub.publish(self._msg)
 
 
 @attr.s
 class RosHalPinSubscriber(RosHalPinPublisher):
-    """HAL pin with attached ROS publisher and subscriber
+    """
+    HAL pin with attached ROS publisher and subscriber.
 
     This HAL pin isn't set via :py:func:`set_pin`, but subscribes to a
     ROS topic for its value.  As a subclass of
@@ -257,22 +272,20 @@ class RosHalPinSubscriber(RosHalPinPublisher):
         self._ros_subscriber_init()
 
     def _ros_subscriber_init(self):
-        rospy.loginfo(
-            'Creating subscriber on topic "{}"'.format(self.sub_topic)
-        )
-        self.sub = rospy.Subscriber(
-            self.sub_topic, self.msg_type, self._subscriber_cb
+        self.logger.info('Creating subscriber on topic "{self.sub_topic}"')
+        self.sub = self.node.create_subscription(
+            self.msg_type, self.sub_topic, self._subscriber_cb
         )
 
     def _subscriber_cb(self, msg):
         # Sanity check
         if type(msg) is not self.msg_type:
             raise HalHWInterfaceException(
-                "subscriber_cb:  Received incorrect message type '%s' for "
-                "pin '%s' of msg type '%s'"
-                % (type(msg), self.pin_name, self.msg_type)
+                f"subscriber_cb:  Received incorrect message type '{type(msg)}'"
+                f"for pin '{self.pin_name}' of msg type '{self.msg_type}'"
             )
 
+        self._msg.data = msg.data
         if self._value_changed(msg.data):
             self.set_pin(msg.data)
             self.update()
@@ -280,7 +293,8 @@ class RosHalPinSubscriber(RosHalPinPublisher):
 
 @attr.s
 class RosHalPinService(RosHalPinPublisher):
-    """HAL pin with attached ROS service and publisher
+    """
+    HAL pin with attached ROS service and publisher.
 
     This HAL pin may be set via a ROS service, in addition to
     :py:func:`set_pin`.  As a subclass of
@@ -331,11 +345,13 @@ class RosHalPinService(RosHalPinPublisher):
         self._ros_service_init()
 
     def _ros_service_init(self):
-        self.service = rospy.Service(
-            self.service_name, self.service_msg_type, self._svc_cb
+        self.service = self.node.create_service(
+            self.service_msg_type, self.service_name, self._service_cb
         )
-        rospy.loginfo("Service {} created".format(self.service.resolved_name))
+        self.logger.info("Service {self.service_name} created")
 
-    def _svc_cb(self, req):
+    def _service_cb(self, req, rsp):
         self.set_pin(req.data)
-        return True, "OK"
+        self.update()
+        rsp.success, rsp.message = (True, "OK")
+        return rsp

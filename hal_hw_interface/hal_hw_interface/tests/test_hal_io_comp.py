@@ -1,16 +1,23 @@
-# -*- coding: utf-8 -*-
 import pytest
 from hal_hw_interface.hal_io_comp import HalIO
+from pprint import pformat
 
 
-class TestHalIO(object):
+class TestHalIO:
     test_class = HalIO
 
-    @pytest.fixture
-    def pin_params(self, mock_rospy, mock_objs):
-        gp = mock_objs["rospy_get_param"]
+    def flatten_keys(self, prefix, data, result=dict()):
+        for key, val in data.items():
+            new_prefix = "/".join([prefix, key])
+            if not isinstance(val, dict):
+                result[new_prefix] = val
+            else:
+                self.flatten_keys(new_prefix, val, result)
+        return result
 
-        test_pins = dict(
+    @pytest.fixture
+    def pin_params(self, mock_rclpy):
+        self.rosparams = test_pins = dict(
             publish_pins=dict(
                 bit_pub=dict(hal_type="HAL_BIT"),
                 u32_pub=dict(hal_type="HAL_U32"),
@@ -30,26 +37,19 @@ class TestHalIO(object):
                 float_svc=dict(hal_type="HAL_FLOAT"),
             ),
         )
-        for key, val in test_pins.items():
-            gp.set_key("hal_io/%s" % key, val)
-        return gp, test_pins
+        # self.rosparams = self.flatten_keys("hal_io", test_pins)
+        print("rosparams", pformat(self.rosparams))
+        yield test_pins
 
     @pytest.fixture
-    def obj(self, mock_comp_obj, mock_rospy, mock_objs, pin_params):
-        for key in list(self.test_class._cached_objs.keys()):
-            self.test_class._cached_objs.pop(key)
-
-        mock_comp_obj.setprefix("hal_io")
-        return self.test_class()
-
-    def test_hal_io_comp_fixture(self, pin_params):
-        get_param, test_pins = pin_params
-        print(get_param("hal_io/publish_pins"))
-        assert isinstance(get_param("hal_io/publish_pins"), dict)
-        assert "bit_sub" in get_param("hal_io/subscribe_pins")
+    def obj(self, mock_hal_comp, mock_rclpy, pin_params):
+        self.test_class._cached_objs.clear()
+        obj = self.test_class(list())
+        obj.setup_component()
+        yield obj
 
     def test_hal_io_comp_setup_component(self, obj, pin_params):
-        get_param, test_pins = pin_params
+        test_pins = pin_params
         obj.setup_component()
 
         # Put pins in dict
@@ -60,8 +60,11 @@ class TestHalIO(object):
         for config_key, pins in test_pins.items():
             # Check param server was queried
             print("Pin class:  %s" % config_key)
-            get_param.assert_any_call("hal_io/%s" % config_key, {})
+            self.node.declare_parameter.assert_any_call(config_key, {})
+            print("pins:", pformat(pins))
+            print("obj_pins:", pformat(obj_pins))
             for pin_name, pin_data in pins.items():
+                print("pin_name:", pin_name, "pin_data:", pin_data)
                 # Check pin was created
                 assert pin_name in obj_pins
                 # Check pin attributes
@@ -71,18 +74,21 @@ class TestHalIO(object):
                 for key, val in pin_data.items():
                     assert str(getattr(pin, key)) == val
 
-    def test_hal_io_comp_update(self, obj, pin_params, mock_comp_obj):
+    def test_hal_io_comp_update(self, obj, pin_params, mock_hal_comp):
         # Check that pins' update() method was called
-        get_param, test_pins = pin_params
         obj.setup_component()
 
         # Set pin values
         for pin in obj.pins:
-            mock_comp_obj.set_pin(pin.name, 1)
+            self.pvals[pin.name] = 1
 
         # Run update() and check that pins changed
         print("----------- Running obj.update()")
         obj.update()
+        print("publishers", pformat(self.publishers))
+        print("pins", pformat(self.pvals))
         for pin in obj.pins:
             print(f"- pin {pin}")
-            pin.pub.publish.assert_called()
+            publisher = self.publishers[pin.pub_topic]
+            print(publisher.mock_calls)
+            publisher.publish.assert_called()

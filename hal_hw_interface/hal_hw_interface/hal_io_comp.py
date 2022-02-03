@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from hal_hw_interface.ros_hal_component import RosHalComponent
 from hal_hw_interface.ros_hal_pin import (
     RosHalPinSubscriber,
@@ -8,7 +7,8 @@ from hal_hw_interface.ros_hal_pin import (
 
 
 class HalIO(RosHalComponent):
-    """HAL user component that sets up HAL pins connected to ROS
+    """
+    HAL user component that sets up HAL pins connected to ROS.
 
     This component queries the ROS parameter server for
     :code:`hal_io/subscribe_pins`, :code:`hal_io/publish_pins` and
@@ -48,8 +48,7 @@ class HalIO(RosHalComponent):
     )
 
     def setup_component(self):
-        """Load pin configuration from ROS param server and create pin
-        objects"""
+        """Create pin objects from ROS param server configuration."""
         self.pins = []
         for config_key, pin_class in self.pin_class_map.items():
             pins = self.get_ros_param(config_key, dict())
@@ -58,6 +57,6 @@ class HalIO(RosHalComponent):
                 self.pins.append(p)
 
     def update(self):
-        """Run pin `update()` functions"""
+        """Run pin :py:func:`update` functions."""
         for p in self.pins:
             p.update()

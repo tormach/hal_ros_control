@@ -1,10 +1,12 @@
-# -*- coding: utf-8 -*-
 import hal
 
 
 class HalPinAttrBase(int):
-    """Subclass int to make a simple interface for accessing
-    hal.HAL_<suffix> enums by integer or string
+    """
+    Simple interface for accessing `hal.HAL_<suffix>` enums.
+
+    Subclass :py:class:`int` to make a simple interface for accessing
+    `hal.HAL_<suffix>` enums by integer or string.
     """
 
     _suffixes = []  # hal.HAL_%s; define in subclasses
@@ -22,8 +24,12 @@ class HalPinAttrBase(int):
         _bwd_map[attr_short] = value
 
     def __new__(cls, value):
-        """Create new object, translating strings to ints and validating
-        value"""
+        """
+        Create new object.
+
+        Create new object, translating strings to ints and validating
+        value
+        """
         if isinstance(value, int):
             if cls._fwd_map.get(value, None) not in cls._suffixes:
                 raise ValueError("Illegal value '{}'".format(value))
@@ -45,7 +51,8 @@ class HalPinAttrBase(int):
 
 
 class HalPinDir(HalPinAttrBase):
-    """A HAL pin direction
+    """
+    A HAL pin direction.
 
     This :py:class:`int` type comes from the :py:mod:`HAL` module
     :code:`HAL_IN`, :code:`HAL_OUT`, :code:`HAL_IO` attributes.  These
@@ -59,7 +66,8 @@ class HalPinDir(HalPinAttrBase):
 
 
 class HalPinType(HalPinAttrBase):
-    """A HAL pin type
+    """
+    A HAL pin type.
 
     This :py:class:`int` type comes from the :py:mod:`HAL` module
     :code:`HAL_BIT`, :code:`HAL_U32`, :code:`HAL_S32`,

@@ -1,69 +1,70 @@
-# -*- coding: utf-8 -*-
 import pytest
 from hal_hw_interface.ros_hal_component import RosHalComponent
 
 
-class TestRosHalComponent(object):
-    test_class = RosHalComponent
+class TestRosHalComponent:
+
+    # Simplest test case
+    class StubComp(RosHalComponent):
+        compname = "test_stub"
+
+        def setup_component(self):
+            self.initialized = True
+            self.count = 0
+            super().setup_component()
+
+        def update(self):
+            self.count += 1
+
+    test_class = StubComp
+    comp_name = test_class.compname
 
     @pytest.fixture
-    def obj(self, mock_comp_obj, mock_rospy, mock_objs):
-        for key in list(self.test_class._cached_objs.keys()):
-            self.test_class._cached_objs.pop(key)
-
-        # Simplest test case
-        class StubComp(self.test_class):
-            compname = "stub"
-
-            def setup_component(self):
-                self.initialized = True
-                self.count = 0
-
-            def update(self):
-                self.count += 1
-
-        gp = mock_objs["rospy_get_param"]
-        gp.set_key("stub/update_rate", 20)
-        gp.set_key("stub/relative_tolerance", 1e-9)
-        gp.set_key("stub/absolute_tolerance", 1e-9)
-
-        return StubComp()
-
-    def test_ros_hal_component_attrs(self, obj):
-        assert obj.compname == "stub"
-
-    def test_ros_hal_component_init(
-        self, obj, mock_rospy, mock_comp_obj, mock_objs
-    ):
-        """Test RosHalComponent.__init__()"""
-        # ROS node initialized
-        mock_rospy["init_node"].assert_called_with(obj.compname)
-        # obj.rate was created from rospy.Rate with param value
-        mock_objs["rospy_get_param"].assert_called_once_with(
-            "stub/update_rate", 10
+    def obj(self, mock_hal_comp, mock_rclpy):
+        self.test_class._cached_objs.clear()  # Clean fixture
+        self.rosparams = dict(
+            update_rate=20,
+            relative_tolerance=1e-9,
+            absolute_tolerance=1e-9,
         )
-        assert obj.update_rate == 20
-        mock_objs["rospy_Rate"].assert_called_once_with(20)
-        assert obj.rate is mock_objs["rospy_Rate_obj"]
-        # Assert obj.hal_comp is a HAL component
-        mock_objs["hal_comp"].assert_called_once_with("stub")
-        assert obj.hal_comp == mock_comp_obj
-        # Assert StubComp.setup_component() called
-        assert getattr(obj, "initialized", False) is True
-        # Assert HAL component initialized
-        obj.hal_comp.ready.assert_called_once_with()
+        obj = self.test_class(list())
+        obj.setup_component()
+        yield obj
 
-    def test_ros_hal_component_get_param(self, obj, mock_objs):
-        """Test get_param()"""
+    def test_init(self, obj):
+        assert hasattr(obj, "node")  # Called init_ros_node
+        assert obj.update_rate == 20  # Value from fixture
+        assert obj.hal_comp is self.hal_comp  # Called init_hal_comp
+        assert obj.count == 0  # Called setup_component in obj fixture
+        obj.hal_comp.ready.assert_called_once()  # Called hal_comp.ready()
+
+    def test_class_attrs(self):
+        assert self.test_class.compname is not None
+
+    def test_init_hal_comp(self, mock_hal_comp, mock_rclpy):
+        # Test init_hal_comp() creates cached component object
+
+        self.test_class._cached_objs.clear()  # Clean fixture
+        assert "hal_comp" not in self.test_class._cached_objs  # Sanity
+
+        obj = self.test_class(list())
+        assert "hal_comp" in obj._cached_objs
+        assert obj.hal_comp is mock_hal_comp
+
+        with pytest.raises(AssertionError):
+            obj.init_hal_comp()  # Already created
+
+    def test_get_ros_param(self, obj):
         res = obj.get_ros_param("relative_tolerance", 42)
         assert res == 1e-9
         res = obj.get_ros_param("bogus_key", 88)
         assert res == 88
+        res = obj.get_ros_param("bogus", 13)
+        assert res == 13
 
-    def test_ros_hal_component_run(self, obj, mock_objs):
-        """Test run() (fixture loops three times); should call update() and
-        rate.sleep()
-        """
+    def test_run(self, obj):
+        # Test run() (fixture loops three times); should call update()
+        # and rate.sleep()
         obj.run()
         assert obj.count == 3
-        assert mock_objs["rospy_Rate_obj"].sleep.call_count == 3
+        assert self.rclpy.spin_once.call_count == 3
