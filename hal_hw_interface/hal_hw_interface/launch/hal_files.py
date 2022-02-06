@@ -1,4 +1,5 @@
 import os
+import traceback
 import yaml
 import pathlib
 import subprocess
@@ -97,7 +98,12 @@ class HalFiles(HalOrderedAction):
                 with open(hal_file_path, "r") as f:
                     data = compile(f.read(), hal_file_path, "exec")
                 globals_ = dict(parameters=parameters)
-                exec(data, globals_)
+                try:
+                    exec(data, globals_)
+                except Exception:
+                    self.__logger.error(f"Error loading HAL file {hal_file}:")
+                    self.__logger.error(traceback.format_exc())
+                    raise
             else:
                 subprocess.check_call(["halcmd", "-f", hal_file_path])
 

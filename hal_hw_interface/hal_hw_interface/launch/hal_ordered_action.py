@@ -1,3 +1,5 @@
+from threading import Thread
+
 from launch import logging
 from launch.action import Action
 from launch.actions import (
@@ -116,7 +118,10 @@ class HalOrderedAction(Action):
         try:
             res = self.execute_deferred(context)
         except Exception as e:
-            return self.shutdown_action(f"{self} shutdown on error:  '{e}'")
+            ecls, emsg = (e.__class__.__name__, str(e))
+            return self.shutdown_action(
+                f"{self} shutdown on error:  {ecls}: {emsg}"
+            )
         return (res or []) + self.ready_event()
 
     def matcher(self, event):
@@ -205,7 +210,7 @@ class HalAsyncReadyAction(HalOrderedAction):
     """
 
     # Ready check interval in seconds
-    ready_check_timeout = 0.1
+    ready_check_interval = 0.1
 
     def __init__(self, wait_timeout=5.0, **kwargs) -> None:
         """
@@ -235,7 +240,7 @@ class HalAsyncReadyAction(HalOrderedAction):
             # Not ready; schedule another check
             return [
                 TimerAction(
-                    period=self.ready_check_timeout,
+                    period=self.ready_check_interval,
                     actions=[OpaqueFunction(function=self.check_ready)],
                 ),
             ]
@@ -251,7 +256,7 @@ class HalAsyncReadyAction(HalOrderedAction):
             return []
         # Periodic ready check timer:  trigger next action when comp is ready
         self.__ready_checker = TimerAction(
-            period=self.ready_check_timeout,
+            period=self.ready_check_interval,
             actions=[OpaqueFunction(function=self.check_ready)],
         )
         # Wait timeout timer:  shut down launch
@@ -262,3 +267,57 @@ class HalAsyncReadyAction(HalOrderedAction):
             ),
         )
         return [self.__ready_timeout, self.__ready_checker]
+
+
+class HalThreadedReadyAction(HalAsyncReadyAction):
+    """
+    HAL action running in a thread with deferred HalReady event.
+
+    An Action that blocks for too long and isn't suited to run directly in a
+    coroutine can instead be run in a thread.  As a subclass of
+    :class:`HalAsyncReadyAction`, this class emits a deferred HalReady event.
+
+    Subclasses must implement :meth:`execute_deferred_cb` that executes the
+    action in a thread.
+
+    Subclass :meth:`is_ready` method may check this class's :meth:`is_ready` if
+    callback exit is a condition of being ready.
+    """
+
+    def __init__(self, **kwargs) -> None:
+        """Construct a HalThreadedReadyAction action."""
+        super().__init__(**kwargs)
+        self.__logger = logging.get_logger(__name__)
+
+    def execute_deferred_cb(self, context):
+        raise NotImplementedError(
+            "Subclasses must implement execute_deferred_cb()"
+        )
+
+    def execute_deferred(self, context):
+        """Execute the action in a thread."""
+        self.__thread = Thread(
+            name=self.hal_name, target=self.execute_deferred_cb, args=(context,)
+        )
+        self.__joined = False
+        self.__thread.start()
+
+    def check_thread_exit(self):
+        if self.__thread.is_alive():
+            return False
+        else:
+            if not self.__joined:
+                self.__logger.info(f"HAL action {self.hal_name} thread exited")
+                self.__thread.join()
+                self.__joined = True
+            return True
+
+    def is_ready(self, context):
+        # If callback hasn't returned, not ready
+        return self.check_thread_exit()
+
+    def check_ready(self, context):
+        # For subclasses is_ready() that don't call super().is_ready(), check
+        # thread joined
+        self.check_thread_exit()
+        return super().check_ready(context)

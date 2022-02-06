@@ -1,19 +1,16 @@
 import os
-from typing import List, Optional
+from typing import Optional
 
 from launch import SomeSubstitutionsType, logging
 from launch.utilities import perform_substitutions
-from launch.action import Action
-from launch.actions import OpaqueFunction
-from launch.launch_context import LaunchContext
 from launch.substitutions import PathJoinSubstitution
 from launch_ros.substitutions import FindPackagePrefix
 
 from machinekit import rtapi, hal
-from .hal_ordered_action import HalOrderedNode, HalAsyncReadyAction
+from .hal_ordered_action import HalOrderedNode, HalThreadedReadyAction
 
 
-class HalRTNode(HalOrderedNode, HalAsyncReadyAction):
+class HalRTNode(HalOrderedNode, HalThreadedReadyAction):
     """Action that loads a HAL RT component ROS node."""
 
     def __init__(
@@ -49,6 +46,9 @@ class HalRTNode(HalOrderedNode, HalAsyncReadyAction):
         self.__logger = logging.get_logger(f"{__name__}({self.hal_name})")
 
     def is_ready(self, context):
+        # If `loadrt()` call hasn't returned, not ready
+        if not super().is_ready(context):
+            return False
         # Check if component is registered and become ready
         if self.hal_name not in hal.components:
             self.__logger.debug(
@@ -61,19 +61,14 @@ class HalRTNode(HalOrderedNode, HalAsyncReadyAction):
         else:
             return True
 
-    def load_comp(self, context):
+    def execute_deferred_cb(self, context):
         # Expand command substitutions
         cmd = [perform_substitutions(context, c) for c in self.cmd]
         comp_path = cmd[0]
-        self.__logger.info(f"Executing HAL RT component {comp_path}")
+        self.__logger.info(f"Loading HAL RT component {comp_path}")
         self.comp_args = ",".join(cmd[1:])
         self.__logger.info(f"  args: ARGV={self.comp_args}")
 
         rtapi.loadrt(comp_path, ARGV=self.comp_args)
 
-    def execute_deferred(
-        self, context: LaunchContext
-    ) -> Optional[List[Action]]:
-        """Execute the action."""
-        # Load the component in a coroutine
-        return [OpaqueFunction(function=self.load_comp)]
+        self.__logger.info("loadrt complete")
