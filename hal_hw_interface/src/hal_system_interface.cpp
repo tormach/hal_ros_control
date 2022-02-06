@@ -72,7 +72,6 @@ hal_float_t** HalSystemInterface::alloc_and_init_hal_pin(
     HAL_ROS_ERR_NAMED(LOG_NAME, "New HAL pin %s failed", pin_name.c_str());
     throw std::runtime_error("Failed to init HAL pin '" + pin_name + "'");
   }
-  HAL_ROS_INFO_NAMED(LOG_NAME, "New HAL pin %s succeeded", pin_name.c_str());
 
   return ptr;
 }
