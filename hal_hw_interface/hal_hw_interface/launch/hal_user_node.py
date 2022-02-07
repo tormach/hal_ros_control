@@ -22,7 +22,6 @@ class HalUserNode(HalOrderedNode, HalAsyncReadyAction):
             the `executable` param
         """
         self.__logger = logging.get_logger(__name__)
-        kwargs.setdefault("on_exit", self.shutdown_action("Exited"))
         hal_name = hal_name or os.path.basename(executable)
         super().__init__(hal_name=hal_name, executable=executable, **kwargs)
         self.__executable = executable

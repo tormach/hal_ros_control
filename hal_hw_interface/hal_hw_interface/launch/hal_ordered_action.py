@@ -33,9 +33,6 @@ class HalOrderedAction(Action):
     the `execute_deferred()` method instead.
     """
 
-    # By default, don't pass `name` param to superclass __init__()
-    pass_name = False
-
     def __init__(self, *, hal_name=None, **kwargs):
         super().__init__(**kwargs)
         self.__logger = logging.get_logger(__name__)
@@ -54,6 +51,8 @@ class HalOrderedAction(Action):
         This function is not thread-safe and should be called only from
         under another coroutine.
         """
+        if self.__canceled:
+            return
         self.__canceled = True
         if hasattr(self, "handler"):
             msg = f"Canceling handler {self}"
@@ -190,13 +189,6 @@ class HalOrderedNode(Node, HalOrderedAction, ExecuteProcess):
     method, which contains non-optional logic that uses munged/private
     parameters and uses the deprecated (??!?) `__node_name` attribute.
     """
-
-    # Node.__init__() uses `name`
-    pass_name = True
-
-    def __init__(self, **kwargs) -> None:
-        kwargs.setdefault("on_exit", self.shutdown_action("Exited"))
-        super().__init__(**kwargs)
 
 
 class HalAsyncReadyAction(HalOrderedAction):

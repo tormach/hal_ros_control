@@ -1,6 +1,8 @@
 import functools
 
 from launch import logging
+from launch.actions import LogInfo, EmitEvent
+from launch.events import Shutdown
 from launch_ros.actions.node import Node
 from launch_ros.ros_adapters import get_ros_node
 
@@ -19,6 +21,7 @@ class HalMgr(Node):
         executable="hal_mgr",
         triggers=None,
         ready_timeout=10,
+        on_exit=None,
         **kwargs,
     ) -> None:
         """
@@ -31,8 +34,18 @@ class HalMgr(Node):
         """
         self.__logger = logging.get_logger(__name__)
         self.triggers = triggers
+        if on_exit is None:
+            on_exit = self.shutdown_action("Exited")
 
-        super().__init__(package=package, executable=executable, **kwargs)
+        super().__init__(
+            package=package, executable=executable, on_exit=on_exit, **kwargs
+        )
+
+    def shutdown_action(self, reason):
+        # On exit, shut down launch
+        loginfo = LogInfo(msg=f"hal_mgr shutting down:  {reason}")
+        shutdown = Shutdown(reason=reason, due_to_sigint=False)
+        return [loginfo, EmitEvent(event=shutdown)]
 
     def _on_ready_event(self, context, msg):
         # If the hal_mgr/ready topic is True, emit an event; no more

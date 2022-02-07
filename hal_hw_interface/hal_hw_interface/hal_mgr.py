@@ -65,8 +65,12 @@ class HalMgr(RosHalComponent):
 
     def stop_realtime(self):
         self.logger.warn("Stopping realtime")
-        subprocess.check_call("realtime stop", shell=True)
-        self.logger.info("Realtime stopped")
+        try:
+            subprocess.check_call(["halcmd", "stop"])
+            subprocess.check_call(["halcmd", "unloadrt", "all"])
+        finally:
+            subprocess.check_call(["realtime", "stop"])
+            self.logger.info("Realtime stopped")
 
     def update(self):
         # FIXME Watch realtime; shut down if it shuts down
