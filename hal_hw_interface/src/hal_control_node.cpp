@@ -51,8 +51,12 @@
 // Controller manager node and executor pointers
 std::shared_ptr<controller_manager::ControllerManager> CONTROLLER_MANAGER;
 std::shared_ptr<rclcpp::executors::MultiThreadedExecutor> EXECUTOR;
+std::shared_ptr<std::thread> EXECUTOR_THREAD;
 rclcpp::TimerBase::SharedPtr RESET_TIMER;
 hal_bit_t** RESET_PIN_PTR;
+hal_bit_t** CM_OK_PIN_PTR;
+bool CM_OK = 1;
+int COMP_ID = -1;
 
 extern "C" {
 // Pre-declare the HAL function
@@ -107,8 +111,8 @@ void reset_controller_cb(void)
 int rtapi_app_main(void)
 {
   // Init HAL component
-  int comp_id = hal_init(CNAME);
-  if (comp_id < 0)
+  COMP_ID = hal_init(CNAME);
+  if (COMP_ID < 0)
   {
     HAL_ROS_ERR_NAMED(CNAME, "ERROR: Component '%s' creation ABORTED", CNAME);
     // return false; // FIXME
@@ -116,7 +120,7 @@ int rtapi_app_main(void)
   }
 
   HAL_ROS_INFO_NAMED(CNAME, "Initialized HAL component '%s' ID %d", CNAME,
-                     comp_id);
+                     COMP_ID);
 
   // Apparently rcl searches through $LD_LIBRARY_PATH to find
   // librmw_fastrtps_cpp.so and related libs.  :P Since HAL's rtapi_app runs
@@ -142,10 +146,18 @@ int rtapi_app_main(void)
   HAL_ROS_DBG_NAMED(CNAME, "Initializing %s.reset HAL pin", CNAME);
   RESET_PIN_PTR = reinterpret_cast<hal_bit_t**>(hal_malloc(sizeof(hal_bit_t*)));
   THROW_ON_NULLPTR(RESET_PIN_PTR);
-  if (hal_pin_bit_newf(HAL_IO, RESET_PIN_PTR, comp_id, "%s.reset", CNAME))
+  if (hal_pin_bit_newf(HAL_IO, RESET_PIN_PTR, COMP_ID, "%s.reset", CNAME))
     throw std::runtime_error("Failed to init " + std::string(CNAME) +
                              ".reset HAL pin");
   THROW_ON_NULLPTR(*RESET_PIN_PTR);
+
+  // Set up cm_ok pin
+  HAL_ROS_DBG_NAMED(CNAME, "Initializing %s.cm_ok HAL pin", CNAME);
+  CM_OK_PIN_PTR = reinterpret_cast<hal_bit_t**>(hal_malloc(sizeof(hal_bit_t*)));
+  if (hal_pin_bit_newf(HAL_OUT, CM_OK_PIN_PTR, COMP_ID, "%s.cm_ok", CNAME))
+    throw std::runtime_error("Failed to init " + std::string(CNAME) +
+                             ".cm_ok HAL pin");
+  THROW_ON_NULLPTR(*CM_OK_PIN_PTR);
 
   // Init controller manager and asynch executor
   HAL_ROS_DBG_NAMED(CNAME, "Initializing node executor");
@@ -168,22 +180,22 @@ int rtapi_app_main(void)
   // ROS asynch executor thread pointer
   HAL_ROS_DBG_NAMED(CNAME, "Starting executor");
   auto executor_cb = []() { EXECUTOR->spin(); };
-  auto executor_thread = new std::thread(executor_cb);
-  pthread_setname_np(executor_thread->native_handle(), "ros2_ctl_mgr");
+  EXECUTOR_THREAD.reset(new std::thread(executor_cb));
+  pthread_setname_np(EXECUTOR_THREAD->native_handle(), "ros2_ctl_mgr");
 
   // Export the function & mark component ready
   HAL_ROS_DBG_NAMED(CNAME, "Exporting HAL function; marking component ready");
-  if (hal_export_functf(funct, nullptr, 1, 0, comp_id, "%s.funct", CNAME) < 0)
+  if (hal_export_functf(funct, nullptr, 1, 0, COMP_ID, "%s.funct", CNAME) < 0)
   {
     HAL_ROS_INFO_NAMED(CNAME, "ERROR: hal_export_functf failed");
-    hal_exit(comp_id);
+    hal_exit(COMP_ID);
     return -1;
   }
-  hal_ready(comp_id);
-
+  hal_ready(COMP_ID);
   HAL_ROS_INFO_NAMED(CNAME, "HAL component ready!");
 
-  rclcpp::Logger l = CONTROLLER_MANAGER->get_logger();
+  // Log first marker message with controller manager logger
+  auto l = CONTROLLER_MANAGER->get_logger();
   HAL_ROS_INFO(l, "HAL controller manager initializing");
 
   return 0;  // Success
@@ -191,6 +203,11 @@ int rtapi_app_main(void)
 
 void funct([[maybe_unused]] void* arg, [[maybe_unused]] int64_t period)
 {
+  if (!rclcpp::ok())
+    CM_OK = 0;
+  **CM_OK_PIN_PTR = CM_OK;
+  if (!CM_OK)
+    return;
   CONTROLLER_MANAGER->read();
   CONTROLLER_MANAGER->update();
   CONTROLLER_MANAGER->write();
@@ -198,11 +215,26 @@ void funct([[maybe_unused]] void* arg, [[maybe_unused]] int64_t period)
 
 void rtapi_app_exit(void)
 {
-  rclcpp::Logger l = CONTROLLER_MANAGER->get_logger();
-  HAL_ROS_INFO(l, "HAL controller manager shutting down");
+  auto l = CONTROLLER_MANAGER->get_logger();
+  HAL_ROS_INFO(l, "rtapi_app_exit():  HAL controller manager shutting down");
+  CM_OK = 0;  // In case unloadrt before threads stopped
+  RESET_TIMER->cancel();
+  HAL_ROS_DBG(l, "Reset timer canceled");
+  EXECUTOR->remove_node(CONTROLLER_MANAGER);
+  HAL_ROS_DBG(l, "Controller manager node removed from executor");
   EXECUTOR->cancel();
-  HAL_ROS_INFO(l, "Executor canceled");
-  rclcpp::shutdown();
+  HAL_ROS_DBG(l, "Executor canceled");
+  EXECUTOR_THREAD->join();
+  HAL_ROS_DBG(l, "Executor thread joined");
+
+  RESET_TIMER.reset();
+  EXECUTOR.reset();
+  CONTROLLER_MANAGER.reset();
+  EXECUTOR_THREAD.reset();
+  HAL_ROS_INFO(l, "HAL controller manager Node shut down");
+
+  hal_exit(COMP_ID);
+  HAL_ROS_INFO(l, "HAL comp exited");
 }
 
 }  // extern "C"
