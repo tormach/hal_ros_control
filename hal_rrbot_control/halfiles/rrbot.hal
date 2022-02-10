@@ -1,0 +1,26 @@
+# 100Hz thread; add hal_hw_interface function
+newthread robot_hw_thread 10000000 fp
+addf hal_control_node.funct robot_hw_thread
+
+# Connect position command to feedback via limit3 comp to simulate
+# joints obeying physics
+loadrt limit3 names=joint1-pos,joint2-pos
+
+# joint 1
+net joint1-pos-cmd RRBot.joint1.position_cmd => joint1-pos.in
+net joint1-pos-fb  joint1-pos.out => RRBot.joint1.position_fb
+# maxv = 90 deg./s; maxa = 45 deg./s/s
+setp joint1-pos.maxv 0.785398
+setp joint1-pos.maxa 0.392699
+addf joint1-pos.funct robot_hw_thread
+
+# joint 2
+net joint2-pos-cmd RRBot.joint2.position_cmd => joint2-pos.in
+net joint2-pos-fb  joint2-pos.out => RRBot.joint2.position_fb
+# maxv = 90 deg./s; maxa = 45 deg./s/s
+setp joint2-pos.maxv 0.785398
+setp joint2-pos.maxa 0.392699
+addf joint2-pos.funct robot_hw_thread
+
+# Start threads
+start

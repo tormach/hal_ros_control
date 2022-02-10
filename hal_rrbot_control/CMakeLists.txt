@@ -1,26 +1,13 @@
-cmake_minimum_required(VERSION 3.0.5)
+cmake_minimum_required(VERSION 3.5)
 project(hal_rrbot_control)
 
-find_package(
-  catkin REQUIRED COMPONENTS
-  hal_hw_interface
-  # rrbot_control
-  )
+find_package(ament_cmake REQUIRED)
+find_package(hal_hw_interface REQUIRED)
+find_package(ros2_control_demo_bringup REQUIRED)
 
-catkin_package(
-  CATKIN_DEPENDS
-  hal_hw_interface
-  # rrbot_control
-  )
+install(
+  DIRECTORY config halfiles launch
+  DESTINATION share/${PROJECT_NAME}
+)
 
-install(DIRECTORY config
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
-
-install(DIRECTORY launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
-
-install(DIRECTORY halfiles
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
-
-install(DIRECTORY urdf
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+ament_package()
