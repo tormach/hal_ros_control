@@ -119,10 +119,10 @@ class RosHalComponent(HalObjBase, abc.ABC):
         """
         ROS node and HAL component update routine.
 
-        This MUST be defined in subclasses.  It is run periodically
-        from the :py:func:`run` function, and should take care of all
-        updates, such as reading or writing pins and communication
-        with ROS.
+        This MUST be defined in subclasses.  It is run periodically from
+        the :py:func:`run` function, and should take care of all
+        updates, such as reading or writing pins and communication with
+        ROS.
         """
 
     def main(self):

@@ -14,7 +14,6 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>ament_cmake_python</buildtool_depend>
-  <buildtool_depend>rosidl_default_generators</buildtool_depend>
 
   <depend>hardware_interface</depend>
   <depend>controller_manager</depend>
@@ -32,7 +31,6 @@
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>std_srvs</exec_depend>
   <exec_depend>hal_hw_interface_msgs</exec_depend>
-  <exec_depend>rosidl_default_runtime</exec_depend>
   <exec_depend>machinekit</exec_depend>
 
   <test_depend>ament_cmake_cppcheck</test_depend>
@@ -50,8 +48,6 @@
        https://github.com/ros/pluginlib/pull/222 -->
   <depend>libboost-thread</depend>
   <build_depend>libboost-thread-dev</build_depend>
-
-  <member_of_group>rosidl_interface_packages</member_of_group>
 
   <export>
     <build_type>ament_cmake</build_type>

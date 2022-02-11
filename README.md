@@ -75,14 +75,12 @@ revolute-revolute robot demo with HAL.  It is meant to show how simple
 it can be to build a `ros_control` hardware interface with HAL, and to
 serve as an example for creating your own.
 
-It also demonstrates the `hal_io` user component.  A simple gripper
-URDF is added, and a `hal_io` service pin open the gripper when
-`True` and closes when `False`.
-
 Run the simulated hardware interface:
 
     ros2 launch hal_rrbot_control rrbot.launch.py
     # Debugging: append `hal_debug_output:=1 hal_debug_level:=5`
+    # Trajectory controller:  append
+    #     `robot_controller:=position_trajectory_controller`
 
 Run `halscope` to visualize HAL joint commands and feedback; in the
 GUI, set the "Run Mode" to "Roll" for continuous updating:
@@ -93,7 +91,31 @@ The simulated trajectories are launched directly from the
 `ros2_control_demo_bringup` package:
 
     ros2 launch ros2_control_demo_bringup test_forward_position_controller.launch.py
+    # Or for robot_controller:=position_trajectory_controller:
     ros2 launch ros2_control_demo_bringup test_joint_trajectory_controller.launch.py
+
+Load and switch to the trajectory controller at run time:
+
+    # Load and configure the trajectory controller
+    ros2 service call \
+      /controller_manager/load_and_configure_controller \
+      controller_manager_msgs/srv/LoadConfigureController \
+      '{name: "position_trajectory_controller"}'
+
+    # Switch to the trajectory controller
+    ros2 service call \
+      /controller_manager/switch_controller \
+      controller_manager_msgs/srv/SwitchController \
+      '{start_controllers: ["position_trajectory_controller"],
+        stop_controllers: ["forward_position_controller"],
+        strictness: 1, start_asap: true,
+        timeout: {sec: 0, nanosec: 10000000}
+       }'
+
+    # Verify the switch: 'position_trajectory_controller' state='active'
+    ros2 service call \
+      /controller_manager/list_controllers \
+      controller_manager_msgs/srv/ListControllers
 
 -----
 ## Configuration

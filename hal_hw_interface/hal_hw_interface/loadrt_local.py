@@ -7,9 +7,9 @@ def loadrt_local(modname):
     """
     Load a RT HAL component.
 
-    Load a locally-built HAL component installed outside standard
-    module directories.  Uses the `LD_LIBRARY_PATH` environment
-    variable as a search path.
+    Load a locally-built HAL component installed outside standard module
+    directories.  Uses the `LD_LIBRARY_PATH` environment variable as a
+    search path.
     """
     if modname in hal.components:
         return

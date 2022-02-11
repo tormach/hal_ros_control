@@ -43,3 +43,17 @@ repos:
   hooks:
   - id: flake8
     # note: ignores and excluded files in .flake8
+
+- repo: https://github.com/myint/docformatter
+  rev: v1.3.1
+  hooks:
+    - id: docformatter
+      args: [--pre-summary-newline, --in-place]
+
+- repo: https://github.com/pycqa/pydocstyle
+  rev: 6.1.1
+  hooks:
+  - id: pydocstyle
+    args:
+    # Match industrial_ci list
+    - --ignore=D100,D101,D102,D103,D104,D105,D106,D107,D203,D212,D404

@@ -15,9 +15,7 @@ class HalIO(RosHalComponent):
     :code:`hal_io/service_pins` parameters, lists of pin names to pin
     data mappings.
 
-    The pin data must be a dictionary of pin configuration.
-
-    Example:
+    The pin data must be a dictionary of pin configuration; example:
 
     .. code-block:: yaml
 
