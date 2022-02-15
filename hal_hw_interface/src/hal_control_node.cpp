@@ -167,12 +167,6 @@ int rtapi_app_main(void)
       std::chrono::milliseconds(10), reset_controller_cb);
   EXECUTOR->add_node(CONTROLLER_MANAGER);
 
-  // Some race condition causes segfault; this seems to take care of it.
-  // Related?
-  // https://github.com/firesurfer/ros2_components/blob/master/src/ros2_components/ManagedNode.cpp#L200
-  HAL_ROS_DBG_NAMED(CNAME, "Sleeping to avoid segfault :P");
-  sleep(2);
-
   // ROS asynch executor thread pointer
   HAL_ROS_DBG_NAMED(CNAME, "Starting executor");
   auto executor_cb = []() { EXECUTOR->spin(); };
