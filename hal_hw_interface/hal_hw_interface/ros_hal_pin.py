@@ -141,9 +141,9 @@ class RosHalPinPublisher(RosHalPin):
     :py:func:`hal_hw_interface.ros_hal_component.RosHalComponent.update`
     function.
 
-    It will only publish its value when the value has changed.  For
-    :py:class:`FLOAT` types, absolute and relative tolerances are read
-    from the :code:`<compname>/absolute_tolerance` and
+    Value changes are logged.  For :py:class:`FLOAT` types, absolute
+    and relative tolerances are read from the
+    :code:`<compname>/absolute_tolerance` and
     :code:`<compname>/relative_tolerance` ROS parameters and default
     to :code:`1e-9` each, respectively.
 
@@ -174,7 +174,7 @@ class RosHalPinPublisher(RosHalPin):
     # Attribute default factories
     @pub_topic.default
     def _pub_topic_default(self):
-        return "{}/{}".format(self.compname, self.pin_name)
+        return self.pin_name
 
     _pin_to_msg_type_map = {
         HalPinType("BIT"): Bool,
@@ -202,7 +202,7 @@ class RosHalPinPublisher(RosHalPin):
 
     def _ros_publisher_init(self):
         self.logger.info(f'Creating publisher on topic "{self.pub_topic}"')
-        self.pub = self.node.create_publisher(self.msg_type, self.pub_topic)
+        self.pub = self.node.create_publisher(self.msg_type, self.pub_topic, 1)
 
     def _value_changed(self, value):
         if self.hal_type == HalPinType("FLOAT"):
@@ -216,19 +216,13 @@ class RosHalPinPublisher(RosHalPin):
             return self.get_pin() != value
 
     def update(self):
-        """
-        Publish pin value to ROS topic.
-
-        Only publishes when pin value has changed.
-        """
-        if not self._value_changed(self._msg.data):
-            return
-
+        """Publish pin value to ROS topic."""
+        if self._value_changed(self._msg.data):
+            self.logger.info(
+                f"Pin {self.pin_name} changed:"
+                f"  old={self._msg.data}; new={self.get_pin()}"
+            )
         value = self._pin_to_python_type_map[self.hal_type](self.get_pin())
-        self.logger.info(
-            f"Pin {self.pin_name} changed:"
-            f"  old={self._msg.data}; new={value}"
-        )
         self._msg.data = value
         self.pub.publish(self._msg)
 
@@ -272,7 +266,7 @@ class RosHalPinSubscriber(RosHalPinPublisher):
         self._ros_subscriber_init()
 
     def _ros_subscriber_init(self):
-        self.logger.info('Creating subscriber on topic "{self.sub_topic}"')
+        self.logger.info(f'Creating subscriber on topic "{self.sub_topic}"')
         self.sub = self.node.create_subscription(
             self.msg_type, self.sub_topic, self._subscriber_cb
         )
@@ -286,9 +280,8 @@ class RosHalPinSubscriber(RosHalPinPublisher):
             )
 
         self._msg.data = msg.data
-        if self._value_changed(msg.data):
-            self.set_pin(msg.data)
-            self.update()
+        self.set_pin(msg.data)
+        self.update()
 
 
 @attr.s
@@ -348,7 +341,7 @@ class RosHalPinService(RosHalPinPublisher):
         self.service = self.node.create_service(
             self.service_msg_type, self.service_name, self._service_cb
         )
-        self.logger.info("Service {self.service_name} created")
+        self.logger.info(f"Service {self.service_name} created")
 
     def _service_cb(self, req, rsp):
         self.set_pin(req.data)

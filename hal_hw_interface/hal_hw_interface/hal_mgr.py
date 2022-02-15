@@ -10,8 +10,6 @@ from std_msgs.msg import Bool
 class HalMgr(RosHalComponent):
     compname = "hal_mgr"
     READY_TOPIC = "hal_mgr/ready"
-    shutdown_begun = False
-    update_rate = 0.1  # sec
 
     def init_hal_comp(self):
         # Don't actually set up any HAL comp

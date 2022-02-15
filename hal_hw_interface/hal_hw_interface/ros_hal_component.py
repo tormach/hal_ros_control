@@ -58,11 +58,11 @@ class RosHalComponent(HalObjBase, abc.ABC):
     This will also be used as a default prefix for ROS names.
     """
 
-    def __init__(self, argv):
-        assert self.compname is not None
+    def __init__(self, argv, node_kwargs=dict()):
+        assert self.compname is not None, "`compname` not set"
 
         # Create ROS node
-        self.init_ros_node(argv)
+        self.init_ros_node(argv, node_kwargs=node_kwargs)
         self.argv = argv
         self.logger.info(f"Initializing '{self.compname}' component")
 
@@ -81,8 +81,8 @@ class RosHalComponent(HalObjBase, abc.ABC):
         :py:class:`hal_hw_interface.ros_hal_pin.RosHalComponent`
         object setup to initialize the new HAL component
         """
-        assert self.compname is not None
-        assert "hal_comp" not in self._cached_objs
+        assert self.compname is not None, "`compname` not set"
+        assert "hal_comp" not in self._cached_objs, "`init_hal_comp` called"
         self._cached_objs["hal_comp"] = hal.component(self.compname)
 
     @abc.abstractmethod
@@ -110,9 +110,8 @@ class RosHalComponent(HalObjBase, abc.ABC):
         The update rate will be taken from the ROS parameter
         `<compname>/update_rate`, defaulting to 10 Hz.
         """
-        while self.node_context.ok():
-            self.update()
-            rclpy.spin_once(self.node, timeout_sec=1 / self.update_rate)
+        self.node.create_timer(1 / self.update_rate, self.update)
+        rclpy.spin(self.node)
 
     @abc.abstractmethod
     def update(self):
@@ -155,5 +154,7 @@ class RosHalComponent(HalObjBase, abc.ABC):
             self.logger.fatal(f"Exiting on HW interface exception:  {e}")
         except Exception as e:
             self.logger.fatal(f"Exiting on exception:  {e}")
+        except KeyboardInterrupt:
+            self.logger.warn("Shutting down on keyboard interrupt")
         self._run_shutdown_cbs()
         self.node_context.shutdown()

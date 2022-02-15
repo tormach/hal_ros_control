@@ -1,4 +1,5 @@
 from pprint import pformat
+import pytest
 
 # Test keys and values
 keys1 = dict(pin1=True, pin2=0.009, pin3=-9)
@@ -9,6 +10,7 @@ keys2 = dict(pin1=False, pin2=1.88e42, pin4=0)
 
 class TestFixtures:
     comp_name = "test_fixtures_comp"
+    rclpy_patches = []
 
     def test_mock_hal_comp_fixture(self, mock_hal_comp):
         # Test hal.component returns mock_hal_comp
@@ -43,15 +45,28 @@ class TestFixtures:
         node = rclpy.create_node("foo_node")
         assert node is self.node
 
-        # Test mock node.declare_parameter()
+        # Test mock node.declare_parameter(), node.has_parameter()
         self.rosparams["foo"] = 1
         self.rosparams["bar"] = 2
         print("self.rosparams", pformat(self.rosparams))
-        assert self.node.declare_parameter("foo").value == 1
-        assert self.node.declare_parameter("bar").value == 2
+        print("self.rosparam_decls", pformat(self.rosparam_decls))
+        assert not self.node.has_parameter("foo")
+        assert not self.node.has_parameter("bar")
+        foo_param = self.node.declare_parameter("foo")
+        assert self.node.has_parameter("foo")
+        assert foo_param.value == 1
+        foo_param.value = 5
+        assert foo_param.value == 5
+        assert not self.node.has_parameter("bar")
+        bar_param = self.node.declare_parameter("bar")
+        assert bar_param.value == 2
+        assert self.node.has_parameter("foo")
+        assert self.node.has_parameter("bar")
         self.rosparams["baz"] = 3
-        assert self.node.declare_parameter("foo").value == 1
-        assert self.node.declare_parameter("bar").value == 2
+        with pytest.raises(RuntimeError):
+            self.node.declare_parameter("foo")  # Already declared
+        assert foo_param.value == 5
+        assert bar_param.value == 2
         assert self.node.declare_parameter("baz").value == 3
 
         # Test mock node.get_logger()
@@ -64,7 +79,7 @@ class TestFixtures:
         logger.fatal("fatal foo")
 
         # Test node.create_publisher()
-        pub = node.create_publisher(int, "foo_publisher")
+        pub = node.create_publisher(int, "foo_publisher", 1)
         assert "foo_publisher" in self.publishers
         assert pub is self.publishers["foo_publisher"]
         assert pub.msg_type is int

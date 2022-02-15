@@ -18,6 +18,10 @@ class TestRosHalComponent:
 
     test_class = StubComp
     comp_name = test_class.compname
+    rclpy_patches = [
+        "hal_hw_interface.hal_obj_base.rclpy",
+        "hal_hw_interface.ros_hal_component.rclpy",
+    ]
 
     @pytest.fixture
     def obj(self, mock_hal_comp, mock_rclpy):
@@ -63,8 +67,8 @@ class TestRosHalComponent:
         assert res == 13
 
     def test_run(self, obj):
-        # Test run() (fixture loops three times); should call update()
-        # and rate.sleep()
         obj.run()
-        assert obj.count == 3
-        assert self.rclpy.spin_once.call_count == 3
+        self.node.create_timer.assert_called_with(
+            1 / self.rosparams["update_rate"], obj.update
+        )
+        self.rclpy.spin.assert_called_with(self.node)

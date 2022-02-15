@@ -6,6 +6,9 @@ from hal_hw_interface.hal_obj_base import HalObjBase
 class TestHalObjBase:
     comp_name = "test_comp"
     test_class = HalObjBase
+    rclpy_patches = [
+        "hal_hw_interface.hal_obj_base.rclpy",
+    ]
 
     @pytest.fixture
     def obj(self, mock_rclpy, mock_hal_comp):
@@ -39,7 +42,9 @@ class TestHalObjBase:
 
         # Check node
         self.rclpy.create_node.assert_called_once()
-        self.rclpy.create_node.assert_called_with(self.comp_name)
+        self.rclpy.create_node.assert_called_with(
+            self.comp_name, context=self.context
+        )
         assert hasattr(obj, "node")
         assert obj.node is self.node
 

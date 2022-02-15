@@ -37,29 +37,41 @@ class HalObjBase:
         :returns: HAL component object
         :rtype: :py:class:`hal.component`
         """
-        assert "hal_comp" in self._cached_objs
+        assert "hal_comp" in self._cached_objs, "`init_hal_comp` not called"
         return self._cached_objs["hal_comp"]
 
-    def init_ros_node(self, args):
+    # A `dict` of keyword args to pass to `rclpy.create_node`
+    default_node_kwargs = dict()
+
+    def init_ros_node(self, args, node_kwargs=dict()):
         """
         Initialize a new ROS node.
 
         Sets the following attributes:
-        - `node`:  The `rclpy.node.Node` object
         - `node_context`:  The `rclpy.context.Context` object
+        - `node`:  The `rclpy.node.Node` object
+
+        The node will be created with `rclpy.create_node`, and passed
+        any keyword arguments in the `node_kwargs` parameter and (with
+        lower precedence) the `default_node_kwargs` class attribute.
 
         Any shutdown callbacks registered with
         :py:func:`add_shutdown_callback` will be run at node shutdown.
 
         :param args:  Args to ROS node, e.g. `sys.argv`
         :type args:  list
+        :param node_kwargs:  Keyword args to `rclpy.create_node`
+        :type node_kwargs:  dict
         """
-        assert self.compname is not None
-        assert "node" not in self._cached_objs
-        rclpy.init(args=args)
+        assert self.compname is not None, "`compname` not set"
         co = self._cached_objs
-        co["node"] = rclpy.create_node(self.compname)
-        co["node_context"] = rclpy.utilities.get_default_context()
+        ctx = co["node_context"] = rclpy.utilities.get_default_context()
+        assert "node" not in self._cached_objs, "`init_ros_node` already called"
+        rclpy.init(args=args, context=ctx)
+        self.node_kwargs = {**self.default_node_kwargs, **node_kwargs}
+        co["node"] = rclpy.create_node(
+            self.compname, context=ctx, **self.node_kwargs
+        )
         self.node_context.on_shutdown(self._run_shutdown_cbs)
         self.logger.info("Created node")
 
@@ -75,7 +87,7 @@ class HalObjBase:
         :returns: ROS node object
         :rtype: :py:class:`rclpy.node.Node`
         """
-        assert "node" in self._cached_objs
+        assert "node" in self._cached_objs, "`init_ros_node` not called"
         return self._cached_objs["node"]
 
     @property
@@ -91,7 +103,7 @@ class HalObjBase:
         :returns: ROS node context object
         :rtype: :py:class:`rclpy.context.Context`
         """
-        assert "node_context" in self._cached_objs
+        assert "node_context" in self._cached_objs, "`init_ros_node` not called"
         return self._cached_objs["node_context"]
 
     def get_ros_param(self, name, default=None):
@@ -112,7 +124,10 @@ class HalObjBase:
         # declarations.
         if name not in self._cached_objs.setdefault("rosparam_decls", dict()):
             self.logger.info(f"New param {name}, default {repr(default)}")
-            decl = self.node.declare_parameter(name, default)
+            if not self.node.has_parameter(name):
+                decl = self.node.declare_parameter(name, default)
+            else:
+                decl = self.node.get_parameter(name)
             self._cached_objs["rosparam_decls"][name] = decl
         return self._cached_objs["rosparam_decls"][name].value
 
@@ -132,7 +147,7 @@ class HalObjBase:
         :param prio: Priority, default 500
         :type prio: int
         """
-        assert callable(cb)
+        assert callable(cb), "shutdown callback must be callable"
         shutdown_cbs = self._cached_objs.setdefault("shutdown_cbs", {})
         while prio in shutdown_cbs:
             prio += 0.1
@@ -141,7 +156,6 @@ class HalObjBase:
     def _run_shutdown_cbs(self):
         cb_map = self._cached_objs.setdefault("shutdown_cbs", {})
         if not cb_map:
-            self.logger.info("No more shutdown cbs to run")
             return  # Already run, or none added
         while cb_map:
             top_cb_key = list(cb_map.keys())[0]
