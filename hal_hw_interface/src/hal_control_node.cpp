@@ -29,10 +29,6 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-#ifndef CNAME
-#error "CNAME must be defined"
-#endif
-
 #include <stdlib.h>
 #include <pthread.h>  // pthread_setname_np()
 #include <unistd.h>   // sleep()
