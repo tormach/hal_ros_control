@@ -33,7 +33,6 @@
 #define HAL_HW_INTERFACE__HAL_ROS_LOGGING_HPP_
 
 // HAL
-#define RTAPI 1
 #include <hal.h>
 
 // ROS

@@ -33,10 +33,20 @@ find_package(hal_hw_interface_msgs REQUIRED)
 #######################
 # HAL RT component build definitions
 
+set(hal_comp_name "hal_control_node")
+
 # Build HAL control_node component
 add_library(
   hal_control_node MODULE
   src/hal_control_node.cpp
+)
+
+target_compile_definitions(
+  hal_control_node PUBLIC
+  # Component name, shared btw. controller node & system interface
+  CNAME="${hal_comp_name}"
+  # HAL RT component
+  RTAPI=1
 )
 
 # Remove 'lib' prefix from comp name
@@ -79,6 +89,14 @@ target_include_directories(
   PRIVATE
   include/
   ${HAL_INCLUDE_PATH}
+)
+
+target_compile_definitions(
+  hal_system_interface PUBLIC
+  # Component name, shared btw. controller node & system interface
+  CNAME="${hal_comp_name}"
+  # HAL RT component
+  RTAPI=1
 )
 
 ament_target_dependencies(

@@ -32,7 +32,6 @@
 // Disable warnings that need to be fixed in external headers
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
-#define RTAPI 1
 #include <hal.h>       // HAL public API decls
 #include <hal_priv.h>  // halpr_find_comp_by_name
 #pragma GCC diagnostic pop
@@ -73,16 +72,17 @@ hal_float_t** HalSystemInterface::alloc_and_init_hal_pin(
     HAL_ROS_ERR_NAMED(LOG_NAME, "New HAL pin %s failed", pin_name.c_str());
     throw std::runtime_error("Failed to init HAL pin '" + pin_name + "'");
   }
-  HAL_ROS_INFO_NAMED(LOG_NAME, "New HAL pin %s succeeded", pin_name.c_str());
 
   return ptr;
 }
 
 void HalSystemInterface::init_command_interface(
     const std::string joint_name, const std::string interface_name,
-    const std::string data_type __attribute__((unused)))
+    const std::string data_type)
 {
-  assert(data_type == "double");
+  if (data_type != "double")
+    throw std::runtime_error("Interface " + joint_name + " " + interface_name +
+                             " type  " + data_type + ", expected 'double'");
   auto name = joint_intf_name(joint_name, interface_name, "_cmd");
   double** hal_pin_storage =
       alloc_and_init_hal_pin(joint_name, interface_name, "_cmd", HAL_OUT);
@@ -94,10 +94,11 @@ void HalSystemInterface::init_command_interface(
 
 void HalSystemInterface::init_state_interface(const std::string joint_name,
                                               const std::string interface_name,
-                                              const std::string data_type
-                                              __attribute__((unused)))
+                                              const std::string data_type)
 {
-  assert(data_type == "double");
+  if (data_type != "double")
+    throw std::runtime_error("Interface " + joint_name + " " + interface_name +
+                             " type  " + data_type + ", expected 'double'");
   auto name = joint_intf_name(joint_name, interface_name, "_fb");
   double** hal_pin_storage =
       alloc_and_init_hal_pin(joint_name, interface_name, "_fb", HAL_IN);
