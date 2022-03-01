@@ -45,12 +45,7 @@ class HalOrderedAction(Action):
         return self.__hal_name
 
     def cancel(self, context, warn=True):
-        """
-        Cancel this Action's handlers.
-
-        This function is not thread-safe and should be called only from
-        under another coroutine.
-        """
+        """Cancel this Action's handlers."""
         if self.__canceled:
             return
         self.__canceled = True
