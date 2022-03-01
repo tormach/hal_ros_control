@@ -29,12 +29,13 @@ output pins with `std_msgs` publishers and subscribers, respectively.
 
 ## The `hal_hw_interface` real-time component
 
-The `hal_hw_interface` HAL component is a ROS
-`hardware_interface::SystemInterface` implementation for controlling
-robot joints in a real-time context.
-
-The `controller_manager::ControllerManager` update loop runs in a HAL
-thread.
+The `hal_control_node` HAL component runs a
+`controller_manager::ControllerManager` node in a real-time HAL
+thread, and the complementary
+`hal_system_interface::HalSystemInterface` is a
+`hardware_interface::SystemInterface` implementation that creates HAL
+pins for the various state and command interfaces defined in a robot's
+`ros2_control` URDF.
 
 ## `hal_io`
 
@@ -43,6 +44,16 @@ subscribes to ROS `std_msgs` topics with values read from and written
 to robot I/O HAL pins.  The `HAL_BIT`, `HAL_FLOAT`, `HAL_S32` and
 `HAL_U32` HAL pin value types correspond to `Bool`, `Float64`, `Int32`
 and `UInt32` messages from ROS `std_msgs`.
+
+## `hal_hw_interface.launch`:  ROS2 launch actions for HAL
+
+The `hal_hw_interface.launch` Python module makes it easy to launch a
+robot with HAL hardware.  It provides actions to start the Machinekit
+HAL realtime environment, load the `hal_control_node`, `hal_io` and
+any other HAL components running ROS2 Nodes, and load HAL files.  It
+takes care of executing these actions in sequence so the HAL
+components don't start before HAL is running, and HAL files don't
+start netting pins before the HAL components are loaded and ready.
 
 ## Dependencies
 
@@ -55,22 +66,15 @@ and `UInt32` messages from ROS `std_msgs`.
   - See the `linux-image-rt-*` packages available in Debian Stretch.
 - [`ros_control_boilerplate`][ros_control_boilerplate]
   - Required by the `hal_hw_interface`
-  - This may be installed in package form.
-- The `rrbot_description` package from `gazebo_ros_demos`
-  - Required by `ros_control_boilerplate` to run the
-  `hal_rrbot_control` demo
-  - Follow the notes in the `ros_control_boilerplate/README.md` to
-    install this.
+  - This may be installed in package form
+- Optional:  The `ros2_control_demos` repo
+  - Required to run the `hal_rrbot_control` demo
+  - Follow the notes in that project's README to install
 
 -----
 ## Run the demos
 
-The `hal_rrbot_control` package contains two demos:  one for
-`hal_hw_interface` and one for `hal_io`.
-
-### `hal_hw_interface` demo
-
-This demo runs the `ros_control_boilerplate` "RRBot" two joint
+This demo runs the `ros2_control_demos` "RRBot" two joint
 revolute-revolute robot demo with HAL.  It is meant to show how simple
 it can be to build a `ros_control` hardware interface with HAL, and to
 serve as an example for creating your own.
@@ -120,100 +124,32 @@ Load and switch to the trajectory controller at run time:
 -----
 ## Configuration
 
-To configure the `hal_hw_interface` and `hal_io` components, use the
-sample configuration  in the `hal_rrbot_control` package as a
-starting point.
+The HAL configuration is started from and configured primarily through
+the robot's launch configuration.  See the working example in
+`hal_rrbot_control/launch/rrbot.launch.py`.
 
-### `hal_mgr` configuration
+In general, a ROS2 launch HAL configuration includes a
+`hal_hw_interface.launch.HalConfig` group action that starts the
+`hal_mgr` Node, and contains a group of actions including a
+`hal_hw_interface.launch.HalRTNode` for launching the
+`hal_control_node`, one or more `hal_hw_interface.launch.HalUserNode`
+for launching `hal_io` or other HAL user component Nodes, followed by
+a `hal_hw_interface.launch.HalFiles` action to load one or more Python
+or `.hal` HAL files and complete the configuration.
 
-The `hal_mgr` python script is launched as a ROS node, and performs
-simple management of the HAL life cycle:
+The robot description's URDF must contain something like the
+following:
 
-- At startup,
-  - Start the RTAPI real time services
-  - Load a HAL configuration from a list of HAL files
-- While running, spin until receiving a shutdown signal from ROS
-- On shutdown, stop HAL and RTAPI and exit
+    <ros2_control name="${name}" type="system">
+      <hardware>
+        <plugin>hal_system_interface/HalSystemInterface</plugin>
+      </hardware>
+      <!-- joints... -->
+    </ros2_control>
 
-The HAL configuration is specified as a list of HAL files to load from
-the `halfiles` directory in the `hal_mgr/hal_files` ROS parameter.
-The files may be either legacy `.hal` files or python scripts.
-
-See the `config/hal_hw_interface.yaml` and `config/hal_io.yaml` files
-in `hal_rrbot_control` for typical configuration examples.
-
-When the hal_mgr completes loading the HAL files, it sets 'hal_mgr/ready'
-topic to true. Other processes can use this topic to check the status
-loading the HAL configuration.
-
-### `hal_hw_interface` configuration
-
-A `hal_hw_interface` configuration builds on an existing
-`ros_control_boilerplate` configuration.  The
-`ros_control_boilerplate` configuration file,
-`rrbot_controllers.yaml`, defines joints and controllers; the
-`generic_hw_control_loop` section is unneeded, since the control loop
-runs in a HAL thread.
-
-The `config/hal_hw_interface.yaml` ROS parameter file loads the
-`halfiles/hal_hardware_interface.hal` file.  That file defines a new
-HAL thread, loads the `hal_hw_interface` component, and adds it to the
-thread.  It then sets up `limit3` components for each joint to limit
-position, velocity and acceleration, and connects them to the
-`hal_hw_interface` command and feedback signals.
-
-Because the `hal_hw_interface` component is installed outside the
-standard HAL component directory, its full path must be provided using
-the `$COMP_DIR` environment variable:  `loadrt
-$(COMP_DIR)/hal_hw_interface`.
-
-When the `hal_hw_interface` component loads, it creates six HAL pins
-for each joint:  three command output pins and three feedback input
-pins for each of position, velocity and effort.  On the ROS side, it
-sets up the hardware interface and controller manager.  The HAL file
-adds its ros_control `update()` function to a real-time HAL thread,
-and once the thread is started, the function runs in a low-latency
-loop at the frequency configured for the thread.
-
-### `hal_io` configuration
-
-The `hal_io` user (non-real-time) component loads its configuration
-from the ROS parameter server.  See the example `config/hal_io.yaml`
-configuration file.  It supports the four HAL data types:  `FLOAT`,
-`S32`, `U32` and `BIT`, connecting them to ROS [`std_msgs`][std_msgs]
-`Float64`, `Int32`, `UInt32` and `Bool` messages, respectively.  The
-configuration has three main parameters:
-
-- `hal_io/update_rate`:  The main loop publisher update frequency in
-  Hz (float)
-- `hal_io/input`:  A dictionary of pin-name keys to HAL input pin type
-  values; e.g. `{ "door_open" : "BIT" }` creates a HAL input pin
-  `hal_io.door_open`, and publishes `Bool` messages to the topic
-  `hal_io/door_open` at the `update_rate` frequency
-- `hal_io/output`:  A dictionary of pin-name keys to lists of (type,
-  topic) values; e.g. `{ "request_tool_num" : [ "U32",
-  "robot_io/request_tool_num"] }` creates a HAL output pin
-  `hal_io.request_tool_num` and sets its value from `UInt32` messages
-  subscribed to from the topic `robot_io/request_tool_num`
-
-[std_msgs]: http://wiki.ros.org/std_msgs
-
-# TODO
-
-- Expose joint limits through pins
-
-
-# FIXME  ROS2 build
-
-```
-sudo apt-get install machinekit-hal-dev
-# VERBOSE=1 \
-colcon build \
-    --cmake-args -DCMAKE_BUILD_TYPE=Release \
-    --cmake-args -DCMAKE_VERBOSE_MAKEFILE=TRUE \
-    --event-handlers console_cohesion+ \
-    --packages-up-to hal_hw_interface
-```
+This tells the controller manager to load the HAL system interface
+plugin for this robot; this plugin will create HAL pins for each state
+or command interface.
 
 Tests:
 ```
@@ -234,7 +170,7 @@ The `hal_mgr` ROS node, which starts up the RTAPI and HAL apparatus,
 is based on Alexander Roessler's [`python-hal-seed`][python-hal-seed].
 The control loop was inspired by the
 [`rtt_ros_control_example`][rtt_ros_control_example] and related
-[discussion][ros_control-130]
+[discussion][ros_control-130].
 
 [tormach]:  https://www.tormach.com/
 [python-hal-seed]: https://github.com/machinekoder/python-hal-seed
