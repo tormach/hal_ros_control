@@ -12,14 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Largely based on ros2_control_demo_bringup package,
+# Much cribbed from ros2_control_demo_bringup package,
 # launch/rrbot_base.launch.py at rev 864b924
 # https://github.com/ros-controls/ros2_control_demos
 
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
-    IncludeLaunchDescription,
 )
 from launch.conditions import IfCondition
 from launch.substitutions import (
@@ -27,12 +26,11 @@ from launch.substitutions import (
     FindExecutable,
     LaunchConfiguration,
     PathJoinSubstitution,
-    PythonExpression,
 )
-from launch.launch_description_sources import PythonLaunchDescriptionSource
-
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
+
+from hal_hw_interface.launch import HalConfig, HalRTNode, HalFiles
 
 
 def generate_launch_description():
@@ -40,18 +38,18 @@ def generate_launch_description():
     declared_arguments = []
     declared_arguments.append(
         DeclareLaunchArgument(
-            "runtime_config_package",
-            default_value="ros2_control_demo_bringup",
-            description="Package with controller's configuration.",
-        )
-    )
-    declared_arguments.append(
-        DeclareLaunchArgument(
-            "controllers_file",
-            default_value="rrbot_controllers.yaml",
+            "robot_controller_config",
+            default_value=PathJoinSubstitution(
+                [
+                    FindPackageShare("ros2_control_demo_bringup"),
+                    "config",
+                    "rrbot_controllers.yaml",
+                ]
+            ),
             description="YAML file with the controllers configuration.",
         )
     )
+
     declared_arguments.append(
         DeclareLaunchArgument(
             "hal_file_dir",
@@ -63,9 +61,9 @@ def generate_launch_description():
     )
     declared_arguments.append(
         DeclareLaunchArgument(
-            "hal_files",
-            default_value=PythonExpression(["['rrbot.hal']"]),
-            description="List of HAL files to load from hal_file_dir.",
+            "hal_file",
+            default_value="rrbot.hal",
+            description="HAL file to load from hal_file_dir.",
         )
     )
     declared_arguments.append(
@@ -115,13 +113,6 @@ def generate_launch_description():
             "position_only",
             default_value="true",
             description="Do not configure velocity or acceleration interfaces.",
-        )
-    )
-    declared_arguments.append(
-        DeclareLaunchArgument(
-            "with_sensor",
-            default_value="false",
-            description="Enable integrated sensor.",
         )
     )
     declared_arguments.append(
@@ -185,35 +176,6 @@ def generate_launch_description():
         )
     )
 
-    # Initialize Arguments
-    runtime_config_package = LaunchConfiguration("runtime_config_package")
-    controllers_file = LaunchConfiguration("controllers_file")
-    description_package = LaunchConfiguration("description_package")
-    description_file = LaunchConfiguration("description_file")
-    prefix = LaunchConfiguration("prefix")
-    use_gazebo = LaunchConfiguration("use_gazebo")
-    use_sim = LaunchConfiguration("use_sim")
-    with_sensor = LaunchConfiguration("with_sensor")
-    use_fake_hardware = LaunchConfiguration("use_fake_hardware")
-    position_only = LaunchConfiguration("position_only")
-    fake_sensor_commands = LaunchConfiguration("fake_sensor_commands")
-    slowdown = LaunchConfiguration("slowdown")
-    hardware_plugin = LaunchConfiguration("hardware_plugin")
-    robot_controller = LaunchConfiguration("robot_controller")
-    start_rviz = LaunchConfiguration("start_rviz")
-    hal_file_dir = LaunchConfiguration("hal_file_dir")
-    hal_files = LaunchConfiguration("hal_files")
-    hal_debug_output = LaunchConfiguration("hal_debug_output")
-    hal_debug_level = LaunchConfiguration("hal_debug_level")
-
-    robot_controllers = PathJoinSubstitution(
-        [
-            FindPackageShare(runtime_config_package),
-            "config",
-            controllers_file,
-        ]
-    )
-
     # Get URDF via xacro
     robot_description_content = Command(
         [
@@ -221,73 +183,97 @@ def generate_launch_description():
             " ",
             PathJoinSubstitution(
                 [
-                    FindPackageShare(description_package),
+                    FindPackageShare(
+                        LaunchConfiguration("description_package")
+                    ),
                     "urdf",
-                    description_file,
+                    LaunchConfiguration("description_file"),
                 ]
             ),
             " ",
             "prefix:=",
-            prefix,
+            LaunchConfiguration("prefix"),
             " ",
             "use_gazebo:=",
-            use_gazebo,
+            LaunchConfiguration("use_gazebo"),
             " ",
             "use_sim:=",
-            use_sim,
+            LaunchConfiguration("use_sim"),
             " ",
             "use_fake_hardware:=",
-            use_fake_hardware,
+            LaunchConfiguration("use_fake_hardware"),
             " ",
             "with_sensor:=",
-            with_sensor,
+            LaunchConfiguration("with_sensor"),
             " ",
             "position_only:=",
-            position_only,
+            LaunchConfiguration("position_only"),
             " ",
             "fake_sensor_commands:=",
-            fake_sensor_commands,
+            LaunchConfiguration("fake_sensor_commands"),
             " ",
             "slowdown:=",
-            slowdown,
+            LaunchConfiguration("slowdown"),
             " ",
             "hardware_plugin:=",
-            hardware_plugin,
+            LaunchConfiguration("hardware_plugin"),
         ]
     )
 
-    hal_hw_interface_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            [
-                PathJoinSubstitution(
-                    [
-                        FindPackageShare("hal_hw_interface"),
-                        "launch",
-                        "hal_hw_interface.launch.py",
-                    ]
-                )
-            ]
-        ),
-        launch_arguments=dict(
-            hal_file_dir=hal_file_dir,
-            hal_files=hal_files,
-            robot_controllers_param_file=robot_controllers,
-            robot_description=robot_description_content,
-            hal_debug_output=hal_debug_output,
-            hal_debug_level=hal_debug_level,
-        ).items(),
+    # HAL configuration
+    hal_hw_interface_launch = HalConfig(
+        # hal_mgr args
+        parameters=[
+            dict(  # Individual keys
+                hal_debug_output=LaunchConfiguration("hal_debug_output"),
+                hal_debug_level=LaunchConfiguration("hal_debug_level"),
+            ),
+        ],
+        output="both",
+        emulate_tty=True,
+        log_cmd=True,
+        # HAL config
+        actions=[
+            # Hardware interface
+            HalRTNode(
+                package="hal_hw_interface",
+                component="hal_control_node",
+                parameters=[
+                    dict(robot_description=robot_description_content),
+                    LaunchConfiguration("robot_controller_config"),
+                ],
+                log_cmd=True,
+                output="both",
+                emulate_tty=True,
+                # arguments=['--ros-args', '--log-level', 'debug'],
+                # prefix=['xterm -e gdb -ex run --args'],
+            ),
+            # HAL files
+            HalFiles(
+                hal_file_dir=LaunchConfiguration("hal_file_dir"),
+                hal_files=[LaunchConfiguration("hal_file")],
+                parameters=[
+                    dict(
+                        use_sim=LaunchConfiguration("use_sim"),
+                    ),
+                ],
+            ),
+        ],
     )
 
     rviz_config_file = PathJoinSubstitution(
-        [FindPackageShare(description_package), "config", "rrbot.rviz"]
+        [
+            FindPackageShare(LaunchConfiguration("description_package")),
+            "config",
+            "rrbot.rviz",
+        ]
     )
 
-    robot_description = dict(robot_description=robot_description_content)
     robot_state_pub_node = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
         output="both",
-        parameters=[robot_description],
+        parameters=[dict(robot_description=robot_description_content)],
     )
     rviz_node = Node(
         package="rviz2",
@@ -295,7 +281,7 @@ def generate_launch_description():
         name="rviz2",
         output="log",
         arguments=["-d", rviz_config_file],
-        condition=IfCondition(start_rviz),
+        condition=IfCondition(LaunchConfiguration("start_rviz")),
     )
 
     joint_state_broadcaster_spawner = Node(
@@ -311,16 +297,19 @@ def generate_launch_description():
     robot_controller_spawner = Node(
         package="controller_manager",
         executable="spawner.py",
-        arguments=[robot_controller, "-c", "/controller_manager"],
+        arguments=[
+            LaunchConfiguration("robot_controller"),
+            "-c",
+            "/controller_manager",
+        ],
     )
 
     nodes = [
+        hal_hw_interface_launch,
         robot_state_pub_node,
         rviz_node,
         joint_state_broadcaster_spawner,
         robot_controller_spawner,
     ]
 
-    return LaunchDescription(
-        declared_arguments + [hal_hw_interface_launch] + nodes
-    )
+    return LaunchDescription(declared_arguments + nodes)
