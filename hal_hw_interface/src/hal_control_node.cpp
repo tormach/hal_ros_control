@@ -51,6 +51,9 @@ std::shared_ptr<std::thread> EXECUTOR_THREAD;
 rclcpp::TimerBase::SharedPtr RESET_TIMER;
 hal_bit_t** RESET_PIN_PTR;
 hal_bit_t** CM_OK_PIN_PTR;
+hal_s32_t** TMAX_READ_PIN_PTR;
+hal_s32_t** TMAX_UPDATE_PIN_PTR;
+hal_s32_t** TMAX_WRITE_PIN_PTR;
 bool CM_OK = 1;
 int COMP_ID = -1;
 
@@ -155,6 +158,30 @@ int rtapi_app_main(void)
                              ".cm_ok HAL pin");
   THROW_ON_NULLPTR(*CM_OK_PIN_PTR);
 
+  // Set up tmax_read/update/write pins
+  HAL_ROS_DBG_NAMED(CNAME, "Initializing %s.read/update/write HAL pins", CNAME);
+  TMAX_READ_PIN_PTR =
+      reinterpret_cast<hal_s32_t**>(hal_malloc(sizeof(hal_s32_t*)));
+  if (hal_pin_s32_newf(HAL_IO, TMAX_READ_PIN_PTR, COMP_ID, "%s.tmax_read",
+                       CNAME))
+    throw std::runtime_error("Failed to init " + std::string(CNAME) +
+                             ".tmax_read HAL pin");
+  THROW_ON_NULLPTR(*TMAX_READ_PIN_PTR);
+  TMAX_WRITE_PIN_PTR =
+      reinterpret_cast<hal_s32_t**>(hal_malloc(sizeof(hal_s32_t*)));
+  if (hal_pin_s32_newf(HAL_IO, TMAX_WRITE_PIN_PTR, COMP_ID, "%s.tmax_write",
+                       CNAME))
+    throw std::runtime_error("Failed to init " + std::string(CNAME) +
+                             ".tmax_write HAL pin");
+  THROW_ON_NULLPTR(*TMAX_WRITE_PIN_PTR);
+  TMAX_UPDATE_PIN_PTR =
+      reinterpret_cast<hal_s32_t**>(hal_malloc(sizeof(hal_s32_t*)));
+  if (hal_pin_s32_newf(HAL_IO, TMAX_UPDATE_PIN_PTR, COMP_ID, "%s.tmax_update",
+                       CNAME))
+    throw std::runtime_error("Failed to init " + std::string(CNAME) +
+                             ".tmax_update HAL pin");
+  THROW_ON_NULLPTR(*TMAX_UPDATE_PIN_PTR);
+
   // Init controller manager and asynch executor
   HAL_ROS_DBG_NAMED(CNAME, "Initializing node executor");
   // - Resource manager & hardware interface loaded here; HAL pins initialized
@@ -193,14 +220,29 @@ int rtapi_app_main(void)
 
 void funct([[maybe_unused]] void* arg, [[maybe_unused]] int64_t period)
 {
+  int64_t tstart, tend;
+  tstart = rtapi_get_time();
   if (!rclcpp::ok())
     CM_OK = 0;
   **CM_OK_PIN_PTR = CM_OK;
   if (!CM_OK)
     return;
   CONTROLLER_MANAGER->read();
+  tend = rtapi_get_time();
+  **TMAX_READ_PIN_PTR =
+      **TMAX_READ_PIN_PTR > tend - tstart ? **TMAX_READ_PIN_PTR : tend - tstart;
+  tstart = tend;
   CONTROLLER_MANAGER->update();
+  tend = rtapi_get_time();
+  **TMAX_UPDATE_PIN_PTR = **TMAX_UPDATE_PIN_PTR > tend - tstart ?
+                              **TMAX_UPDATE_PIN_PTR :
+                              tend - tstart;
+  tstart = tend;
   CONTROLLER_MANAGER->write();
+  tend = rtapi_get_time();
+  **TMAX_WRITE_PIN_PTR = **TMAX_WRITE_PIN_PTR > tend - tstart ?
+                             **TMAX_WRITE_PIN_PTR :
+                             tend - tstart;
 }
 
 void rtapi_app_exit(void)
