@@ -30,6 +30,11 @@ class HalIO(RosHalComponent):
             digital_out_1:
               hal_type: BIT
               hal_dir: IN
+              log_changes: true
+            status_word:
+              hal_type: U32
+              hal_dir: OUT
+              log_changes: debug
           service_pins:
             encoder_scale:
               hal_type: FLOAT

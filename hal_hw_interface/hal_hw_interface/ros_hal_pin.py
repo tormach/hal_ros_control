@@ -160,6 +160,9 @@ class RosHalPinPublisher(RosHalPin):
     :type hal_dir:  :py:class:`hal_hw_interface.hal_pin_attrs.HalPinDir`
     :param pub_topic: ROS publisher topic
     :type pub_topic: str
+    :param log_changes:  Log pin changes at given logger level, `['debug',
+      'info', 'warning', 'error']` or `True` for `'info'`; default `False`
+    :type log_changes: bool or str
 
     .. todo::  Parameter :code:`hal_dir` needs a validator; not all pin
       directions make sense for all subclasses
@@ -170,6 +173,7 @@ class RosHalPinPublisher(RosHalPin):
     _default_hal_dir = "IN"
     pub_topic = attr.ib()
     msg_type = attr.ib()
+    log_changes = attr.ib(default=False)
 
     # Attribute default factories
     @pub_topic.default
@@ -204,25 +208,38 @@ class RosHalPinPublisher(RosHalPin):
         self.logger.info(f'Creating publisher on topic "{self.pub_topic}"')
         self.pub = self.node.create_publisher(self.msg_type, self.pub_topic, 1)
 
-    def _value_changed(self, value):
+    def _value_changed(self, value, return_value=False):
+        pin_value = self.get_pin()
         if self.hal_type == HalPinType("FLOAT"):
-            return not self._isclose(
-                self.get_pin(),
+            changed = not self._isclose(
+                pin_value,
                 value,
                 rel_tol=self.get_ros_param("relative_tolerance", 1e-9),
                 abs_tol=self.get_ros_param("absolute_tolerance", 1e-9),
             )
         else:
-            return self.get_pin() != value
+            changed = pin_value != value
+        return (changed, pin_value) if return_value else changed
+
+    def value_str(self, value):
+        if self.hal_type == HalPinType("U32"):
+            return f"0x{value:08X}"
+        elif self.hal_type == HalPinType("FLOAT"):
+            return f"{value:0.6f}"
+        elif self.hal_type == HalPinType("BIT"):
+            return "1" if value else "0"
+        else:
+            return str(value)
 
     def update(self):
         """Publish pin value to ROS topic."""
-        if self._value_changed(self._msg.data):
-            self.logger.info(
-                f"Pin {self.pin_name} changed:"
-                f"  old={self._msg.data}; new={self.get_pin()}"
-            )
-        value = self._pin_to_python_type_map[self.hal_type](self.get_pin())
+        changed, pin_value = self._value_changed(self._msg.data, True)
+        if self.log_changes and changed:
+            old = self.value_str(self._msg.data)
+            new = self.value_str(pin_value)
+            logger = getattr(self.logger, self.log_changes, self.logger.info)
+            logger(f"Pin {self.pin_name} changed:  old={old}; new={new}")
+        value = self._pin_to_python_type_map[self.hal_type](pin_value)
         self._msg.data = value
         self.pub.publish(self._msg)
 

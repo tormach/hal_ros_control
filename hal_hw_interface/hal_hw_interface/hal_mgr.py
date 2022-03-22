@@ -68,6 +68,7 @@ class HalMgr(RosHalComponent):
         try:
             subprocess.check_call(["halcmd", "stop"])
             subprocess.check_call(["halcmd", "unloadrt", "all"])
+            subprocess.check_call(["halcmd", "unload", "all"])
         finally:
             subprocess.check_call(["realtime", "stop"])
             self.logger.info("Realtime stopped")

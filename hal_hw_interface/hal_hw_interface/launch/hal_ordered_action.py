@@ -294,7 +294,6 @@ class HalThreadedReadyAction(HalAsyncReadyAction):
             return False
         else:
             if not self.__joined:
-                self.__logger.info(f"HAL action {self.hal_name} thread exited")
                 self.__thread.join()
                 self.__joined = True
             return True
