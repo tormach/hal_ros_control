@@ -35,5 +35,6 @@ else(HAL_INCLUDE_PATH)
   message(FATAL_ERROR "Could not find HAL includes")
 endif(HAL_INCLUDE_PATH)
 
-# HAL_EXECUTABLE:  instcomp python script path
+# HAL_EXECUTABLE:  instcomp & comp python script paths
 find_program(HAL_INSTCOMP NAMES instcomp)
+find_program(HAL_COMP NAMES comp)
