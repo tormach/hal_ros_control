@@ -4,7 +4,8 @@ import os
 import subprocess
 import signal
 
-from machinekit import launcher, config, rtapi
+from machinekit.hal import launcher
+from machinekit.hal.cyruntime import rtapi
 
 # ROS
 import rospy
@@ -114,8 +115,8 @@ def main():
     launcher.set_debug_level(debug)
 
     if "MACHINEKIT_INI" not in os.environ:  # export for package installs
-        mkconfig = config.Config()
-        os.environ["MACHINEKIT_INI"] = mkconfig.MACHINEKIT_INI
+        #mkconfig = config.Config()
+        os.environ["MACHINEKIT_INI"] = os.getenv("MACHINEKIT_INI") #mkconfig.MACHINEKIT_INI
 
     hal_mgr = HalMgr()
     try:
