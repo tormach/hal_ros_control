@@ -36,7 +36,7 @@
 #include <ros_control_boilerplate/generic_hw_interface.h>
 
 // HAL
-#include <hal.h>
+#include <hal/hal.h>
 
 // ROS
 #include <ros/duration.h>
