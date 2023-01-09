@@ -4,7 +4,7 @@ import os
 import subprocess
 import signal
 
-from machinekit.hal import launcher
+from machinekit.hal.launcher import launcher
 from machinekit.hal.cyruntime import rtapi
 
 # ROS
