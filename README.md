@@ -25,7 +25,7 @@ extending [`ros_control_boilerplate`][ros_control_boilerplate].  The
 connecting HAL input and output pins with `std_msgs` publishers and
 subscribers, respectively.
 
-[machinekit]:  http://machinekit.io
+[machinekit]: http://machinekit.io
 [ros_control_boilerplate]: https://github.com/davetcoleman/ros_control_boilerplate
 
 ## The `hal_hw_interface` real-time component
@@ -65,14 +65,26 @@ and `UInt32` messages from ROS `std_msgs`.
 - A real-time kernel, either RT_PREEMPT or Xenomai
   - Required by Machinekit for low-latency control
   - See the `linux-image-rt-*` packages available in Debian Stretch.
-- [`ros_control_boilerplate`][ros_control_boilerplate]
+- [ros_control_boilerplate][ros_control_boilerplate]
   - Required by the `hal_hw_interface`
-  - This may be installed in package form.
-- The `rrbot_description` package from `gazebo_ros_demos`
+- [redis_store][redis_store]
+  - Required by the `hal_hw_interface`
+- [redis_store_msgs][redis_store_msgs]
+  - Required by `redis_store`
+- The `rrbot_description` package from [gazebo_ros_demos][gazebo_ros_demos]
   - Required by `ros_control_boilerplate` to run the
   `hal_rrbot_control` demo
   - Follow the notes in the `ros_control_boilerplate/README.md` to
     install this.
+- Demo run additional dependencies:
+  - If complaints about missing libraries run `sudo ldconfig /opt/ros/noetic/lib/`
+  - add joint packages: `sudo apt install ros-noetic-joint-state-controller/focal ros-noetic-joint-trajectory-controller/focal`
+  - add missing python modules: `sudo pip install redis` `sudo pip install future`
+  - for halscope `sudo apt install machinekit-hal-unmanaged-components/focal`
+
+[redis_store]: https://github.com/machinekoder/redis_store/tree/noetic-devel/src/redis_store
+[redis_store_msgs]: https://github.com/machinekoder/redis_store_msgs
+[gazebo_ros_demos]: https://github.com/ros-simulation/gazebo_ros_demos
 
 -----
 ## Run the demos
