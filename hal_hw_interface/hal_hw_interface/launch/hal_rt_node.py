@@ -7,7 +7,7 @@ from launch.substitutions import PathJoinSubstitution
 from launch_ros.substitutions import FindPackagePrefix
 
 from machinekit.hal.cyruntime import rtapi
-import machinekit.hal.pyhal as hal
+import machinekit.hal.cyhal as hal
 from .hal_ordered_action import HalOrderedNode, HalThreadedReadyAction
 
 

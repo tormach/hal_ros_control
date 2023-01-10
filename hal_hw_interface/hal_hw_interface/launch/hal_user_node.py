@@ -1,5 +1,5 @@
 import os
-import machinekit.hal.pyhal as hal
+import machinekit.hal.cyhal as hal
 from launch import logging
 from .hal_ordered_action import HalOrderedNode, HalAsyncReadyAction
 
