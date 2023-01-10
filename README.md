@@ -64,11 +64,12 @@ start netting pins before the HAL components are loaded and ready.
 - A real-time kernel, either RT_PREEMPT or Xenomai
   - Required by Machinekit for low-latency control
   - See the `linux-image-rt-*` packages available in Debian Stretch.
-- [`ros_control_boilerplate`][ros_control_boilerplate]
+- [`ros2_control`][ros2_control]
   - Required by the `hal_hw_interface`
   - This may be installed in package form
 - Optional:  The `ros2_control_demos` repo
   - Required to run the `hal_rrbot_control` demo
+  - This may also be installed in package form
   - Follow the notes in that project's README to install
 
 -----
