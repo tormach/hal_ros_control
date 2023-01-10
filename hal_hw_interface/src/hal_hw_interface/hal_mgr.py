@@ -116,7 +116,7 @@ def main():
 
     if "MACHINEKIT_INI" not in os.environ:  # export for package installs
         #mkconfig = config.Config()
-        os.environ["MACHINEKIT_INI"] = machinekit_hal_ini_file #mkconfig.MACHINEKIT_INI
+        os.environ["MACHINEKIT_INI"] = "/etc/machinekit/hal/machinekit.ini" #mkconfig.MACHINEKIT_INI
 
     hal_mgr = HalMgr()
     try:

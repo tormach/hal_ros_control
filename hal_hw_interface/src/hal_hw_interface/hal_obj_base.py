@@ -7,7 +7,7 @@
    .. moduleauthor:: John Morris <john@dovetail-automata.com>
 """
 
-import hal
+import machinekit.hal.cyhal as hal
 import rospy
 
 
