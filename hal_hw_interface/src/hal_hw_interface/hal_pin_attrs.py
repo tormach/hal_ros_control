@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import machinekit.hal.cyhal as hal
+import machinekit.hal.pyhal as hal
 
 
 class HalPinAttrBase(int):

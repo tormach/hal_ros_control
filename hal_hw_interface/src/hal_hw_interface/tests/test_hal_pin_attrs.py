@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
-import machinekit.hal.cyhal as hal
+import machinekit.hal.pyhal as hal
 
 from hal_hw_interface.hal_pin_attrs import HalPinDir, HalPinType
 
