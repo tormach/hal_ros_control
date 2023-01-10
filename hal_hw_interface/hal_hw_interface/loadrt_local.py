@@ -1,7 +1,7 @@
 import rclpy
 import os
-from machinekit import rtapi, hal
-
+from machinekit.hal.cyruntime import rtapi
+import machinekit.hal.pyhal as hal
 
 def loadrt_local(modname):
     """
