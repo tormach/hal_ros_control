@@ -1,6 +1,7 @@
 import rospy
 import os
-from machinekit import rtapi, hal
+from machinekit import hal
+from machinekit.hal.cyruntime import rtapi
 
 
 def loadrt_local(modname):

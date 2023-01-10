@@ -32,7 +32,7 @@
 #ifndef HAL_HW_INTERFACE_HAL_ROS_LOGGING_H
 #define HAL_HW_INTERFACE_HAL_ROS_LOGGING_H
 
-#include <hal.h>
+#include <hal/hal.h>
 #include <ros/console.h>
 
 #define HAL_ROS_LOG(hal_lev, ros_lev, name, ...)                               \
