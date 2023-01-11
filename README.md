@@ -26,7 +26,7 @@ output pins with `std_msgs` publishers and subscribers, respectively.
 
 [machinekit]:  http://machinekit.io
 [ros2_control]: https://github.com/ros-controls/ros2_control
-
+[ros2_control_demos]:https://github.com/ros-controls/ros2_control_demos
 ## The `hal_hw_interface` real-time component
 
 The `hal_control_node` HAL component runs a
@@ -64,11 +64,12 @@ start netting pins before the HAL components are loaded and ready.
 - A real-time kernel, either RT_PREEMPT or Xenomai
   - Required by Machinekit for low-latency control
   - See the `linux-image-rt-*` packages available in Debian Stretch.
-- [`ros_control_boilerplate`][ros_control_boilerplate]
+- [`ros2_control`][ros2_control]
   - Required by the `hal_hw_interface`
   - This may be installed in package form
-- Optional:  The `ros2_control_demos` repo
+- Optional:  The [`ros2_control_demos`][ros2_control_demos] repo
   - Required to run the `hal_rrbot_control` demo
+  - This may also be installed in package form
   - Follow the notes in that project's README to install
 
 -----
@@ -84,7 +85,7 @@ Run the simulated hardware interface:
     ros2 launch hal_rrbot_control rrbot.launch.py
     # Debugging: append `hal_debug_output:=1 hal_debug_level:=5`
     # Trajectory controller:  append
-    #     `robot_controller:=position_trajectory_controller`
+    #     `robot_controller:=joint_trajectory_position_controller`
 
 Run `halscope` to visualize HAL joint commands and feedback; in the
 GUI, set the "Run Mode" to "Roll" for continuous updating:
@@ -95,8 +96,8 @@ The simulated trajectories are launched directly from the
 `ros2_control_demo_bringup` package:
 
     ros2 launch ros2_control_demo_bringup test_forward_position_controller.launch.py
-    # Or for robot_controller:=position_trajectory_controller:
-    ros2 launch ros2_control_demo_bringup test_joint_trajectory_controller.launch.py
+    # Or for robot_controller:=joint_trajectory_position_controller:
+    ros2 launch ros2_control_demo_bringup test_joint_trajectory_position_controller.launch.py
 
 Load and switch to the trajectory controller at run time:
 
@@ -104,19 +105,19 @@ Load and switch to the trajectory controller at run time:
     ros2 service call \
       /controller_manager/load_and_configure_controller \
       controller_manager_msgs/srv/LoadConfigureController \
-      '{name: "position_trajectory_controller"}'
+      '{name: "joint_trajectory_position_controller"}'
 
     # Switch to the trajectory controller
     ros2 service call \
       /controller_manager/switch_controller \
       controller_manager_msgs/srv/SwitchController \
-      '{start_controllers: ["position_trajectory_controller"],
+      '{start_controllers: ["joint_trajectory_position_controller"],
         stop_controllers: ["forward_position_controller"],
         strictness: 1, start_asap: true,
         timeout: {sec: 0, nanosec: 10000000}
        }'
 
-    # Verify the switch: 'position_trajectory_controller' state='active'
+    # Verify the switch: 'joint_trajectory_position_controller' state='active'
     ros2 service call \
       /controller_manager/list_controllers \
       controller_manager_msgs/srv/ListControllers

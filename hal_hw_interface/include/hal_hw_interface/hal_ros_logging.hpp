@@ -33,7 +33,7 @@
 #define HAL_HW_INTERFACE__HAL_ROS_LOGGING_HPP_
 
 // HAL
-#include <hal.h>
+#include <hal/hal.h>
 
 // ROS
 #include <rclcpp/logging.hpp>

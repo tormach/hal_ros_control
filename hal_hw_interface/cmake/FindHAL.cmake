@@ -24,8 +24,8 @@ set(MACHINEKIT_RIP_PATH
 
 # HAL_INCLUDE_PATH:  Find HAL include directory
 find_path(
-  HAL_INCLUDE_PATH hal.h
-  PATH_SUFFIXES machinekit
+  HAL_INCLUDE_PATH hal/hal.h
+  PATH_SUFFIXES machinekit/hal
   PATHS ${MACHINEKIT_RIP_PATH}/include
 )
 

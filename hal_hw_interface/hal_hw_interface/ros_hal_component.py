@@ -5,7 +5,7 @@
 """
 
 import abc
-import hal
+import machinekit.hal.pyhal as hal
 import rclpy
 from .hal_obj_base import HalObjBase
 from .exception import HalHWInterfaceException

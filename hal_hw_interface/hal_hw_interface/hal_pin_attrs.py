@@ -1,4 +1,4 @@
-import hal
+import machinekit.hal.pyhal as hal
 
 
 class HalPinAttrBase(int):

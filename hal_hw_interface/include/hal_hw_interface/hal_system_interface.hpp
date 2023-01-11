@@ -37,7 +37,7 @@
 #endif
 
 // HAL
-#include <hal.h>
+#include <hal/hal.h>
 
 #include <string>
 #include <vector>

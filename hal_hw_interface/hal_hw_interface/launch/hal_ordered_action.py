@@ -14,7 +14,7 @@ from launch.events import Shutdown
 
 from launch_ros.actions import Node
 
-from machinekit import rtapi
+from machinekit.hal.cyruntime import rtapi
 from .hal_ready import HalReady
 
 

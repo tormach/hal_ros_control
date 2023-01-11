@@ -32,7 +32,7 @@
 #include <stdlib.h>
 #include <pthread.h>  // pthread_setname_np()
 #include <unistd.h>   // sleep()
-#include <hal.h>      // HAL public API decls
+#include <hal/hal.h>      // HAL public API decls
 #include <rclcpp/rclcpp.hpp>
 #include <controller_manager/controller_manager.hpp>
 #include <controller_manager_msgs/srv/switch_controller.hpp>

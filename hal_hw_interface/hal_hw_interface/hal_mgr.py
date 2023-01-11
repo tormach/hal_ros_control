@@ -1,6 +1,6 @@
 import os
 import subprocess
-from machinekit import config
+#from machinekit import config
 from .ros_hal_component import RosHalComponent
 
 # ROS
@@ -52,7 +52,7 @@ class HalMgr(RosHalComponent):
         env = dict(
             DEBUG=d_lev,
             SYSLOG_TO_STDERR=d_out,
-            MACHINEKIT_INI=config.Config().MACHINEKIT_INI,
+            MACHINEKIT_INI="/etc/machinekit/hal/machinekit.ini",
             FASTRTPS_DEFAULT_PROFILES_FILE=fastrtps_profiles,
             **os.environ,
         )
