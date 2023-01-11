@@ -26,7 +26,7 @@ output pins with `std_msgs` publishers and subscribers, respectively.
 
 [machinekit]:  http://machinekit.io
 [ros2_control]: https://github.com/ros-controls/ros2_control
-
+[ros2_control_demos]:https://github.com/ros-controls/ros2_control_demos
 ## The `hal_hw_interface` real-time component
 
 The `hal_control_node` HAL component runs a
@@ -67,7 +67,7 @@ start netting pins before the HAL components are loaded and ready.
 - [`ros2_control`][ros2_control]
   - Required by the `hal_hw_interface`
   - This may be installed in package form
-- Optional:  The `ros2_control_demos` repo
+- Optional:  The [`ros2_control_demos`][ros2_control_demos] repo
   - Required to run the `hal_rrbot_control` demo
   - This may also be installed in package form
   - Follow the notes in that project's README to install
