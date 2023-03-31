@@ -108,12 +108,12 @@ void HalSystemInterface::init_state_interface(const std::string joint_name,
                                  .handle_storage = 0.0 };
 }
 
-hardware_interface::return_type
-HalSystemInterface::configure(const hardware_interface::HardwareInfo& info)
+CallbackReturn
+HalSystemInterface::on_init(const hardware_interface::HardwareInfo& info)
 {
-  if (configure_default(info) != hardware_interface::return_type::OK)
+  if (hardware_interface::SystemInterface::on_init(info) != CallbackReturn::SUCCESS)
   {
-    return hardware_interface::return_type::ERROR;
+    return CallbackReturn::ERROR;
   }
 
   HAL_ROS_INFO_NAMED(LOG_NAME, "Initializing HAL hardware interface");
@@ -149,7 +149,7 @@ HalSystemInterface::configure(const hardware_interface::HardwareInfo& info)
 
   HAL_ROS_INFO_NAMED(LOG_NAME, "Initialized HAL pins");
 
-  return hardware_interface::return_type::OK;
+  return CallbackReturn::SUCCESS;
 }  // configure()
 
 std::vector<hardware_interface::StateInterface>
@@ -190,16 +190,16 @@ hardware_interface::return_type HalSystemInterface::write([[maybe_unused]] const
   return hardware_interface::return_type::OK;
 }
 
-hardware_interface::return_type HalSystemInterface::start()
+CallbackReturn HalSystemInterface::on_activate()
 {
   HAL_ROS_INFO_NAMED(LOG_NAME, "Starting HAL system interface");
-  return hardware_interface::return_type::OK;
+  return CallbackReturn::SUCCESS;
 }
 
-hardware_interface::return_type HalSystemInterface::stop()
+CallbackReturn HalSystemInterface::on_deactivate()
 {
   HAL_ROS_INFO_NAMED(LOG_NAME, "Stopping HAL system interface");
-  return hardware_interface::return_type::OK;
+  return CallbackReturn::SUCCESS;
 }
 
 }  // namespace hal_system_interface

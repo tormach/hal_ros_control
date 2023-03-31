@@ -45,7 +45,6 @@
 #include <unordered_map>
 
 #include "hardware_interface/handle.hpp"
-#include "hardware_interface/base_interface.hpp"
 #include "hardware_interface/system_interface.hpp"
 #include "rclcpp_lifecycle/node_interfaces/lifecycle_node_interface.hpp"
 #include "rclcpp_lifecycle/state.hpp"
@@ -100,16 +99,15 @@ namespace hal_system_interface
  * [1]: https://github.com/PickNikRobotics/ros_control_boilerplate
  */
 
-class HalSystemInterface : public hardware_interface::BaseInterface<
-                               hardware_interface::SystemInterface>
+class HalSystemInterface : public hardware_interface::SystemInterface
 {
 public:
   // Define aliases and static functions for using the Class with shared_ptrs
   RCLCPP_SHARED_PTR_DEFINITIONS(HalSystemInterface);
 
   HAL_HW_INTERFACE_PUBLIC
-  hardware_interface::return_type
-  configure(const hardware_interface::HardwareInfo& info) override;
+  CallbackReturn
+  on_init(const hardware_interface::HardwareInfo& info) override;
 
   HAL_HW_INTERFACE_PUBLIC
   std::vector<hardware_interface::StateInterface>
@@ -130,10 +128,10 @@ public:
   //   const std::vector<std::string> & /*stop_interfaces*/) override;
 
   HAL_HW_INTERFACE_PUBLIC
-  hardware_interface::return_type start() override;
+  CallbackReturn on_activate();
 
   HAL_HW_INTERFACE_PUBLIC
-  hardware_interface::return_type stop() override;
+  CallbackReturn on_deactivate();
 
   HAL_HW_INTERFACE_PUBLIC
   hardware_interface::return_type read(const rclcpp::Time & time, const rclcpp::Duration & period) override;
