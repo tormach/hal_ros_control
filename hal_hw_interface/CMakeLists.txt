@@ -70,7 +70,6 @@ target_link_libraries(hal_control_node ${rclcpp_LIBRARIES})
 ament_target_dependencies(
   hal_control_node
   controller_manager
-  hardware_interface
   rclcpp
   HAL
 )
@@ -104,6 +103,7 @@ ament_target_dependencies(
   pluginlib
   rclcpp
   # rclcpp_lifecycle
+  hardware_interface
   HAL
 )
 

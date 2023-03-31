@@ -111,7 +111,8 @@ void HalSystemInterface::init_state_interface(const std::string joint_name,
 CallbackReturn
 HalSystemInterface::on_init(const hardware_interface::HardwareInfo& info)
 {
-  if (hardware_interface::SystemInterface::on_init(info) != CallbackReturn::SUCCESS)
+  if (hardware_interface::SystemInterface::on_init(info) !=
+      CallbackReturn::SUCCESS)
   {
     return CallbackReturn::ERROR;
   }
@@ -174,20 +175,24 @@ HalSystemInterface::export_command_interfaces()
   return interfaces;
 }
 
-hardware_interface::return_type HalSystemInterface::read([[maybe_unused]] const rclcpp::Time & time, [[maybe_unused]] const rclcpp::Duration & period)
+return_type
+HalSystemInterface::read([[maybe_unused]] const rclcpp::Time& time,
+                         [[maybe_unused]] const rclcpp::Duration& period)
 {
   for (auto& [name, intf_data] : state_intf_data_map_)
     // Copy to handle from HAL pin
     intf_data.handle_storage = **intf_data.hal_pin_storage;
-  return hardware_interface::return_type::OK;
+  return return_type::OK;
 }
 
-hardware_interface::return_type HalSystemInterface::write([[maybe_unused]] const rclcpp::Time & time, [[maybe_unused]] const rclcpp::Duration & period)
+return_type
+HalSystemInterface::write([[maybe_unused]] const rclcpp::Time& time,
+                          [[maybe_unused]] const rclcpp::Duration& period)
 {
   for (auto& [name, intf_data] : command_intf_data_map_)
     // Copy to HAL pin from handle
     **intf_data.hal_pin_storage = intf_data.handle_storage;
-  return hardware_interface::return_type::OK;
+  return return_type::OK;
 }
 
 CallbackReturn HalSystemInterface::on_activate()
