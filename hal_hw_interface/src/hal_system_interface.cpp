@@ -174,7 +174,7 @@ HalSystemInterface::export_command_interfaces()
   return interfaces;
 }
 
-hardware_interface::return_type HalSystemInterface::read()
+hardware_interface::return_type HalSystemInterface::read([[maybe_unused]] const rclcpp::Time & time, [[maybe_unused]] const rclcpp::Duration & period)
 {
   for (auto& [name, intf_data] : state_intf_data_map_)
     // Copy to handle from HAL pin
@@ -182,7 +182,7 @@ hardware_interface::return_type HalSystemInterface::read()
   return hardware_interface::return_type::OK;
 }
 
-hardware_interface::return_type HalSystemInterface::write()
+hardware_interface::return_type HalSystemInterface::write([[maybe_unused]] const rclcpp::Time & time, [[maybe_unused]] const rclcpp::Duration & period)
 {
   for (auto& [name, intf_data] : command_intf_data_map_)
     // Copy to HAL pin from handle

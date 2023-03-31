@@ -136,10 +136,10 @@ public:
   hardware_interface::return_type stop() override;
 
   HAL_HW_INTERFACE_PUBLIC
-  hardware_interface::return_type read() override;
+  hardware_interface::return_type read(const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
   HAL_HW_INTERFACE_PUBLIC
-  hardware_interface::return_type write() override;
+  hardware_interface::return_type write(const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
 protected:
   hal_float_t** alloc_and_init_hal_pin(const std::string /*joint_name*/,
