@@ -8,6 +8,7 @@
     # packages.
     #
     # uri: https://github.com/ros-controls/ros2_control_demos.git
-    # version: foxy
+    # # No humble release
+    # version: galactic
     uri: https://github.com/zultron/ros2_control_demos.git
-    version: foxy-dev-parameterize-hardware-plugin
+    version: zultron/2023-03-31-humble-dev-parameterize-hardware-plugin

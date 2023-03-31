@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         env:
-          - IMAGE: foxy-ci
+          - IMAGE: humble-ci
             CLANG_TIDY: pedantic
     env:
       CXXFLAGS: "-Wall -Wextra -Wwrite-strings -Wunreachable-code -Wpointer-arith -Wredundant-decls -Wno-deprecated-copy"
