@@ -36,12 +36,36 @@ from hal_hw_interface.launch import HalConfig, HalRTNode, HalFiles
 def generate_launch_description():
     # Declare arguments
     declared_arguments = []
+
+    # - Find ros2_control_demos example package
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            "ros2_control_demo_example_num",
+            default_value="1",
+            description="ros2_control_demos example number (1-8).",
+        )
+    )
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            "ros2_control_demo_example_package",
+            default_value=[
+                "ros2_control_demo_example_",
+                LaunchConfiguration("ros2_control_demo_example_num"),
+            ],
+            description="ros2_control_demos example package name.",
+        )
+    )
+    example_package_share = FindPackageShare(
+        LaunchConfiguration("ros2_control_demo_example_package")
+    )
+
+    # - Find ros2_control_demos example package config
     declared_arguments.append(
         DeclareLaunchArgument(
             "robot_controller_config",
             default_value=PathJoinSubstitution(
                 [
-                    FindPackageShare("ros2_control_demo_bringup"),
+                    example_package_share,
                     "config",
                     "rrbot_controllers.yaml",
                 ]
@@ -50,6 +74,7 @@ def generate_launch_description():
         )
     )
 
+    # - HAL hardware interface & controller
     declared_arguments.append(
         DeclareLaunchArgument(
             "hal_file_dir",
@@ -68,99 +93,11 @@ def generate_launch_description():
     )
     declared_arguments.append(
         DeclareLaunchArgument(
-            "description_package",
-            default_value="rrbot_description",
-            description="Description package with robot URDF/xacro files.",
-        )
-    )
-    declared_arguments.append(
-        DeclareLaunchArgument(
-            "description_file",
-            default_value="rrbot.urdf.xacro",
-            description="URDF/XACRO description file with the robot.",
-        )
-    )
-    declared_arguments.append(
-        DeclareLaunchArgument(
-            "prefix",
-            default_value='""',
-            description="Prefix of the joint names.",
-        )
-    )
-    declared_arguments.append(
-        DeclareLaunchArgument(
-            "use_gazebo",
-            default_value="false",
-            description="Enable Gazebo in URDF.",
-        )
-    )
-    declared_arguments.append(
-        DeclareLaunchArgument(
-            "with_sensor",
-            default_value="false",
-            description="Enable integrated sensor.",
-        )
-    )
-    declared_arguments.append(
-        DeclareLaunchArgument(
-            "use_sim",
-            default_value="false",
-            description="Start robot in Gazebo simulation.",
-        )
-    )
-    declared_arguments.append(
-        DeclareLaunchArgument(
-            "position_only",
-            default_value="true",
-            description="Do not configure velocity or acceleration interfaces.",
-        )
-    )
-    declared_arguments.append(
-        DeclareLaunchArgument(
-            "use_fake_hardware",
-            default_value="true",
-            description=(
-                "Start robot with fake hardware mirroring command to state."
-            ),
-        )
-    )
-    declared_arguments.append(
-        DeclareLaunchArgument(
-            "fake_sensor_commands",
-            default_value="false",
-            description="Enable fake command interfaces for sensors.",
-        )
-    )
-    declared_arguments.append(
-        DeclareLaunchArgument(
-            "slowdown",
-            default_value="3.0",
-            description="Slowdown factor of the RRbot.",
-        )
-    )
-    declared_arguments.append(
-        DeclareLaunchArgument(
             "robot_controller",
             default_value="forward_position_controller",
             description="Robot controller to start.",
         )
     )
-    declared_arguments.append(  # Changed for hal_rrbot_control demo
-        DeclareLaunchArgument(
-            "hardware_plugin",
-            default_value="hal_system_interface/HalSystemInterface",
-            description="ros2_control hardware plugin.",
-        )
-    )
-    declared_arguments.append(
-        DeclareLaunchArgument(
-            "start_rviz",
-            default_value="true",
-            description="Start RViz2 automatically with this launch file.",
-        )
-    )
-
-    # hal_hw_interface launch args
     declared_arguments.append(
         DeclareLaunchArgument(
             "hal_debug_output",
@@ -176,6 +113,76 @@ def generate_launch_description():
         )
     )
 
+    # - URDF
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            "description_file",
+            # FIXME Varies with each example
+            # example_1/description/urdf/rrbot.urdf.xacro
+            # example_1/description/urdf/rrbot_description.urdf.xacro (macro)
+            # example_2/description/urdf/diffbot.urdf.xacro
+            # example_2/description/urdf/diffbot_description.urdf.xacro (macro)
+            # example_3/description/urdf/rrbot_system_multi_interface.urdf.xacro
+            # example_3/description/urdf/rrbot_description.urdf.xacro (macro)
+            # example_4/description/urdf/rrbot_system_with_sensor.urdf.xacro
+            # example_4/description/urdf/rrbot_description.urdf.xacro  (macro)
+            # example_5/description/urdf/rrbot_system_with_external_sensor.urdf.xacro
+            # example_5/description/urdf/rrbot_description.urdf.xacro (macro)
+            # example_6/description/urdf/rrbot_modular_actuators.urdf.xacro
+            # example_6/description/urdf/rrbot_description.urdf.xacro (macro)
+            # example_8/description/urdf/rrbot_transmissions_system_position_only.urdf.xacro
+            # example_8/description/urdf/rrbot_description.urdf.xacro (macro)
+            default_value="rrbot.urdf.xacro",
+            description="URDF/XACRO description file with the robot.",
+        )
+    )
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            "use_mock_hardware",
+            default_value="false",
+            description=(
+                "Start robot with mock hardware mirroring command to state."
+            ),
+        )
+    )
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            "mock_sensor_commands",
+            default_value="false",
+            description="Enable mock command interfaces for sensors.",
+        )
+    )
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            "slowdown",
+            default_value="3.0",
+            description="Slowdown factor of the RRbot.",
+        )
+    )
+    declared_arguments.append(  # Changed for hal_rrbot_control demo
+        DeclareLaunchArgument(
+            "hardware_plugin",
+            default_value="hal_system_interface/HalSystemInterface",
+            description="ros2_control hardware plugin.",
+        )
+    )
+
+    # - RViz
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            "start_rviz",
+            default_value="true",
+            description="Start RViz2 automatically with this launch file.",
+        )
+    )
+    rviz_config_file = PathJoinSubstitution(
+        [
+            example_package_share,
+            "rviz",
+            "rrbot.rviz",
+        ]
+    )
+
     # Get URDF via xacro
     robot_description_content = Command(
         [
@@ -183,34 +190,17 @@ def generate_launch_description():
             " ",
             PathJoinSubstitution(
                 [
-                    FindPackageShare(
-                        LaunchConfiguration("description_package")
-                    ),
+                    example_package_share,
                     "urdf",
                     LaunchConfiguration("description_file"),
                 ]
             ),
             " ",
-            "prefix:=",
-            LaunchConfiguration("prefix"),
+            "use_mock_hardware:=",
+            LaunchConfiguration("use_mock_hardware"),
             " ",
-            "use_gazebo:=",
-            LaunchConfiguration("use_gazebo"),
-            " ",
-            "use_sim:=",
-            LaunchConfiguration("use_sim"),
-            " ",
-            "use_fake_hardware:=",
-            LaunchConfiguration("use_fake_hardware"),
-            " ",
-            "with_sensor:=",
-            LaunchConfiguration("with_sensor"),
-            " ",
-            "position_only:=",
-            LaunchConfiguration("position_only"),
-            " ",
-            "fake_sensor_commands:=",
-            LaunchConfiguration("fake_sensor_commands"),
+            "mock_sensor_commands:=",
+            LaunchConfiguration("mock_sensor_commands"),
             " ",
             "slowdown:=",
             LaunchConfiguration("slowdown"),
@@ -253,20 +243,10 @@ def generate_launch_description():
                 hal_file_dir=LaunchConfiguration("hal_file_dir"),
                 hal_files=[LaunchConfiguration("hal_file")],
                 parameters=[
-                    dict(
-                        use_sim=LaunchConfiguration("use_sim"),
-                    ),
+                    # For Python HAL files, add Node-style parameters here
                 ],
             ),
         ],
-    )
-
-    rviz_config_file = PathJoinSubstitution(
-        [
-            FindPackageShare(LaunchConfiguration("description_package")),
-            "config",
-            "rrbot.rviz",
-        ]
     )
 
     robot_state_pub_node = Node(
@@ -286,7 +266,7 @@ def generate_launch_description():
 
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",
-        executable="spawner.py",
+        executable="spawner",
         arguments=[
             "joint_state_broadcaster",
             "--controller-manager",
@@ -296,7 +276,7 @@ def generate_launch_description():
 
     robot_controller_spawner = Node(
         package="controller_manager",
-        executable="spawner.py",
+        executable="spawner",
         arguments=[
             LaunchConfiguration("robot_controller"),
             "-c",
