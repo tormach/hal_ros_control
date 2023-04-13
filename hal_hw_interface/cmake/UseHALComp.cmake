@@ -28,9 +28,18 @@
 # included in all copies or substantial portions of the Software.
 # =============================================================================
 
-find_package(HAL)
+function(set_hal_modinc_var dest_var modinc_var)
+  execute_process(
+    COMMAND bash -c "echo $'include ${HAL_MODINC}\nprint:\n\t@echo \$(${modinc_var})'"
+    COMMAND make -s -f - print
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    OUTPUT_VARIABLE modinc_var_value
+  )
+  set(${dest_var} "${modinc_var_value}" PARENT_SCOPE)
+endfunction()
 
-# hal_comp_add_module(src/my_mod)
+
+# hal_add_instcomp(src/my_mod)
 function(hal_add_instcomp icomp_modpath)
   get_filename_component(icomp_name ${icomp_modpath} NAME)
   get_filename_component(icomp_dir ${icomp_modpath} DIRECTORY)
@@ -43,7 +52,7 @@ function(hal_add_instcomp icomp_modpath)
     OUTPUT ${icomp_c}
     # Copy .icomp file:  instcomp generates .c in same directory
     COMMAND cp ${icomp_src_path} ${icomp_src}
-    COMMAND ${HAL_INSTCOMP} -p ${icomp_src}
+    COMMAND ${HAL_INSTCOMP} --preprocess ${icomp_src}
     DEPENDS ${icomp_src_path}
     COMMENT "Preprocessing instcomp ${icomp_modpath}")
 
@@ -53,13 +62,13 @@ function(hal_add_instcomp icomp_modpath)
   # Add the HAL comp .so target
   add_library(${icomp_name} MODULE ${icomp_c})
 
-  # Add CFLAGS
-  target_compile_definitions(${icomp_name} PRIVATE RTAPI=1)
+  # Omit the `lib` prefix and add `$EXTRA_CFLAGS`
+  set_hal_modinc_var(HAL_EXTRA_CFLAGS "EXTRA_CFLAGS")
+  set_target_properties(${icomp_name} PROPERTIES
+    PREFIX ""
+    COMPILE_FLAGS "${HAL_EXTRA_CFLAGS} -DRTAPI=1"
+  )
 
-  # Omit the `lib` prefix
-  set_target_properties(${icomp_name} PROPERTIES PREFIX "")
-
-  # Install HAL component
   install(TARGETS ${icomp_name}
-          LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
+          LIBRARY DESTINATION lib)
 endfunction()
