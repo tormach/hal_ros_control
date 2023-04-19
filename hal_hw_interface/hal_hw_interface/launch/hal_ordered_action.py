@@ -1,3 +1,4 @@
+import traceback
 from threading import Thread
 
 from launch import logging
@@ -113,6 +114,7 @@ class HalOrderedAction(Action):
             res = self.execute_deferred(context)
         except Exception as e:
             ecls, emsg = (e.__class__.__name__, str(e))
+            self.__logger.error(traceback.format_exc())
             return self.shutdown_action(
                 f"{self} shutdown on error:  {ecls}: {emsg}"
             )
