@@ -160,6 +160,9 @@ class HalObjBase:
             prio += 0.1
         shutdown_cbs[prio] = cb
 
+    def spin(self):
+        rclpy.spin(self.node)
+
     def _run_shutdown_cbs(self):
         cb_map = self._cached_objs.setdefault("shutdown_cbs", {})
         if not cb_map:

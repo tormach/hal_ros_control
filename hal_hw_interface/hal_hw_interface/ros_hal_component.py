@@ -110,7 +110,7 @@ class RosHalComponent(HalObjBase, abc.ABC):
         `<compname>/update_rate`, defaulting to 10 Hz.
         """
         self.node.create_timer(1 / self.update_rate, self.update)
-        rclpy.spin(self.node)
+        self.spin()
 
     @abc.abstractmethod
     def update(self):
