@@ -6,7 +6,6 @@
 
 import abc
 import hal
-import rclpy
 from .hal_obj_base import HalObjBase
 from .exception import HalHWInterfaceException
 

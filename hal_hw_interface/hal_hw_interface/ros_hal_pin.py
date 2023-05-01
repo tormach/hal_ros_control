@@ -45,6 +45,7 @@ class RosHalPin(HalObjBase):
     _default_hal_type = None
     _default_hal_dir = "IN"  # Subclasses may override for hal_dir attribute
 
+    # Basic attributes
     name = attr.ib()
     hal_type = attr.ib(converter=HalPinType)
     hal_dir = attr.ib(converter=HalPinDir)
@@ -206,7 +207,9 @@ class RosHalPinPublisher(RosHalPin):
 
     def _ros_publisher_init(self):
         self.logger.info(f'Creating publisher on topic "{self.pub_topic}"')
-        self.pub = self.node.create_publisher(self.msg_type, self.pub_topic, 1)
+        self.pub = self.node.create_publisher(
+            self.msg_type, self.pub_topic, self.qos_profile
+        )
 
     def _value_changed(self, value, return_value=False):
         pin_value = self.get_pin()
@@ -285,7 +288,7 @@ class RosHalPinSubscriber(RosHalPinPublisher):
     def _ros_subscriber_init(self):
         self.logger.info(f'Creating subscriber on topic "{self.sub_topic}"')
         self.sub = self.node.create_subscription(
-            self.msg_type, self.sub_topic, self._subscriber_cb
+            self.msg_type, self.sub_topic, self._subscriber_cb, self.qos_profile
         )
 
     def _subscriber_cb(self, msg):
@@ -356,7 +359,9 @@ class RosHalPinService(RosHalPinPublisher):
 
     def _ros_service_init(self):
         self.service = self.node.create_service(
-            self.service_msg_type, self.service_name, self._service_cb
+            self.service_msg_type,
+            self.service_name,
+            self._service_cb,
         )
         self.logger.info(f"Service {self.service_name} created")
 

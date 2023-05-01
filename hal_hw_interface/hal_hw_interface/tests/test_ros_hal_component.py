@@ -3,7 +3,6 @@ from hal_hw_interface.ros_hal_component import RosHalComponent
 
 
 class TestRosHalComponent:
-
     # Simplest test case
     class StubComp(RosHalComponent):
         compname = "test_stub"

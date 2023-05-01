@@ -4,9 +4,11 @@
 .. moduleauthor:: John Morris <john@dovetail-automata.com>
 """
 
+import attr
 import rclpy
 
 
+@attr.s
 class HalObjBase:
     """
     Base class for HAL component objects.
@@ -18,6 +20,11 @@ class HalObjBase:
     will create the actual HAL component here.  Then pins can access
     the component without it explicitly being passed around.
     """
+
+    # QoS attributes, given as kwargs
+    qos_reliability_policy = attr.ib(default="BEST_EFFORT", kw_only=True)
+    qos_history_policy = attr.ib(default="KEEP_LAST", kw_only=True)
+    qos_depth = attr.ib(default=1, kw_only=True)
 
     _cached_objs = dict()
 
@@ -161,3 +168,18 @@ class HalObjBase:
             top_cb_key = list(cb_map.keys())[0]
             self.logger.info(f"Running shutdown cb {top_cb_key}")
             cb_map.pop(top_cb_key)()
+
+    @property
+    def qos_profile(self):
+        """Return a :py:class:`rclpy.qos.QoSProfile` object."""
+        reliability_policy = getattr(
+            rclpy.qos.QoSReliabilityPolicy, self.qos_reliability_policy
+        )
+        history_policy = getattr(
+            rclpy.qos.QoSHistoryPolicy, self.qos_history_policy
+        )
+        return rclpy.qos.QoSProfile(
+            reliability=reliability_policy,
+            history=history_policy,
+            depth=self.qos_depth,
+        )
