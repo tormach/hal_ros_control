@@ -271,15 +271,23 @@ class RosHalPinSubscriber(RosHalPinPublisher):
     :type pub_topic: str
     :param sub_topic: ROS subscriber topic
     :type sub_topic: str
+    :param initial_value: Set HAL pin to this initial value
+    :type initial_value: (Depends on HAL pin data type)
     """
 
     _default_hal_dir = "OUT"
     sub_topic = attr.ib()
+    initial_value = attr.ib(default=None)
 
     # Attribute default factories
     @sub_topic.default
     def _sub_topic_default(self):
         return "{}/{}".format(self.compname, self.pin_name)
+
+    def _hal_init(self):
+        super()._hal_init()
+        if self.initial_value is not None:
+            self.hal_pin.set(self.initial_value)
 
     def _ros_init(self):
         super()._ros_init()

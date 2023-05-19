@@ -25,11 +25,12 @@ class HalIO(RosHalComponent):
           subscribe_pins:
             enable:
               hal_type: BIT
-              hal_dir: OUT
+              hal_dir: OUT  # default
+              initial_value: false  # optional
           publish_pins:
             digital_out_1:
               hal_type: BIT
-              hal_dir: IN
+              hal_dir: IN  # default
               log_changes: true
             status_word:
               hal_type: U32
@@ -38,7 +39,7 @@ class HalIO(RosHalComponent):
           service_pins:
             encoder_scale:
               hal_type: FLOAT
-              hal_dir: OUT
+              hal_dir: OUT  # default
 
     The periodic :py:func:`update` function calls the pins'
     :py:func:`update` functions, if any.
