@@ -130,7 +130,7 @@ class HalObjBase:
         # Params must be declared once and only once, so cache
         # declarations.
         if name not in self._cached_objs.setdefault("rosparam_decls", dict()):
-            self.logger.info(f"New param {name}, default {repr(default)}")
+            self.logger.info(f"New param '{name}', default {repr(default)}")
             if not self.node.has_parameter(name):
                 decl = self.node.declare_parameter(name, default)
             else:

@@ -6,11 +6,13 @@
 
 import abc
 import hal
+import attr
 from .hal_obj_base import HalObjBase
 from .exception import HalHWInterfaceException
 import traceback
 
 
+@attr.s
 class RosHalComponent(HalObjBase, abc.ABC):
     """
     Base class implementing a HAL user component in a ROS node.
@@ -58,12 +60,14 @@ class RosHalComponent(HalObjBase, abc.ABC):
     This will also be used as a default prefix for ROS names.
     """
 
-    def __init__(self, argv, node_kwargs=dict()):
+    argv = attr.ib(default=list())
+    node_kwargs = attr.ib(default=dict())
+
+    def __attrs_post_init__(self):
         assert self.compname is not None, "`compname` not set"
 
         # Create ROS node
-        self.init_ros_node(argv, node_kwargs=node_kwargs)
-        self.argv = argv
+        self.init_ros_node(self.argv, node_kwargs=self.node_kwargs)
         self.logger.info(f"Initializing '{self.compname}' component")
 
         # Publisher update rate in Hz
