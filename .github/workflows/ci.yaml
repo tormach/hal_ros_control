@@ -22,7 +22,7 @@ jobs:
             CLANG_TIDY: pedantic
     env:
       CXXFLAGS: "-Wall -Wextra -Wwrite-strings -Wunreachable-code -Wpointer-arith -Wredundant-decls -Wno-deprecated-copy"
-      DOCKER_IMAGE: ghcr.io/ros-planning/moveit2:${{ matrix.env.IMAGE }}
+      DOCKER_IMAGE: moveit/moveit2:${{ matrix.env.IMAGE }}
       UPSTREAM_WORKSPACE: .github/workflows/upstream.rosinstall
       BEFORE_SETUP_UPSTREAM_WORKSPACE: .github/workflows/upstream_install.sh
       # Pull any updates to the upstream workspace (after restoring it from cache)
@@ -43,7 +43,7 @@ jobs:
       - name: "Free up disk space"
         if: matrix.env.CCOV
         run: |
-          sudo apt-get -qq purge build-essential "ghc*"
+          sudo apt-get -qq purge build-essential ghc\*
           sudo apt-get clean
           # cleanup docker images not used by us
           docker system prune -af

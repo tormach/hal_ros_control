@@ -13,9 +13,11 @@ install_cloudsmith_repo() {
     REPO=$2
     KEY_ID=$3
     CLOUDSMITH_ARGS="distro=${ID}&codename=${VERSION_CODENAME}"
-    curl -1sLf ${BASE}/${ORG}/${REPO}/cfg/gpg/gpg.${KEY_ID}.key |
-        apt-key add -
-    curl -1sLf "${BASE}/${ORG}/${REPO}/cfg/setup/config.deb.txt?${CLOUDSMITH_ARGS}" \
+    KEYRING_LOCATION="/usr/share/keyrings/${ORG}-${REPO}-archive-keyring.gpg"
+    curl -1sLf ${BASE}/${ORG}/${REPO}/gpg.${KEY_ID}.key \
+        | gpg --dearmor \
+        >$KEYRING_LOCATION
+    curl -1sLf "${BASE}/${ORG}/${REPO}/config.deb.txt?${CLOUDSMITH_ARGS}" \
         >/etc/apt/sources.list.d/${ORG}-${REPO}.list
 }
 
@@ -39,6 +41,20 @@ cat >$UPSTREAM_ROSDEP_YML <<-EOF
 	  debian: [machinekit-hal-dev]
 	  ubuntu: [machinekit-hal-dev]
 	EOF
+
+# FIXME  Waiting for these to shake out:
+# https://github.com/ros/rosdistro/pull/36888
+# https://github.com/ros/rosdistro/pull/36893
+cat >>$UPSTREAM_ROSDEP_YML <<-EOF
+	python-attrs-pip:
+	  debian:
+	    pip:
+	      packages: [attrs]
+	  ubuntu:
+	    pip:
+	      packages: [attrs]
+	EOF
+
 echo "yaml file://$UPSTREAM_ROSDEP_YML" > \
     /etc/ros/rosdep/sources.list.d/10-local.list
 rosdep update
