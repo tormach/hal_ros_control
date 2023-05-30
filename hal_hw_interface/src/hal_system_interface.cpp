@@ -36,11 +36,11 @@
 #include <hal_priv.h>  // halpr_find_comp_by_name
 #pragma GCC diagnostic pop
 
-#include <hal_hw_interface/hal_system_interface.hpp>
-#include <hal_hw_interface/hal_ros_logging.hpp>
-
 #include <string>
 #include <vector>
+
+#include <hal_hw_interface/hal_system_interface.hpp>
+#include <hal_hw_interface/hal_ros_logging.hpp>
 
 namespace hal_system_interface
 {

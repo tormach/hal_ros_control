@@ -33,6 +33,9 @@
 #include <pthread.h>  // pthread_setname_np()
 #include <unistd.h>   // sleep()
 #include <hal.h>      // HAL public API decls
+#include <memory>
+#include <string>
+#include <vector>
 #include <rclcpp/rclcpp.hpp>
 #include <controller_manager/controller_manager.hpp>
 #include <controller_manager_msgs/srv/switch_controller.hpp>
@@ -40,9 +43,6 @@
 #include <hardware_interface/macros.hpp>  // THROW_ON_NULLPTR
 #include <lifecycle_msgs/msg/state.hpp>
 #include <hal_hw_interface/hal_ros_logging.hpp>
-#include <memory>
-#include <string>
-#include <vector>
 
 // Controller manager node and executor pointers
 std::shared_ptr<controller_manager::ControllerManager> CONTROLLER_MANAGER;
