@@ -52,7 +52,7 @@ class HalRTNode(HalOrderedNode, HalThreadedReadyAction):
         # Check if component is registered and become ready
         if self.hal_name not in hal.components:
             self.__logger.debug(
-                "...HAL comp {self.hal_name} not yet registered"
+                f"...HAL comp {self.hal_name} not yet registered"
             )
             return False
         elif hal.components[self.hal_name].state != hal.COMP_READY:
