@@ -34,6 +34,7 @@ class HalMgr(Node):
         """
         self.__logger = logging.get_logger(__name__)
         self.triggers = triggers
+        self.ready = False
         if on_exit is None:
             on_exit = self.shutdown_action("Exited")
 
@@ -50,11 +51,13 @@ class HalMgr(Node):
     def _on_ready_event(self, context, msg):
         # If the hal_mgr/ready topic is True, emit an event; no more
         # to do, so destroy the subscriber
-        if msg.data:
+        if msg.data and not self.ready:
             context.asyncio_loop.call_soon_threadsafe(
                 lambda: context.emit_event_sync(HalReady(self.triggers))
             )
-            self.__hal_mgr_ready_subscription.destroy()
+
+            # Ensure the event is only emitted one time.
+            self.ready = True
 
     def execute(self, context):
         """Execute the action."""
