@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import pytest
 
 from hal_hw_interface.ros_hal_pin import (
@@ -71,7 +70,7 @@ isclose_cases = [
 ]
 
 
-class TestRosHalPin(object):
+class TestRosHalPin:
     test_class = RosHalPin
     default_hal_type = None
     default_hal_dir = HalPinDir('IN')
@@ -171,7 +170,7 @@ class TestRosHalPin(object):
         return param['other_value'][index]
 
     def ros_name(self, obj):
-        return '{}/{}'.format(self.compname, self.obj_test_name(obj))
+        return f'{self.compname}/{self.obj_test_name(obj)}'
 
     #
     # Base class tests
@@ -272,9 +271,7 @@ class TestRosHalPinPublisher(TestRosHalPin):
     # Tests
     #
     def test_ros_hal_pin_attrs(self, obj, mock_comp_obj):
-        super(TestRosHalPinPublisher, self).test_ros_hal_pin_attrs(
-            obj, mock_comp_obj
-        )
+        super().test_ros_hal_pin_attrs(obj, mock_comp_obj)
         assert obj.pub_topic == self.pub_topic(obj)
 
     def test_ros_hal_pin_publisher_init(self, obj, mock_objs):
@@ -322,9 +319,7 @@ class TestRosHalPinSubscriber(TestRosHalPinPublisher):
     # Tests
     #
     def test_ros_hal_pin_attrs(self, obj, mock_comp_obj):
-        super(TestRosHalPinSubscriber, self).test_ros_hal_pin_attrs(
-            obj, mock_comp_obj
-        )
+        super().test_ros_hal_pin_attrs(obj, mock_comp_obj)
         assert obj.sub_topic == self.sub_topic(obj)
 
     def test_ros_hal_pin_subscriber_init(self, obj, mock_objs):
@@ -369,9 +364,7 @@ class TestRosHalPinService(TestRosHalPinPublisher):
     # Tests
     #
     def test_ros_hal_pin_attrs(self, obj, mock_comp_obj):
-        super(TestRosHalPinService, self).test_ros_hal_pin_attrs(
-            obj, mock_comp_obj
-        )
+        super().test_ros_hal_pin_attrs(obj, mock_comp_obj)
         assert obj.service_name == self.service_name(obj)
         assert obj.service_msg_type == self.service_msg_type(obj)
 

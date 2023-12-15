@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 import pytest
 from hal_hw_interface.ros_hal_component import RosHalComponent
 
 
-class TestRosHalComponent(object):
+class TestRosHalComponent:
     test_class = RosHalComponent
 
     @pytest.fixture

@@ -4,11 +4,11 @@
          type="position_controllers::InterruptibleJointTrajectoryController"
          base_class_type="controller_interface::ControllerBase">
     <description>
-        The InterruptibleJointTrajectoryController executes joint-space trajectories on
-        a set of joints, which is interrupted in realtime if a stop / goal
-        condition is reached.
+      The InterruptibleJointTrajectoryController executes joint-space trajectories on
+      a set of joints, which is interrupted in realtime if a stop / goal
+      condition is reached.
       This variant represents trajectory segments as quintic splines and sends
-        commands to a position interface.
+      commands to a position interface.
     </description>
   </class>
 
@@ -16,11 +16,11 @@
          type="velocity_controllers::InterruptibleJointTrajectoryController"
          base_class_type="controller_interface::ControllerBase">
     <description>
-        The InterruptibleJointTrajectoryController executes joint-space trajectories on
-        a set of joints, which is interrupted in realtime if a stop / goal
-        condition is reached.
-        This variant represents trajectory segments as quintic splines and
-        sends commands to a velocity interface.
+      The InterruptibleJointTrajectoryController executes joint-space trajectories on
+      a set of joints, which is interrupted in realtime if a stop / goal
+      condition is reached.
+      This variant represents trajectory segments as quintic splines and
+      sends commands to a velocity interface.
     </description>
   </class>
 
@@ -28,11 +28,11 @@
          type="effort_controllers::InterruptibleJointTrajectoryController"
          base_class_type="controller_interface::ControllerBase">
     <description>
-        The InterruptibleJointTrajectoryController executes joint-space trajectories on
-        a set of joints, which is interrupted in realtime if a stop / goal
-        condition is reached.
-        This variant represents trajectory segments as quintic splines and sends
-        commands to an effort interface.
+      The InterruptibleJointTrajectoryController executes joint-space trajectories on
+      a set of joints, which is interrupted in realtime if a stop / goal
+      condition is reached.
+      This variant represents trajectory segments as quintic splines and sends
+      commands to an effort interface.
     </description>
   </class>
 
@@ -40,11 +40,11 @@
          type="pos_vel_controllers::InterruptibleJointTrajectoryController"
          base_class_type="controller_interface::ControllerBase">
     <description>
-        The InterruptibleJointTrajectoryController executes joint-space trajectories on
-        a set of joints, which is interrupted in realtime if a stop / goal
-        condition is reached.
-        This variant represents trajectory segments as quintic splines and
-        sends commands to an pos_vel interface.
+      The InterruptibleJointTrajectoryController executes joint-space trajectories on
+      a set of joints, which is interrupted in realtime if a stop / goal
+      condition is reached.
+      This variant represents trajectory segments as quintic splines and
+      sends commands to an pos_vel interface.
     </description>
   </class>
 
@@ -52,11 +52,11 @@
          type="pos_vel_acc_controllers::InterruptibleJointTrajectoryController"
          base_class_type="controller_interface::ControllerBase">
     <description>
-        The InterruptibleJointTrajectoryController executes joint-space trajectories on
-        a set of joints, which is interrupted in realtime if a stop / goal
-        condition is reached.
-        This variant represents trajectory segments as quintic splines and
-        sends commands to an spline interface.
+      The InterruptibleJointTrajectoryController executes joint-space trajectories on
+      a set of joints, which is interrupted in realtime if a stop / goal
+      condition is reached.
+      This variant represents trajectory segments as quintic splines and
+      sends commands to an spline interface.
     </description>
   </class>
 

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 
    :synopsis: HAL pin object connected to `redis_store` parameter
@@ -45,7 +43,7 @@ class RedisStoreHalPin(RosHalPin):
     # Attribute default factories
     @key.default
     def _key_default(self):
-        return '{}/{}'.format(self.compname, self.pin_name)
+        return f'{self.compname}/{self.pin_name}'
 
     redis_service_timeout_default = 20.0  # seconds to wait for service
 

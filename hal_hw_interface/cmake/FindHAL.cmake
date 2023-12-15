@@ -26,8 +26,7 @@ set(MACHINEKIT_RIP_PATH
 find_path(
   HAL_INCLUDE_PATH hal.h
   PATH_SUFFIXES machinekit
-  PATHS ${MACHINEKIT_RIP_PATH}/include
-  )
+  PATHS ${MACHINEKIT_RIP_PATH}/include)
 if(HAL_INCLUDE_PATH)
   message(STATUS "Found HAL includes:  ${HAL_INCLUDE_PATH}")
   set(HAL_FOUND TRUE)

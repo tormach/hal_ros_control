@@ -7,30 +7,29 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 # Load catkin and all dependencies required for this package
-find_package(catkin
-  REQUIRED COMPONENTS
-    actionlib
-    angles
-    cmake_modules
-    control_msgs
-    control_toolbox
-    controller_interface
-    moveit_ros_control_interface
-
-    hardware_interface
-    joint_trajectory_controller
-    machinekit_interfaces
-    pluginlib
-    realtime_tools
-    roscpp
-    stop_event_msgs
-    trajectory_msgs
-    urdf
-    hal_hw_interface
-)
 find_package(
-  HAL
-  )
+  catkin REQUIRED
+  COMPONENTS actionlib
+             angles
+             cmake_modules
+             control_msgs
+             control_toolbox
+             controller_interface
+             moveit_ros_control_interface
+             hardware_interface
+             joint_trajectory_controller
+             machinekit_interfaces
+             pluginlib
+             realtime_tools
+             redis_store_msgs
+             roscpp
+             std_msgs
+             stop_event_msgs
+             trajectory_msgs
+             velocity_override_msgs
+             urdf
+             hal_hw_interface)
+find_package(HAL)
 
 # Declare catkin package
 catkin_package(
@@ -46,33 +45,34 @@ catkin_package(
   pluginlib
   machinekit_interfaces
   realtime_tools
+  redis_store_msgs
   roscpp
+  std_msgs
   stop_event_msgs
   trajectory_msgs
+  velocity_override_msgs
   urdf
   INCLUDE_DIRS
-    include
+  include
   LIBRARIES
-    ${PROJECT_NAME}
-)
+  ${PROJECT_NAME})
 
-include_directories(
-  include/
-  ${HAL_INCLUDE_PATH}
-  ${Boost_INCLUDE_DIR}
-  ${catkin_INCLUDE_DIRS}
-  )
+include_directories(include/ ${HAL_INCLUDE_PATH} ${Boost_INCLUDE_DIR}
+                    ${catkin_INCLUDE_DIRS})
 
 add_library(
   ${PROJECT_NAME}
   src/interruptible_joint_trajectory_controller.cpp
-)
+  src/velocity_scale_manager.cpp
+  src/velocity_scale.cpp
+  src/velocity_scale_base.cpp
+  src/active_move_handler.cpp
+  src/feedhold_handler.cpp)
 
 # Add CFLAGS
 target_compile_definitions(${PROJECT_NAME} PRIVATE RTAPI=1)
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
-
 
 #############
 ## Testing ##
@@ -88,74 +88,81 @@ if(CATKIN_ENABLE_TESTING)
 
   # Build auxiliary tools for tests
   add_executable(rrbot test/rrbot.cpp)
-  target_link_libraries(rrbot ${catkin_LIBRARIES} ${controller_manager_LIBRARIES})
+  target_link_libraries(rrbot ${catkin_LIBRARIES}
+                        ${controller_manager_LIBRARIES})
 
   add_executable(rrbot_wrapping test/rrbot_wrapping.cpp)
-  target_link_libraries(rrbot_wrapping ${catkin_LIBRARIES} ${controller_manager_LIBRARIES})
+  target_link_libraries(rrbot_wrapping ${catkin_LIBRARIES}
+                        ${controller_manager_LIBRARIES})
 
   add_dependencies(tests rrbot)
   add_dependencies(tests rrbot_wrapping)
   add_dependencies(tests ${PROJECT_NAME})
 
   # Test components
-  catkin_add_gtest(quintic_spline_segment_test test/quintic_spline_segment_test.cpp)
+  catkin_add_gtest(quintic_spline_segment_test
+                   test/quintic_spline_segment_test.cpp)
   target_link_libraries(quintic_spline_segment_test ${catkin_LIBRARIES})
 
   catkin_add_gtest(trajectory_interface_test test/trajectory_interface_test.cpp)
   target_link_libraries(trajectory_interface_test ${catkin_LIBRARIES})
 
-  catkin_add_gtest(joint_trajectory_segment_test test/joint_trajectory_segment_test.cpp)
+  catkin_add_gtest(joint_trajectory_segment_test
+                   test/joint_trajectory_segment_test.cpp)
   target_link_libraries(joint_trajectory_segment_test ${catkin_LIBRARIES})
 
-  catkin_add_gtest(joint_trajectory_msg_utils_test test/joint_trajectory_msg_utils_test.cpp)
+  catkin_add_gtest(joint_trajectory_msg_utils_test
+                   test/joint_trajectory_msg_utils_test.cpp)
   target_link_libraries(joint_trajectory_msg_utils_test ${catkin_LIBRARIES})
 
-  catkin_add_gtest(init_joint_trajectory_test test/init_joint_trajectory_test.cpp)
+  catkin_add_gtest(init_joint_trajectory_test
+                   test/init_joint_trajectory_test.cpp)
   target_link_libraries(init_joint_trajectory_test ${catkin_LIBRARIES})
 
   catkin_add_gtest(trajectory_builder_test test/trajectory_builder_test.cpp)
   target_link_libraries(trajectory_builder_test ${catkin_LIBRARIES})
 
   catkin_add_gtest(hold_trajectory_builder_test
-                   test/hold_trajectory_builder_test.cpp
-                   test/test_common.cpp)
+                   test/hold_trajectory_builder_test.cpp test/test_common.cpp)
   target_link_libraries(hold_trajectory_builder_test ${catkin_LIBRARIES})
 
   catkin_add_gtest(stop_trajectory_builder_test
-                   test/stop_trajectory_builder_test.cpp
-                   test/test_common.cpp)
+                   test/stop_trajectory_builder_test.cpp test/test_common.cpp)
   target_link_libraries(stop_trajectory_builder_test ${catkin_LIBRARIES})
 
-  add_rostest_gtest(tolerances_test
-                  test/tolerances.test
-                  test/tolerances_test.cpp)
+  add_rostest_gtest(tolerances_test test/tolerances.test
+                    test/tolerances_test.cpp)
   target_link_libraries(tolerances_test ${catkin_LIBRARIES})
 
-
   # Test the joint_trajectory_controller itself
-  add_rostest_gtest(joint_trajectory_controller_test
-                    test/joint_trajectory_controller.test
-                    test/joint_trajectory_controller_test.cpp
-                    test/test_common.cpp)
-  target_link_libraries(joint_trajectory_controller_test ${catkin_LIBRARIES} ${controller_manager_LIBRARIES})
+  add_rostest_gtest(
+    joint_trajectory_controller_test test/joint_trajectory_controller.test
+    test/joint_trajectory_controller_test.cpp test/test_common.cpp)
+  target_link_libraries(joint_trajectory_controller_test ${catkin_LIBRARIES}
+                        ${controller_manager_LIBRARIES})
 
-  add_rostest_gtest(joint_trajectory_controller_stopramp_test
-                    test/joint_trajectory_controller_stopramp.test
-                    test/joint_trajectory_controller_test.cpp
-                    test/test_common.cpp)
-  target_link_libraries(joint_trajectory_controller_stopramp_test ${catkin_LIBRARIES})
+  add_rostest_gtest(
+    joint_trajectory_controller_stopramp_test
+    test/joint_trajectory_controller_stopramp.test
+    test/joint_trajectory_controller_test.cpp test/test_common.cpp)
+  target_link_libraries(joint_trajectory_controller_stopramp_test
+                        ${catkin_LIBRARIES})
 
-  add_rostest_gtest(joint_trajectory_controller_vel_test
-                    test/joint_trajectory_controller_vel.test
-                    test/joint_trajectory_controller_test.cpp
-                    test/test_common.cpp)
-  target_link_libraries(joint_trajectory_controller_vel_test ${catkin_LIBRARIES})
-  target_compile_definitions(joint_trajectory_controller_vel_test PRIVATE TEST_VELOCITY_FF=1)
+  add_rostest_gtest(
+    joint_trajectory_controller_vel_test
+    test/joint_trajectory_controller_vel.test
+    test/joint_trajectory_controller_test.cpp test/test_common.cpp)
+  target_link_libraries(joint_trajectory_controller_vel_test
+                        ${catkin_LIBRARIES})
+  target_compile_definitions(joint_trajectory_controller_vel_test
+                             PRIVATE TEST_VELOCITY_FF=1)
 
-  add_rostest_gtest(joint_trajectory_controller_wrapping_test
-                    test/joint_trajectory_controller_wrapping.test
-                    test/joint_trajectory_controller_wrapping_test.cpp)
-  target_link_libraries(joint_trajectory_controller_wrapping_test ${catkin_LIBRARIES})
+  add_rostest_gtest(
+    joint_trajectory_controller_wrapping_test
+    test/joint_trajectory_controller_wrapping.test
+    test/joint_trajectory_controller_wrapping_test.cpp)
+  target_link_libraries(joint_trajectory_controller_wrapping_test
+                        ${catkin_LIBRARIES})
 
   # Code coverage test
   if(ENABLE_COVERAGE_TESTING)
@@ -168,26 +175,23 @@ if(CATKIN_ENABLE_TESTING)
 
 endif()
 
-
 #############
 ## Install ##
 #############
 
 # Install headers
 install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-)
+        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
 # Install targets
-install(TARGETS ${PROJECT_NAME}
+install(
+  TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
-  )
+  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION})
 
 # Install plugins
 install(FILES ros_control_plugins.xml moveit_ros_control_interface_plugins.xml
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
 # TODO: Install test resource files as well?

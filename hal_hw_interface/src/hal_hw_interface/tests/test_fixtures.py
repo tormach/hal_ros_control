@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Test keys and values
 keys1 = dict(pin1=True, pin2=0.009, pin3=-9)
 
@@ -54,7 +52,7 @@ def test_mock_rospy_fixture(mock_rospy, mock_objs):
     found_false = False
     for i in range(10):
         val = mock_objs['rospy_is_shutdown']()
-        print("iter {} val {}".format(i, val))
+        print(f"iter {i} val {val}")
         if val is False:
             found_false = True
         if val is True:
@@ -66,8 +64,8 @@ def test_mock_rospy_fixture(mock_rospy, mock_objs):
 
     # Test returned objects
     for name in ('Subscriber', 'Publisher', 'Service'):
-        method = mock_objs['rospy_{}'.format(name)]
-        obj = mock_objs['rospy_{}_obj'.format(name)]
+        method = mock_objs[f'rospy_{name}']
+        obj = mock_objs[f'rospy_{name}_obj']
         assert method() == obj
 
 

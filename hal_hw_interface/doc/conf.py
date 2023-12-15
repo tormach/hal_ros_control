@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # hal_hw_interface documentation build configuration file, created by
 # sphinx-quickstart on Sun Feb 10 14:11:52 2019.
@@ -66,9 +65,9 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'hal_hw_interface'
-copyright = u'2019, John Morris'
-author = u'John Morris'
+project = 'hal_hw_interface'
+copyright = '2019, John Morris'
+author = 'John Morris'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -281,8 +280,8 @@ latex_documents = [
     (
         master_doc,
         'hal_hw_interface.tex',
-        u'hal\\_hw\\_interface Documentation',
-        u'John Morris',
+        'hal\\_hw\\_interface Documentation',
+        'John Morris',
         'manual',
     )
 ]
@@ -328,7 +327,7 @@ man_pages = [
     (
         master_doc,
         'hal_hw_interface',
-        u'hal_hw_interface Documentation',
+        'hal_hw_interface Documentation',
         [author],
         1,
     )
@@ -348,7 +347,7 @@ texinfo_documents = [
     (
         master_doc,
         'hal_hw_interface',
-        u'hal_hw_interface Documentation',
+        'hal_hw_interface Documentation',
         author,
         'hal_hw_interface',
         'One line description of project.',

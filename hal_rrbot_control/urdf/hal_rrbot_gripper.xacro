@@ -48,24 +48,24 @@
     <!-- Base link -->
     <link name="${prefix}gripper_base">
       <collision>
-	<origin xyz="0 0 ${base_h/2}" rpy="0 0 0"/>
-	<geometry>
-	  <box size="${base_w} ${d} ${base_h}"/>
-	</geometry>
+        <origin xyz="0 0 ${base_h/2}" rpy="0 0 0"/>
+        <geometry>
+          <box size="${base_w} ${d} ${base_h}"/>
+        </geometry>
       </collision>
 
       <visual>
-	<origin xyz="0 0 ${base_h/2}" rpy="0 0 0"/>
-	<geometry>
-	  <box size="${base_w} ${d} ${base_h}"/>
-	</geometry>
+        <origin xyz="0 0 ${base_h/2}" rpy="0 0 0"/>
+        <geometry>
+          <box size="${base_w} ${d} ${base_h}"/>
+        </geometry>
         <material name="red"/>
       </visual>
 
       <inertial>
-	<origin xyz="0 0 ${base_h/2}" rpy="0 0 0"/>
-	<mass value="${base_mass}"/>
-	<inertia
+        <origin xyz="0 0 ${base_h/2}" rpy="0 0 0"/>
+        <mass value="${base_mass}"/>
+        <inertia
 	    ixx="${base_mass/12.0 * (d**2 + base_h**2)}" ixy="0.0" ixz="0.0"
 	    iyy="${base_mass/12.0 * (base_w**2 + base_h**2)}" iyz="0.0"
 	    izz="${base_mass/12.0 * (base_w**2 + d**2)}"/>
@@ -74,24 +74,24 @@
 
     <link name="${prefix}gripper_finger_link1">
       <collision>
-	<origin xyz="0 0 ${finger_h/2}" rpy="0 0 0"/>
-	<geometry>
-	  <box size="${finger_w} ${d} ${finger_h}"/>
-	</geometry>
+        <origin xyz="0 0 ${finger_h/2}" rpy="0 0 0"/>
+        <geometry>
+          <box size="${finger_w} ${d} ${finger_h}"/>
+        </geometry>
       </collision>
 
       <visual>
-	<origin xyz="0 0 ${finger_h/2}" rpy="0 0 0"/>
-	<geometry>
-	  <box size="${finger_w} ${d} ${finger_h}"/>
-	</geometry>
+        <origin xyz="0 0 ${finger_h/2}" rpy="0 0 0"/>
+        <geometry>
+          <box size="${finger_w} ${d} ${finger_h}"/>
+        </geometry>
         <material name="red"/>
       </visual>
 
       <inertial>
-	<origin xyz="0 0 ${finger_h/2}" rpy="0 0 0"/>
-	<mass value="${finger_mass}"/>
-	<inertia
+        <origin xyz="0 0 ${finger_h/2}" rpy="0 0 0"/>
+        <mass value="${finger_mass}"/>
+        <inertia
 	    ixx="${finger_mass/12.0 * (d**2 + finger_h**2)}" ixy="0.0" ixz="0.0"
 	    iyy="${finger_mass/12.0 * (finger_w**2 + finger_h**2)}" iyz="0.0"
 	    izz="${finger_mass/12.0 * (finger_w**2 + d**2)}"/>
@@ -100,24 +100,24 @@
 
     <link name="${prefix}gripper_finger_link2">
       <collision>
-	<origin xyz="0 0 ${finger_h/2}" rpy="0 0 0"/>
-	<geometry>
-	  <box size="${finger_w} ${d} ${finger_h}"/>
-	</geometry>
+        <origin xyz="0 0 ${finger_h/2}" rpy="0 0 0"/>
+        <geometry>
+          <box size="${finger_w} ${d} ${finger_h}"/>
+        </geometry>
       </collision>
 
       <visual>
-	<origin xyz="0 0 ${finger_h/2}" rpy="0 0 0"/>
-	<geometry>
-	  <box size="${finger_w} ${d} ${finger_h}"/>
-	</geometry>
+        <origin xyz="0 0 ${finger_h/2}" rpy="0 0 0"/>
+        <geometry>
+          <box size="${finger_w} ${d} ${finger_h}"/>
+        </geometry>
         <material name="red"/>
       </visual>
 
       <inertial>
-	<origin xyz="0 0 0" rpy="0 0 0"/>
-	<mass value="${finger_mass}"/>
-	<inertia
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="${finger_mass}"/>
+        <inertia
 	    ixx="${finger_mass/12.0 * (d**2 + finger_h**2)}" ixy="0.0" ixz="0.0"
 	    iyy="${finger_mass/12.0 * (finger_w**2 + finger_h**2)}" iyz="0.0"
 	    izz="${finger_mass/12.0 * (finger_w**2 + d**2)}"/>

@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 import pytest
 
 from hal_hw_interface.hal_obj_base import HalObjBase
 
 
-class TestHalObjBase(object):
+class TestHalObjBase:
     compname = 'test_comp'
     test_class = HalObjBase
 
@@ -57,7 +56,7 @@ class TestHalObjBase(object):
 
         for key_short, set_val in test_params.items():
             # Mock return value
-            key_long = '{}/{}'.format(self.compname, key_short)
+            key_long = f'{self.compname}/{key_short}'
             gp.set_key(key_long, set_val)
 
             # Call get_ros_param() and check
@@ -67,7 +66,5 @@ class TestHalObjBase(object):
 
         # Check default plumbing
         get_val = obj.get_ros_param('bogus_key', default='default_val')
-        gp.assert_called_with(
-            '{}/bogus_key'.format(self.compname), 'default_val'
-        )
+        gp.assert_called_with(f'{self.compname}/bogus_key', 'default_val')
         assert get_val == 'default_val'

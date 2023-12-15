@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 import pytest
 from hal_hw_interface.hal_io_comp import HalIO
 
 
-class TestHalIO(object):
+class TestHalIO:
     test_class = HalIO
 
     @pytest.fixture
@@ -66,7 +65,7 @@ class TestHalIO(object):
                 assert pin_name in obj_pins
                 # Check pin attributes
                 pin = obj_pins[pin_name]
-                print("  name %s; data %s" % (pin_name, pin_data))
+                print(f"  name {pin_name}; data {pin_data}")
                 print("  pin %s" % pin)
                 for key, val in pin_data.items():
                     assert str(getattr(pin, key)) == val

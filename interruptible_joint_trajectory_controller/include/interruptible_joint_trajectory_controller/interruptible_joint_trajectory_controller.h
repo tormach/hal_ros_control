@@ -64,6 +64,11 @@
 #include <machinekit_interfaces/joint_event_interface.h>
 #include <machinekit_interfaces/hal_pin_interface.h>
 
+// For reading the scalling factor
+#include <redis_store_msgs/ParamUpdate.h>
+#include <std_msgs/Float64.h>
+#include <std_msgs/String.h>
+
 // Bring in enums
 using machinekit_interfaces::ProbeState;
 using machinekit_interfaces::ProbeTransitions;
@@ -73,6 +78,9 @@ using stop_event_msgs::SetNextProbeMoveResponse;
 
 // Project
 #include <joint_trajectory_controller/joint_trajectory_controller.h>
+
+// Dynamic Velocity Scale
+#include "interruptible_joint_trajectory_controller/velocity_scale_manager.h"
 
 namespace interruptible_joint_trajectory_controller
 {
@@ -185,6 +193,8 @@ protected:
   ros::ServiceServer error_detail_service_;  //!< Used to query verbose error
                                              //!< data after a motion error has
                                              //!< occurred
+
+  boost::shared_ptr<VelocityScaleManager> velocity_scale_manager_;
 
   std::vector<machinekit_interfaces::JointEventDataHandle> probe_joint_results_;
   machinekit_interfaces::ProbeHandle probe_handle_;
@@ -299,6 +309,8 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
   // / stop event interfaces)
   ROS_INFO_STREAM("initRequest for InterruptibleJointTrajectoryController");
 
+  ROS_WARN("CUSTOMCTRL");
+
   // SO ugly, need to redirect to the base class method, but this is fragile if
   // JointTrajectoryController ever decides to add one... Complete the
   // underlying initialization for the controller (JointTrajectoryController
@@ -364,6 +376,10 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
           handleJointTrajectoryErrorContextRequest,
       this);
 
+  boost::shared_ptr<ros::NodeHandle> nh_ptr2 =
+      boost::make_shared<ros::NodeHandle>(root_nh);
+  velocity_scale_manager_ = boost::make_shared<VelocityScaleManager>(nh_ptr2);
+
   // KLUDGE soft error threshold so jogging with probe active doesn't spam the
   // console
   jog_err_threshold_ = 32;
@@ -384,10 +400,25 @@ void InterruptibleJointTrajectoryController<
 {
   // Acquire the trajectory pointer from the RT box ONCE (here), and pass to
   // various methods as needed
+
   ExtendedTrajectoryPtr curr_traj_ptr;
   joint_trajectory_controller::TimeData time_data;
-  JointTrajectoryControllerType::prepare_for_update(time, period, curr_traj_ptr,
-                                                    time_data);
+
+  velocity_scale_manager_->updateVelocityScales(period.toSec());
+  double current_scaling_factor =
+      velocity_scale_manager_->getCurrentScalingFactor();
+
+  // double current_scaling_factor = 1.0;
+
+  auto period_now = ros::Duration(current_scaling_factor * period.toSec());
+
+  JointTrajectoryControllerType::prepare_for_update(time, period_now,
+                                                    curr_traj_ptr, time_data);
+
+  // JointTrajectoryControllerType::prepare_for_update(time, period,
+  // curr_traj_ptr,
+  //                                                   time_data);
+
   typename JointTrajectoryControllerType::RealtimeGoalHandlePtr
       current_active_goal(this->rt_active_goal_);
 

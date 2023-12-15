@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 """
    :synopsis: Base class for HAL objects
 
@@ -11,7 +8,7 @@ import hal
 import rospy
 
 
-class HalObjBase(object):
+class HalObjBase:
     """Base class for HAL component objects
 
     Takes care of caching objects related to HAL components, like the
@@ -67,7 +64,7 @@ class HalObjBase(object):
         """
         return self._cached_objs.setdefault(
             suffix,
-            rospy.get_param('{}/{}'.format(self.compname, suffix), default),
+            rospy.get_param(f'{self.compname}/{suffix}', default),
         )
 
     def add_shutdown_callback(self, cb):

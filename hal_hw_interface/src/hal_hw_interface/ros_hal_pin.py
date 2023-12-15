@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
    :synopsis: ROS-connected HAL pin objects for use in
      :py:mod:`hal_hw_interface.ros_hal_component`
@@ -168,7 +166,7 @@ class RosHalPinPublisher(RosHalPin):
     # Attribute default factories
     @pub_topic.default
     def _pub_topic_default(self):
-        return '{}/{}'.format(self.compname, self.pin_name)
+        return f'{self.compname}/{self.pin_name}'
 
     _pin_to_msg_type_map = {
         HalPinType('BIT'): Bool,
@@ -186,7 +184,7 @@ class RosHalPinPublisher(RosHalPin):
         self._ros_publisher_init()
 
     def _ros_publisher_init(self):
-        rospy.loginfo('Creating publisher on topic "{}"'.format(self.pub_topic))
+        rospy.loginfo(f'Creating publisher on topic "{self.pub_topic}"')
         self.pub = rospy.Publisher(
             self.pub_topic, self.msg_type, queue_size=1, latch=True
         )
@@ -250,16 +248,14 @@ class RosHalPinSubscriber(RosHalPinPublisher):
     # Attribute default factories
     @sub_topic.default
     def _sub_topic_default(self):
-        return '{}/{}'.format(self.compname, self.pin_name)
+        return f'{self.compname}/{self.pin_name}'
 
     def _ros_init(self):
         super()._ros_init()
         self._ros_subscriber_init()
 
     def _ros_subscriber_init(self):
-        rospy.loginfo(
-            'Creating subscriber on topic "{}"'.format(self.sub_topic)
-        )
+        rospy.loginfo(f'Creating subscriber on topic "{self.sub_topic}"')
         self.sub = rospy.Subscriber(
             self.sub_topic, self.msg_type, self._subscriber_cb
         )
@@ -313,7 +309,7 @@ class RosHalPinService(RosHalPinPublisher):
     # Attribute default factories
     @service_name.default
     def _service_name_default(self):
-        return '{}/{}'.format(self.compname, self.pin_name)
+        return f'{self.compname}/{self.pin_name}'
 
     _pin_to_service_msg_type_map = {
         HalPinType('BIT'): SetBool,
@@ -334,7 +330,7 @@ class RosHalPinService(RosHalPinPublisher):
         self.service = rospy.Service(
             self.service_name, self.service_msg_type, self._svc_cb
         )
-        rospy.loginfo("Service {} created".format(self.service.resolved_name))
+        rospy.loginfo(f"Service {self.service.resolved_name} created")
 
     def _svc_cb(self, req):
         self.set_pin(req.data)

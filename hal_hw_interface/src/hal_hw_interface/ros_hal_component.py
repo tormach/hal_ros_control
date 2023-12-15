@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
    :synopsis: Boilerplate for HAL user components in ROS nodes
 

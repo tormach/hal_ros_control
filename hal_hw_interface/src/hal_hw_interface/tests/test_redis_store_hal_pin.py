@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from hal_hw_interface.redis_store_hal_pin import RedisStoreHalPin
 
 # Borrow tests from ros_hal_pin
@@ -10,7 +9,7 @@ class TestRedisStoreHalPin(TestRosHalPin):
     test_class = RedisStoreHalPin
 
     def redis_param_key(self, obj):
-        return "{}/{}".format(obj.compname, obj.pin_name)
+        return f"{obj.compname}/{obj.pin_name}"
 
     def set_mock_redis_param(self, obj, param):
         if isinstance(param, dict):
@@ -39,7 +38,7 @@ class TestRedisStoreHalPin(TestRosHalPin):
         obj_val = obj.set_pin_from_redis()
         # Check that redis was read
         mock_redis_client_obj.get_param.assert_called_once_with(
-            '{}/{}'.format(self.compname, self.obj_test_name(obj))
+            f'{self.compname}/{self.obj_test_name(obj)}'
         )
         # Check the returned value
         assert obj_val == test_val
@@ -80,7 +79,7 @@ class TestRedisStoreHalPin(TestRosHalPin):
         assert obj_val == test_val
         # Check redis was written to
         mock_redis_client_obj.set_param.assert_called_once_with(
-            '{}/{}'.format(self.compname, self.obj_test_name(obj)), test_val
+            f'{self.compname}/{self.obj_test_name(obj)}', test_val
         )
         # Check if log message was printed
         print(mock_redis_client_obj.get_param.mock_calls)
@@ -104,7 +103,7 @@ class TestRedisStoreHalPin(TestRosHalPin):
         assert obj_val == test_val
         # Check redis was written to
         mock_redis_client_obj.set_param.assert_called_once_with(
-            '{}/{}'.format(self.compname, self.obj_test_name(obj)), test_val
+            f'{self.compname}/{self.obj_test_name(obj)}', test_val
         )
         # Check the log message was not printed
         print(mock_redis_client_obj.get_param.mock_calls)

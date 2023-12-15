@@ -1,4 +1,4 @@
-import rospy
+import rospy  # noqa: F401
 import os
 from machinekit import rtapi, hal
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import sys
 import os
 import subprocess
@@ -11,7 +10,7 @@ import rospy
 from std_msgs.msg import Bool
 
 
-class HalMgr(object):
+class HalMgr:
     NAME = 'hal_mgr'
     READY_TOPIC = "hal_mgr/ready"
     shutdown_begun = False

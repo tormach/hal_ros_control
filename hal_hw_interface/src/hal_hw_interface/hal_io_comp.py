@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from hal_hw_interface.ros_hal_component import RosHalComponent
 from hal_hw_interface.ros_hal_pin import (
     RosHalPinSubscriber,

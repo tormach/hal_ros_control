@@ -78,21 +78,17 @@ function(hal_add_c_comp)
     WORKING_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
     COMMAND env MAKEFLAGS=-j1 ${HAL_COMP} --compile ${comp_srcs}
     COMMENT "Building and linking C HAL comp ${target}"
-    DEPENDS ${comp_srcs}
-    )
+    DEPENDS ${comp_srcs})
 
   # Hook HAL .so module into build
   add_custom_target(
-    build_${target}
-    ALL
+    build_${target} ALL
     DEPENDS "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${target}.so"
-    COMMENT "Built C HAL component ${target}"
-    )
+    COMMENT "Built C HAL component ${target}")
 
   # Install HAL .so module
   install(
     FILES ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${target}.so
     CONFIGURATIONS Debug Release
-    DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    )
+    DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
 endfunction()

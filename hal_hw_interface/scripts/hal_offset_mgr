@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 from hal_hw_interface.hal_offset_mgr import HalOffsetMgr
 

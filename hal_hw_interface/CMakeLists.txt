@@ -5,41 +5,33 @@ project(hal_hw_interface)
 add_compile_options(-std=c++11 -Wall)
 
 # Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS
-  controller_manager
-  machinekit_interfaces
-  message_generation
-  redis_store
-  ros_control_boilerplate
-  roscpp
-  rospy
-  std_msgs
-  std_srvs
-  stop_event_msgs
-)
+find_package(
+  catkin REQUIRED
+  COMPONENTS controller_manager
+             machinekit_interfaces
+             message_generation
+             redis_store
+             ros_control_boilerplate
+             roscpp
+             rospy
+             std_msgs
+             std_srvs
+             stop_event_msgs)
 
 # Find Machinekit HAL
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
-find_package(
-  HAL
-  )
+find_package(HAL)
 
 # Install packages with setup.py
 catkin_python_setup()
 
-add_service_files(
-  FILES
-  SetFloat64.srv
-  SetInt32.srv
-  SetUInt32.srv
-)
+add_service_files(FILES SetFloat64.srv SetInt32.srv SetUInt32.srv)
 generate_messages()
 
 # This package
 catkin_package(
   INCLUDE_DIRS
   include
-
   CATKIN_DEPENDS
   controller_manager
   machinekit_interfaces
@@ -51,84 +43,54 @@ catkin_package(
   std_msgs
   std_srvs
   stop_event_msgs
-
   CFG_EXTRAS
-  ${PROJECT_NAME}-extras.cmake
-)
+  ${PROJECT_NAME}-extras.cmake)
 
 # Header files
 # - Specify additional header locations
-include_directories(
-  include/
-  ${HAL_INCLUDE_PATH}
-  ${catkin_INCLUDE_DIRS}
-)
+include_directories(include/ ${HAL_INCLUDE_PATH} ${catkin_INCLUDE_DIRS})
 # - Install our headers
-install(
-  DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  )
+install(DIRECTORY include/${PROJECT_NAME}/
+        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
 #######################
 # HAL component build definitions
 
 # Build HAL component
-add_library(
-  ${PROJECT_NAME} MODULE
-  src/hal_control_loop.cpp
-  src/${PROJECT_NAME}.cpp
-)
+add_library(${PROJECT_NAME} MODULE src/hal_control_loop.cpp
+                                   src/${PROJECT_NAME}.cpp)
 
 # CFLAGS
-target_compile_definitions(
-  ${PROJECT_NAME} PRIVATE
-  RTAPI=1
-  THREAD_FLAVOR_ID=1
-  )
+target_compile_definitions(${PROJECT_NAME} PRIVATE RTAPI=1 THREAD_FLAVOR_ID=1)
 
 # Linked libs
-target_link_libraries(
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  )
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 # Remove 'lib' prefix from comp name
-set_target_properties(
-  ${PROJECT_NAME} PROPERTIES
-  PREFIX ""
-  )
+set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
 
 #######################
 # Install
 
 # Install libraries
-install(
-  TARGETS ${PROJECT_NAME}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  )
+install(TARGETS ${PROJECT_NAME}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
 
 # Install python executables
 catkin_install_python(
-  PROGRAMS
-  scripts/hal_mgr
-  scripts/hal_io
-  scripts/hal_offset_mgr
-
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-  )
+  PROGRAMS scripts/hal_mgr scripts/hal_io scripts/hal_offset_mgr DESTINATION
+  ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 # Install header files
-install(
-  DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+install(DIRECTORY include/${PROJECT_NAME}/
+        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
 # Install launch files
-install(DIRECTORY launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+install(DIRECTORY launch DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
 # Install CMake files
 install(FILES cmake/FindHAL.cmake cmake/UseHALComp.cmake
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/cmake)
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/cmake)
 
 if(CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)

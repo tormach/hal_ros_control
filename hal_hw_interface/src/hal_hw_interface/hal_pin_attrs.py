@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import hal
 
 
@@ -25,16 +24,16 @@ class HalPinAttrBase(int):
         """Create new object, translating strings to ints and validating value"""
         if isinstance(value, int):
             if cls._fwd_map.get(value, None) not in cls._suffixes:
-                raise ValueError("Illegal value '{}'".format(value))
+                raise ValueError(f"Illegal value '{value}'")
             return int.__new__(cls, value)
         elif isinstance(value, str):
             if value.startswith('HAL_'):
                 value = value[4:]
             if value not in cls._suffixes:
-                raise ValueError("Illegal value '{}'".format(value))
+                raise ValueError(f"Illegal value '{value}'")
             return int.__new__(cls, cls._bwd_map[value])
         else:
-            raise ValueError("Illegal value '{}'".format(value))
+            raise ValueError(f"Illegal value '{value}'")
 
     def __repr__(self):
         return 'HAL_' + self._fwd_map[self]
@@ -54,7 +53,7 @@ class HalPinDir(HalPinAttrBase):
     .. inheritance-diagram:: hal_hw_interface.hal_pin_attrs.HalPinDir
     """
 
-    _suffixes = set(['IN', 'OUT', 'IO'])
+    _suffixes = {'IN', 'OUT', 'IO'}
 
 
 class HalPinType(HalPinAttrBase):
@@ -69,4 +68,4 @@ class HalPinType(HalPinAttrBase):
     .. inheritance-diagram:: hal_hw_interface.hal_pin_attrs.HalPinType
     """
 
-    _suffixes = set(['BIT', 'U32', 'S32', 'FLOAT'])
+    _suffixes = {'BIT', 'U32', 'S32', 'FLOAT'}
