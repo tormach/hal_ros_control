@@ -1,0 +1,6 @@
+uint8 JOG = 0
+uint8 PROGRAM_MOVE = 1
+uint8 MOVEJ_MOVE = 2
+uint8 MOVEL_MOVE = 3
+uint8 MOVEC_MOVE = 4
+uint8 MOVEF_MOVE = 5
