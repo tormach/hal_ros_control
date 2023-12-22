@@ -16,6 +16,7 @@ find_package(
              control_toolbox
              controller_interface
              moveit_ros_control_interface
+             hal_hw_interface
              hardware_interface
              joint_trajectory_controller
              machinekit_interfaces
@@ -26,9 +27,9 @@ find_package(
              std_msgs
              stop_event_msgs
              trajectory_msgs
-             velocity_override_msgs
              urdf
-             hal_hw_interface)
+             velocity_override_msgs
+             )
 find_package(HAL)
 
 # Declare catkin package
@@ -50,8 +51,8 @@ catkin_package(
   std_msgs
   stop_event_msgs
   trajectory_msgs
-  velocity_override_msgs
   urdf
+  velocity_override_msgs
   INCLUDE_DIRS
   include
   LIBRARIES
