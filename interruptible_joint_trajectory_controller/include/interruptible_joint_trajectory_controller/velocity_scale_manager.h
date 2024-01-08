@@ -31,7 +31,7 @@ public:
   double getCurrentScalingFactor() const;
 
 private:
-  const std::string MAXVEL_SCALE_PARAMETER = "user_config/maxvel_scale";
+  const std::string MAXVEL_SCALE_PARAMETER = "user_config/maximum_velocity_scale";
   const std::string UNIFORM_VEL_SCALE_PARAMETER = "user_config/"
                                                   "uniform_velocity_scale";
   const std::string VEL_TRANSITION_TIME_TOPIC_NAME = "/velocity_"
