@@ -88,7 +88,7 @@ class RedisStoreHalPin(RosHalPin):
         self.set_pin(value)
         self._prev_pin_val = self._prev_redis_val = value
 
-    def update(self):
+    def update(self, _reset=False):
         """Write changed pin value to redis for input and IO pins"""
         new_val = self.get_pin()
         if self.hal_dir == HalPinDir('OUT') or self._prev_pin_val == new_val:

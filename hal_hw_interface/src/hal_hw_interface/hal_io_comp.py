@@ -27,7 +27,7 @@ class HalIO(RosHalComponent):
               hal_type: BIT
               hal_dir: OUT
           publish_pins:
-            digital_out_1:
+            digital_in_1:
               hal_type: BIT
               hal_dir: IN
           service_pins:
@@ -48,6 +48,7 @@ class HalIO(RosHalComponent):
     def setup_component(self):
         """Load pin configuration from ROS param server and create pin objects"""
         self.pins = []
+        self.reset_pin = None
         pin_class_map = dict(
             subscribe_pins=RosHalPinSubscriber,
             publish_pins=RosHalPinPublisher,
@@ -59,8 +60,18 @@ class HalIO(RosHalComponent):
             for pin_name, pin_data in pins.items():
                 p = pin_class(pin_name, **pin_data)
                 self.pins.append(p)
+        if self.get_ros_param('resetable', False):
+            self.reset_pin = RosHalPinPublisher(
+                'reset', hal_type='BIT', hal_dir='IO'
+            )
 
     def update(self):
         """Run pin `update()` functions"""
+        reset = False
+        if self.reset_pin is not None:
+            self.reset_pin.update()
+            reset = self.reset_pin.get_pin()
         for p in self.pins:
-            p.update()
+            p.update(reset)
+        if reset:
+            self.reset_pin.set_pin(False)  # signal reset completed

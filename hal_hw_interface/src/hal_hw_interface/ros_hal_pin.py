@@ -20,6 +20,7 @@ from std_msgs.msg import Bool, Float64, UInt32, Int32
 from std_srvs.srv import SetBool
 from hal_hw_interface.srv import SetUInt32, SetInt32, SetFloat64
 from math import isclose
+import hal
 
 
 @attr.s
@@ -71,6 +72,7 @@ class RosHalPin(HalObjBase):
         return self.name
 
     def __attrs_post_init__(self):
+        self._fb_pin_name = None
         self._hal_init()
         self._ros_init()
 
@@ -85,11 +87,23 @@ class RosHalPin(HalObjBase):
             )
         )
 
+        if (
+            not self.get_ros_param('resetable', False)
+            or self.hal_dir != hal.HAL_OUT
+        ):
+            return
+
+        self.hal_comp.newpin(f'{self.pin_name}_fb', self.hal_type, hal.HAL_IN)
+        rospy.loginfo(
+            f'Created pin "{self.pin_name}_fb" type/dir "{self.hal_type}/HAL_IN"'
+        )
+        self._fb_pin_name = f'{self.pin_name}_fb'
+
     def _ros_init(self):
         # May be implemented in subclasses
         pass
 
-    def update(self):
+    def update(self, reset=False):
         """An update function; used in some subclasses"""
         # May be implemented in subclasses
         raise NotImplementedError()
@@ -202,8 +216,10 @@ class RosHalPinPublisher(RosHalPin):
             changed = self._msg.data != value
         return changed
 
-    def update(self):
+    def update(self, reset=False):
         """If pin value has changed, publish to ROS topic"""
+        if reset and self._fb_pin_name is not None:
+            self.set_pin(self.hal_comp[self._fb_pin_name])
         value = self.get_pin()
         if self._value_changed(value):
             rospy.logdebug(
@@ -250,6 +266,9 @@ class RosHalPinSubscriber(RosHalPinPublisher):
     def _sub_topic_default(self):
         return f'{self.compname}/{self.pin_name}'
 
+    def _hal_init(self):
+        super()._hal_init()
+
     def _ros_init(self):
         super()._ros_init()
         self._ros_subscriber_init()
@@ -272,6 +291,12 @@ class RosHalPinSubscriber(RosHalPinPublisher):
         if self._value_changed(msg.data):
             self.set_pin(msg.data)
             self.update()
+
+    def update(self, reset=False):
+        """If pin value has changed, publish to ROS topic"""
+        # if reset:
+
+        super().update(reset)
 
 
 @attr.s
