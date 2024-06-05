@@ -27,9 +27,10 @@ public:
 
   void paramUpdateCallback(const redis_store_msgs::ParamUpdate::ConstPtr& msg);
 
+  const std::string SCALE_FACTOR_PARAM_NAME;
+
 private:
   boost::shared_ptr<ros::NodeHandle> controller_nh_;
-  const std::string SCALE_FACTOR_PARAM_NAME;
   ros::Subscriber slider_subscriber_;
 };
 

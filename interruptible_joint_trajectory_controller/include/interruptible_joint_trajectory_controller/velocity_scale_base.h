@@ -26,6 +26,11 @@ public:
     return rt_current_scaling_factor_.load();
   }
 
+  double getTargetScalingFactor() const
+  {
+    return rt_target_scaling_factor_.load();
+  }
+
 protected:
   std::atomic<double> rt_target_scaling_factor_{ 1.0 };   // overwritten by
                                                           // derived class

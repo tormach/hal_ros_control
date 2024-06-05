@@ -84,6 +84,13 @@ int HalHWInterface::init_hal(void (*funct)(void*, long))
       machinekit_interfaces::HALBitPinHandle("stop", &stop_event_));
   registerInterface(&hal_bit_pin_interface_);
 
+  hal_bit_pin_interface_.registerHandle(
+      machinekit_interfaces::HALBitPinHandle("safety_input", &safety_input_event_));
+  hal_bit_pin_interface_.registerHandle(
+      machinekit_interfaces::HALBitPinHandle("enabling_input", &enabling_input_event_));
+  registerInterface(&hal_bit_pin_interface_);
+
+ // TODO
   // Call base class init to set register interfaces and handles for joint state
   // / command / limits
   ros_control_boilerplate::GenericHWInterface::init();
@@ -216,6 +223,18 @@ int HalHWInterface::init_hal(void (*funct)(void*, long))
   if (!create_bit_pin(&stop_pin_ptr_, HAL_IO, "stop"))
   {
     HAL_ROS_LOG_ERR(CNAME, "%s: Failed to initialize stop pin", CNAME);
+    return false;
+  }
+
+  if (!create_bit_pin(&safety_input_pin_ptr_, HAL_IN, "safety_input"))
+  {
+    HAL_ROS_LOG_ERR(CNAME, "%s: Failed to initialize safety_input pin", CNAME);
+    return false;
+  }
+
+  if (!create_bit_pin(&enabling_input_pin_ptr_, HAL_IN, "enabling_input"))
+  {
+    HAL_ROS_LOG_ERR(CNAME, "%s: Failed to initialize enabling_input pin", CNAME);
     return false;
   }
 
@@ -383,7 +402,12 @@ void HalHWInterface::read_with_time(ros::Duration& elapsed_time,
     probe_result_type_ = probe_transition_;
     probe_event_time_ = current_time;
   }
+
   // No overtravel support currently
+
+  // Safety & enabling input handling
+  enabling_input_event_ = **enabling_input_pin_ptr_;
+  safety_input_event_ = **safety_input_pin_ptr_;
 }
 
 void HalHWInterface::write(ros::Duration& elapsed_time)

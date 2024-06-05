@@ -240,6 +240,12 @@ private:
   bool stop_event_;      // To pass stop pin value to controller
   bool** stop_pin_ptr_;  // HAL input pin for controller stop event
 
+  bool safety_input_event_;      // To pass stop pin value to controller
+  bool** safety_input_pin_ptr_;  // HAL input pin for controller stop event
+
+  bool enabling_input_event_;      // To pass estop pin value to controller
+  bool** enabling_input_pin_ptr_;  // HAL input pin for controller estop event
+
 };  // HalHWInterface
 
 }  // namespace hal_hw_interface

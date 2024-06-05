@@ -12,6 +12,9 @@ VelocityScaleManager::VelocityScaleManager(
       controller_nh, UNIFORM_VEL_SCALE_PARAMETER);
   feedhold_handler_ = std::make_shared<FeedholdHandler>(controller_nh);
   active_move_handler_ = std::make_shared<ActiveMoveHandler>(controller_nh);
+  // safety_pin_interface_ = machinekit_interfaces::HALBitPinInterface();
+
+  // safety_pin_interface_.registerHandle();
 
   // Subscribe to ROS topics
   velocity_transition_time_subscriber_ = controller_nh->subscribe(

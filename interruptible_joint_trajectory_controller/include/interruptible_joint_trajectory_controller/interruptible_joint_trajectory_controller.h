@@ -34,6 +34,7 @@
 #include <stdexcept>
 #include <string>
 #include <memory>
+#include <iomanip>
 
 // Boost
 #include <boost/shared_ptr.hpp>
@@ -64,8 +65,16 @@
 #include <machinekit_interfaces/joint_event_interface.h>
 #include <machinekit_interfaces/hal_pin_interface.h>
 
-// For reading the scalling factor
+// For reading and writing the scalling factor
+// and spinning a separate thread with ros publisher interface
+// to offload controller `update` method
 #include <redis_store_msgs/ParamUpdate.h>
+
+//#include <thread>
+//#include <atomic>
+//#include <mutex>
+//#include <condition_variable>
+
 #include <std_msgs/Float64.h>
 #include <std_msgs/String.h>
 
@@ -81,6 +90,9 @@ using stop_event_msgs::SetNextProbeMoveResponse;
 
 // Dynamic Velocity Scale
 #include "interruptible_joint_trajectory_controller/velocity_scale_manager.h"
+
+// Separate thread handling updated velocity scale publishing
+#include "interruptible_joint_trajectory_controller/CommThread.h"
 
 namespace interruptible_joint_trajectory_controller
 {
@@ -195,6 +207,12 @@ protected:
                                              //!< occurred
 
   boost::shared_ptr<VelocityScaleManager> velocity_scale_manager_;
+  bool safety_input_previous_state_;
+  boost::shared_ptr<CommThread> comm_thread_;  // Use shared_ptr for automatic memory management
+  double scale_factor_before_safety_trip_;
+
+  // ros::Publisher safety_input_reduced_velocity_pub_;
+
 
   std::vector<machinekit_interfaces::JointEventDataHandle> probe_joint_results_;
   machinekit_interfaces::ProbeHandle probe_handle_;
@@ -205,6 +223,9 @@ protected:
                        // reported if many happen at once
   machinekit_interfaces::HALBitPinHandle stop_handle_;
   machinekit_interfaces::HALBitPinHandle estop_handle_;
+
+  machinekit_interfaces::HALBitPinHandle safety_input_handle_;
+  machinekit_interfaces::HALBitPinHandle enabling_input_handle_;
 };
 
 }  // namespace interruptible_joint_trajectory_controller
@@ -351,6 +372,15 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
   stop_handle_ = bit_rsrc_handles[0];
   estop_handle_ = bit_rsrc_handles[1];
 
+  std::vector<machinekit_interfaces::HALBitPinHandle> bit_rsrc_handles_safety;
+  const std::vector<std::string> bit_rsrc_names_safety = { "safety_input", "enabling_input" };
+  if (!claim_hardware_resources<machinekit_interfaces::HALBitPinInterface,
+                                machinekit_interfaces::HALBitPinHandle>(
+          robot_hw, claimed_resources, bit_rsrc_handles_safety, bit_rsrc_names_safety))
+    return false;
+  safety_input_handle_ = bit_rsrc_handles_safety[0];
+  enabling_input_handle_ = bit_rsrc_handles_safety[1];
+
   ROS_INFO_STREAM_NAMED(this->name_, "Claimed " << claimed_resources.size()
                                                 << " hardware interface types");
   for (auto const& s : claimed_resources)
@@ -379,6 +409,12 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
   boost::shared_ptr<ros::NodeHandle> nh_ptr2 =
       boost::make_shared<ros::NodeHandle>(root_nh);
   velocity_scale_manager_ = boost::make_shared<VelocityScaleManager>(nh_ptr2);
+  comm_thread_ = boost::make_shared<CommThread>();
+  comm_thread_->start();
+
+  safety_input_previous_state_ = true;
+
+  // safety_input_reduced_velocity_pub_ = nh.advertise<redis_store_msgs::ParamUpdate>("/config_manager/update", 1000);
 
   // KLUDGE soft error threshold so jogging with probe active doesn't spam the
   // console
@@ -408,7 +444,59 @@ void InterruptibleJointTrajectoryController<
   double current_scaling_factor =
       velocity_scale_manager_->getCurrentScalingFactor();
 
+  double target_uniform_scale_goal = velocity_scale_manager_->uniform_velocity_scale_->getTargetScalingFactor();
+  // double current_uniform_scale_goal = velocity_scale_manager_->uniform_velocity_scale_->getCurrentScalingFactor();
+
   // double current_scaling_factor = 1.0;
+
+  std::string scale_factor_name = velocity_scale_manager_->uniform_velocity_scale_->SCALE_FACTOR_PARAM_NAME;
+  double velocity_scale_limit_on_safety_input = 0.1;
+
+  if (!safety_input_handle_.get() && safety_input_previous_state_ == true)
+  {
+    // ROS_INFO_STREAM_NAMED(this->name_, "*** SAFETY INPUT INACTIVE ***");
+    scale_factor_before_safety_trip_ = target_uniform_scale_goal;
+
+    if(scale_factor_before_safety_trip_ > velocity_scale_limit_on_safety_input)
+    {
+      velocity_scale_manager_->uniform_velocity_scale_->updateTargetScalingFactor(velocity_scale_limit_on_safety_input);
+
+      redis_store_msgs::ParamUpdate msg;
+      msg.param_name = scale_factor_name;
+
+      std::stringstream stream;
+      stream << std::fixed << std::setprecision(2) << velocity_scale_limit_on_safety_input;
+      msg.param_value = stream.str();
+
+      comm_thread_->send(msg);
+    }
+  }
+  else if (!safety_input_handle_.get() && safety_input_previous_state_ == false)
+  {
+    if(target_uniform_scale_goal != velocity_scale_limit_on_safety_input)
+    {
+    scale_factor_before_safety_trip_ = target_uniform_scale_goal;
+    }
+  }
+
+  else if (safety_input_handle_.get() && safety_input_previous_state_ == false)
+  {
+    if(scale_factor_before_safety_trip_ > velocity_scale_limit_on_safety_input)
+    {
+      velocity_scale_manager_->uniform_velocity_scale_->updateTargetScalingFactor(scale_factor_before_safety_trip_);
+
+      redis_store_msgs::ParamUpdate msg;
+      msg.param_name = scale_factor_name;
+
+      std::stringstream stream;
+      stream << std::fixed << std::setprecision(2) << scale_factor_before_safety_trip_;
+      msg.param_value = stream.str();
+
+      comm_thread_->send(msg);
+    }
+  }
+
+  safety_input_previous_state_ = safety_input_handle_.get();
 
   auto period_now = ros::Duration(current_scaling_factor * period.toSec());
 
