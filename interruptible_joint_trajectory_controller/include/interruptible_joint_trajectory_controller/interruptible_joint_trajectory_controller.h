@@ -444,22 +444,18 @@ void InterruptibleJointTrajectoryController<
   double current_scaling_factor =
       velocity_scale_manager_->getCurrentScalingFactor();
 
-  // double target_uniform_scale_goal = velocity_scale_manager_->uniform_velocity_scale_->getTargetScalingFactor();
   double target_max_vel_scale_goal = velocity_scale_manager_->maxvel_scale_->getTargetScalingFactor();
 
-  // std::string scale_factor_name = velocity_scale_manager_->uniform_velocity_scale_->SCALE_FACTOR_PARAM_NAME;
   std::string scale_factor_name = velocity_scale_manager_->maxvel_scale_->SCALE_FACTOR_PARAM_NAME;
   double velocity_scale_limit_on_safety_input = 0.1;
 
   if (!safety_input_handle_.get() && safety_input_previous_state_ == true)
   {
     // ROS_INFO_STREAM_NAMED(this->name_, "*** SAFETY INPUT INACTIVE ***");
-    // scale_factor_before_safety_trip_ = target_uniform_scale_goal;
     scale_factor_before_safety_trip_ = target_max_vel_scale_goal;
 
     if(scale_factor_before_safety_trip_ > velocity_scale_limit_on_safety_input)
     {
-      // velocity_scale_manager_->uniform_velocity_scale_->updateTargetScalingFactor(velocity_scale_limit_on_safety_input);
       velocity_scale_manager_->maxvel_scale_->updateTargetScalingFactor(velocity_scale_limit_on_safety_input);
 
       redis_store_msgs::ParamUpdate msg;
@@ -474,10 +470,6 @@ void InterruptibleJointTrajectoryController<
   }
   else if (!safety_input_handle_.get() && safety_input_previous_state_ == false)
   {
-    // if(target_uniform_scale_goal != velocity_scale_limit_on_safety_input)
-    // {
-    // scale_factor_before_safety_trip_ = target_uniform_scale_goal;
-    // }
     if(target_max_vel_scale_goal != velocity_scale_limit_on_safety_input)
     {
     scale_factor_before_safety_trip_ = target_max_vel_scale_goal;
@@ -488,7 +480,6 @@ void InterruptibleJointTrajectoryController<
   {
     if(scale_factor_before_safety_trip_ > velocity_scale_limit_on_safety_input)
     {
-      // velocity_scale_manager_->uniform_velocity_scale_->updateTargetScalingFactor(scale_factor_before_safety_trip_);
       velocity_scale_manager_->maxvel_scale_->updateTargetScalingFactor(scale_factor_before_safety_trip_);
 
       redis_store_msgs::ParamUpdate msg;
