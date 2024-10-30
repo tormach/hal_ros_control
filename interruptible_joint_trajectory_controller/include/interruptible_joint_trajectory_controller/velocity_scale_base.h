@@ -8,7 +8,7 @@ class VelocityScaleBase
 {
 public:
   static constexpr double TRANSITION_TIME_INTERPOLATION_TRESH = 0.010;
-  static constexpr double DEFAULT_TRANSITION_TIME = 1.0;  // in seconds
+  static constexpr double DEFAULT_TRANSITION_TIME = 0.2;  // in seconds
   static constexpr double CONTROL_CYCLE_TIME = 0.001;     // in seconds
 
   VelocityScaleBase()
