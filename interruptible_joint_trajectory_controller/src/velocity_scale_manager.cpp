@@ -49,7 +49,7 @@ void VelocityScaleManager::transitionTimeUpdateCallback(
 {
   if (msg->data < 0.0 || msg->data > 1.0)
   {
-    // ROS_INFO("IN CONTROLLER Scaling factor is not valid: %f", msg->data);
+     ROS_ERROR("IN CONTROLLER Scaling factor is not valid: %f", msg->data);
     return;
   }
   updateTransitionTimes(msg->data);
