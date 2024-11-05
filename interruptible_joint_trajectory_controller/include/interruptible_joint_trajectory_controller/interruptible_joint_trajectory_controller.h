@@ -465,7 +465,7 @@ void InterruptibleJointTrajectoryController<
       stream << std::fixed << std::setprecision(2) << velocity_scale_limit_on_safety_input;
       msg.param_value = stream.str();
 
-      comm_thread_->send(msg);
+      //comm_thread_->send(msg);
     }
   }
   else if (!safety_input_handle_.get() && safety_input_previous_state_ == false)
