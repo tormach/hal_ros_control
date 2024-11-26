@@ -26,12 +26,13 @@ void VelocityScaleManager::updateVelocityScales(double period) const
 {
   // speed-up velocity scale transition for slow moves
   // expected value from range [1.0, 10.0]
-  double velocity_scale_compensation_factor =
-      1.0 / active_move_handler_->getVelocityScale();
-  if (velocity_scale_compensation_factor > 10.0)
-  {
-    velocity_scale_compensation_factor = 10.0;
-  }
+  double velocity_scale_compensation_factor = 1.0;
+  //double velocity_scale_compensation_factor =
+      //1.0 / active_move_handler_->getVelocityScale();
+  //if (velocity_scale_compensation_factor > 10.0)
+  //{
+    //velocity_scale_compensation_factor = 10.0;
+  //}
   maxvel_scale_->update(period * velocity_scale_compensation_factor);
   uniform_velocity_scale_->update(period * velocity_scale_compensation_factor);
   feedhold_handler_->update(period * velocity_scale_compensation_factor);
