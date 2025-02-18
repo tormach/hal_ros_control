@@ -3,7 +3,7 @@
 FeedholdHandler::FeedholdHandler(
     boost::shared_ptr<ros::NodeHandle> controller_nh)
   : controller_nh_(controller_nh)
-  , feedhold_(false)  // Initialize to false by default
+  , feedhold_(false)
 {
   const std::string service_name =
       velocity_override_msgs::ServiceNames::FEEDHOLD_SERVICE_NAME;
@@ -13,7 +13,6 @@ FeedholdHandler::FeedholdHandler(
 
 FeedholdHandler::~FeedholdHandler()
 {
-  // Destructor logic here, if needed
 }
 
 bool FeedholdHandler::feedholdServiceCallback(

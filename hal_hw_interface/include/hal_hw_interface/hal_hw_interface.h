@@ -128,6 +128,10 @@ public:
 
   bool create_s32_pin(int*** ptr, hal_pin_dir_t dir, const char* name);
 
+  bool create_float_pin(double*** ptr, hal_pin_dir_t dir, const char* name);
+
+  bool create_int_pin(int*** ptr, hal_pin_dir_t dir, const char* name);
+
   /**
    * \brief Read the state from the robot hardware.
    * \param elapsed_time - period since last run
@@ -191,6 +195,12 @@ protected:
   machinekit_interfaces::HALBitPinInterface hal_bit_pin_interface_;
   machinekit_interfaces::HALS32PinInterface hal_s32_pin_interface_;
 
+
+  hardware_interface::HardwareResourceManager<
+      machinekit_interfaces::HALPinHandle<double>,
+      hardware_interface::DontClaimResources>
+      hal_float_pin_interface_;
+
 private:
   // Joints:  HAL storage
   // - Commands
@@ -246,6 +256,140 @@ private:
   bool enabling_input_event_;      // To pass estop pin value to controller
   bool** enabling_input_pin_ptr_;  // HAL input pin for controller estop event
 
+  double joint1_start_time_;
+  double joint1_duration_;
+  double** joint1_start_time_ptr_;
+  double** joint1_duration_ptr_;
+
+  double joint1_a_;
+  double joint1_b_;
+  double joint1_c_;
+  double joint1_d_;
+  double joint1_e_;
+  double joint1_f_;
+
+  double** joint1_a_ptr_;
+  double** joint1_b_ptr_;
+  double** joint1_c_ptr_;
+  double** joint1_d_ptr_;
+  double** joint1_e_ptr_;
+  double** joint1_f_ptr_;
+
+  double joint2_start_time_;
+  double joint2_duration_;
+  double** joint2_start_time_ptr_;
+  double** joint2_duration_ptr_;
+
+  double joint2_a_;
+  double joint2_b_;
+  double joint2_c_;
+  double joint2_d_;
+  double joint2_e_;
+  double joint2_f_;
+
+  double** joint2_a_ptr_;
+  double** joint2_b_ptr_;
+  double** joint2_c_ptr_;
+  double** joint2_d_ptr_;
+  double** joint2_e_ptr_;
+  double** joint2_f_ptr_;
+
+  double joint3_start_time_;
+  double joint3_duration_;
+  double** joint3_start_time_ptr_;
+  double** joint3_duration_ptr_;
+
+  double joint3_a_;
+  double joint3_b_;
+  double joint3_c_;
+  double joint3_d_;
+  double joint3_e_;
+  double joint3_f_;
+
+  double** joint3_a_ptr_;
+  double** joint3_b_ptr_;
+  double** joint3_c_ptr_;
+  double** joint3_d_ptr_;
+  double** joint3_e_ptr_;
+  double** joint3_f_ptr_;
+
+  double joint4_start_time_;
+  double joint4_duration_;
+  double** joint4_start_time_ptr_;
+  double** joint4_duration_ptr_;
+
+  double joint4_a_;
+  double joint4_b_;
+  double joint4_c_;
+  double joint4_d_;
+  double joint4_e_;
+  double joint4_f_;
+
+  double** joint4_a_ptr_;
+  double** joint4_b_ptr_;
+  double** joint4_c_ptr_;
+  double** joint4_d_ptr_;
+  double** joint4_e_ptr_;
+  double** joint4_f_ptr_;
+
+  double joint5_start_time_;
+  double joint5_duration_;
+  double** joint5_start_time_ptr_;
+  double** joint5_duration_ptr_;
+
+  double joint5_a_;
+  double joint5_b_;
+  double joint5_c_;
+  double joint5_d_;
+  double joint5_e_;
+  double joint5_f_;
+
+  double** joint5_a_ptr_;
+  double** joint5_b_ptr_;
+  double** joint5_c_ptr_;
+  double** joint5_d_ptr_;
+  double** joint5_e_ptr_;
+  double** joint5_f_ptr_;
+
+  double joint6_start_time_;
+  double joint6_duration_;
+  double** joint6_start_time_ptr_;
+  double** joint6_duration_ptr_;
+
+  double joint6_a_;
+  double joint6_b_;
+  double joint6_c_;
+  double joint6_d_;
+  double joint6_e_;
+  double joint6_f_;
+
+  double** joint6_a_ptr_;
+  double** joint6_b_ptr_;
+  double** joint6_c_ptr_;
+  double** joint6_d_ptr_;
+  double** joint6_e_ptr_;
+  double** joint6_f_ptr_;
+
+  double elapsed_trajectory_time;
+  double** elapsed_trajectory_time_ptr_;
+
+  double absolute_time;
+  double** absolute_time_ptr_;
+
+  int total_segments_in_traj;
+  int** total_segments_in_traj_ptr_;
+
+  int current_segment_in_traj;
+  int** current_segment_in_traj_ptr_;
+
+  double velocity_scale;
+  double** velocity_scale_ptr_;
+
+  int feedhold_state;
+  int** feedhold_state_ptr_;
+
+  int move_id;
+  int** move_id_ptr_;
 };  // HalHWInterface
 
 }  // namespace hal_hw_interface

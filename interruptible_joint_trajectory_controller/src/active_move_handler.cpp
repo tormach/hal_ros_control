@@ -1,10 +1,12 @@
 #include "interruptible_joint_trajectory_controller/active_move_handler.h"
+#include <set>
 
 ActiveMoveHandler::ActiveMoveHandler(
     boost::shared_ptr<ros::NodeHandle> controller_nh)
   : controller_nh_(controller_nh)
   , moveType_(velocity_override_msgs::MoveTypes::JOG)
   , velocityScale_(double(1.0))
+  , move_id_(-1)
 {
   const std::string service_name =
       velocity_override_msgs::ServiceNames::NEXT_MOVE_SERVICE_NAME;
@@ -14,7 +16,6 @@ ActiveMoveHandler::ActiveMoveHandler(
 
 ActiveMoveHandler::~ActiveMoveHandler()
 {
-  // Destructor logic here, if needed
 }
 
 bool ActiveMoveHandler::moveTypeServiceCallback(
@@ -31,7 +32,12 @@ bool ActiveMoveHandler::moveTypeServiceCallback(
 
   if (req.move_type == velocity_override_msgs::MoveTypes::PROGRAM_MOVE)
   {
-    ROS_INFO("Received move type: PROGRAM_MOVE");
+    ROS_INFO("Received move type: PROGRAM_MOVE PROCESSING");
+    move_id_++;
+    if(move_id_handle_){
+      move_id_handle_->set(move_id_);
+    }
+    ROS_INFO("Received move type: PROGRAM_MOVE move_id: %d", move_id_);
   }
   else if (req.move_type == velocity_override_msgs::MoveTypes::JOG)
   {
@@ -53,4 +59,12 @@ uint8_t ActiveMoveHandler::getMoveType() const
 double ActiveMoveHandler::getVelocityScale() const
 {
   return velocityScale_;
+}
+
+void ActiveMoveHandler::setMoveIdHandle(machinekit_interfaces::HALS32PinHandle& handle) {
+  move_id_handle_ = &handle;
+}
+
+int ActiveMoveHandler::getMoveId() const {
+  return move_id_;
 }

@@ -33,6 +33,9 @@ public:
   std::shared_ptr<VelocityScale> uniform_velocity_scale_;
   std::shared_ptr<VelocityScale> maxvel_scale_;
 
+  std::shared_ptr<FeedholdHandler> feedhold_handler_;
+  std::shared_ptr<ActiveMoveHandler> active_move_handler_;
+
 private:
   const std::string MAXVEL_SCALE_PARAMETER = "user_config/maximum_velocity_scale";
   const std::string UNIFORM_VEL_SCALE_PARAMETER = "user_config/"
@@ -45,8 +48,6 @@ private:
 
   boost::shared_ptr<ros::NodeHandle> nh_ptr_;
 
-  std::shared_ptr<FeedholdHandler> feedhold_handler_;
-  std::shared_ptr<ActiveMoveHandler> active_move_handler_;
 };
 
 #endif  // VELOCITY_SCALE_MANAGER_H

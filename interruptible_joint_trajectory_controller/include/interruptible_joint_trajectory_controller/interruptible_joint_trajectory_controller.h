@@ -35,6 +35,7 @@
 #include <string>
 #include <memory>
 #include <iomanip>
+#include <cmath>
 
 // Boost
 #include <boost/shared_ptr.hpp>
@@ -70,13 +71,11 @@
 // to offload controller `update` method
 #include <redis_store_msgs/ParamUpdate.h>
 
-//#include <thread>
-//#include <atomic>
-//#include <mutex>
-//#include <condition_variable>
-
 #include <std_msgs/Float64.h>
 #include <std_msgs/String.h>
+
+#include <std_srvs/Trigger.h>
+#include <realtime_tools/realtime_buffer.h>
 
 // Bring in enums
 using machinekit_interfaces::ProbeState;
@@ -93,6 +92,11 @@ using stop_event_msgs::SetNextProbeMoveResponse;
 
 // Separate thread handling updated velocity scale publishing
 #include "interruptible_joint_trajectory_controller/CommThread.h"
+
+// Trajectory recording experiments
+#include <functional>
+#include <numeric>
+#include <joint_trajectory_controller/joint_trajectory_segment.h>
 
 namespace interruptible_joint_trajectory_controller
 {
@@ -113,12 +117,15 @@ struct ProbeSettings
  * execution works.
  *
  */
+
 template <class SegmentImpl, class HardwareInterface>
 class InterruptibleJointTrajectoryController
   : public joint_trajectory_controller::JointTrajectoryController<
         SegmentImpl, HardwareInterface, ProbeSettings>
 {
 protected:
+  using JointTrajectorySegmentType =
+      joint_trajectory_controller::JointTrajectorySegment<SegmentImpl>;
   using JointTrajectoryControllerType =
       typename joint_trajectory_controller::JointTrajectoryController<
           SegmentImpl, HardwareInterface, ProbeSettings>;
@@ -126,6 +133,8 @@ protected:
   using typename JointTrajectoryControllerType::JointTrajectoryConstPtr;
   using typename JointTrajectoryControllerType::RealtimeGoalHandlePtr;
   using typename JointTrajectoryControllerType::Trajectory;
+
+
 
 public:
   InterruptibleJointTrajectoryController();
@@ -149,6 +158,7 @@ protected:
   void handle_stop_event(
       ExtendedTrajectoryPtr, joint_trajectory_controller::TimeData,
       typename JointTrajectoryControllerType::RealtimeGoalHandlePtr);
+
   void handle_probe_transitions(
       ExtendedTrajectoryPtr, joint_trajectory_controller::TimeData,
       typename JointTrajectoryControllerType::RealtimeGoalHandlePtr);
@@ -208,11 +218,11 @@ protected:
 
   boost::shared_ptr<VelocityScaleManager> velocity_scale_manager_;
   bool safety_input_previous_state_;
-  boost::shared_ptr<CommThread> comm_thread_;  // Use shared_ptr for automatic memory management
+  boost::shared_ptr<CommThread> comm_thread_;  // Use shared_ptr for automatic
+                                               // memory management
   double scale_factor_before_safety_trip_;
 
-  // ros::Publisher safety_input_reduced_velocity_pub_;
-
+  std::vector<const JointTrajectorySegmentType*> current_segments_;
 
   std::vector<machinekit_interfaces::JointEventDataHandle> probe_joint_results_;
   machinekit_interfaces::ProbeHandle probe_handle_;
@@ -226,6 +236,85 @@ protected:
 
   machinekit_interfaces::HALBitPinHandle safety_input_handle_;
   machinekit_interfaces::HALBitPinHandle enabling_input_handle_;
+
+  machinekit_interfaces::HALPinHandle<double> joint1_start_time_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint1_duration_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint1_a_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint1_b_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint1_c_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint1_d_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint1_e_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint1_f_handle_;
+
+  machinekit_interfaces::HALPinHandle<double> joint2_start_time_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint2_duration_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint2_a_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint2_b_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint2_c_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint2_d_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint2_e_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint2_f_handle_;
+
+  machinekit_interfaces::HALPinHandle<double> joint3_start_time_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint3_duration_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint3_a_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint3_b_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint3_c_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint3_d_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint3_e_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint3_f_handle_;
+
+  machinekit_interfaces::HALPinHandle<double> joint4_start_time_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint4_duration_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint4_a_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint4_b_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint4_c_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint4_d_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint4_e_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint4_f_handle_;
+
+  machinekit_interfaces::HALPinHandle<double> joint5_start_time_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint5_duration_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint5_a_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint5_b_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint5_c_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint5_d_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint5_e_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint5_f_handle_;
+
+  machinekit_interfaces::HALPinHandle<double> joint6_start_time_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint6_duration_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint6_a_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint6_b_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint6_c_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint6_d_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint6_e_handle_;
+  machinekit_interfaces::HALPinHandle<double> joint6_f_handle_;
+
+
+  machinekit_interfaces::HALS32PinHandle move_id_handle_;
+  machinekit_interfaces::HALS32PinHandle feedhold_state_handle_;
+  machinekit_interfaces::HALS32PinHandle total_segments_in_traj_handle_;
+  machinekit_interfaces::HALS32PinHandle current_segment_in_traj_handle_;
+
+machinekit_interfaces::HALPinHandle<double> velocity_scale_handle_;
+machinekit_interfaces::HALPinHandle<double> elapsed_trajectory_time_handle_;
+machinekit_interfaces::HALPinHandle<double> absolute_time_handle_;
+
+  // Move ID tracking
+  int move_id;
+  int** move_id_ptr_;
+
+  // Feedhold state tracking
+  int feedhold_state;
+  int** feedhold_state_ptr_;
+
+  // Trajectory segment tracking
+  int total_segments_in_traj;
+  int** total_segments_in_traj_ptr_;
+
+  int current_segment_in_traj;
+  int** current_segment_in_traj_ptr_;
 };
 
 }  // namespace interruptible_joint_trajectory_controller
@@ -373,13 +462,185 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
   estop_handle_ = bit_rsrc_handles[1];
 
   std::vector<machinekit_interfaces::HALBitPinHandle> bit_rsrc_handles_safety;
-  const std::vector<std::string> bit_rsrc_names_safety = { "safety_input", "enabling_input" };
+  const std::vector<std::string> bit_rsrc_names_safety = { "safety_input",
+                                                           "enabling_input" };
   if (!claim_hardware_resources<machinekit_interfaces::HALBitPinInterface,
                                 machinekit_interfaces::HALBitPinHandle>(
-          robot_hw, claimed_resources, bit_rsrc_handles_safety, bit_rsrc_names_safety))
+          robot_hw, claimed_resources, bit_rsrc_handles_safety,
+          bit_rsrc_names_safety))
     return false;
   safety_input_handle_ = bit_rsrc_handles_safety[0];
   enabling_input_handle_ = bit_rsrc_handles_safety[1];
+
+  std::vector<machinekit_interfaces::HALPinHandle<double>>
+      joint1_float_rsrc_handles;
+  const std::vector<std::string> joint1_float_rsrc_names = {
+    "joint1_start_time", "joint1_duration", "joint1_a", "joint1_b",
+    "joint1_c",          "joint1_d",        "joint1_e", "joint1_f"
+  };
+
+  if (!claim_hardware_resources<hardware_interface::HardwareResourceManager<
+                                    machinekit_interfaces::HALPinHandle<double>,
+                                    hardware_interface::DontClaimResources>,
+                                machinekit_interfaces::HALPinHandle<double>>(
+          robot_hw, claimed_resources, joint1_float_rsrc_handles,
+          joint1_float_rsrc_names))
+    return false;
+
+  joint1_start_time_handle_ = joint1_float_rsrc_handles[0];
+  joint1_duration_handle_ = joint1_float_rsrc_handles[1];
+  joint1_a_handle_ = joint1_float_rsrc_handles[2];
+  joint1_b_handle_ = joint1_float_rsrc_handles[3];
+  joint1_c_handle_ = joint1_float_rsrc_handles[4];
+  joint1_d_handle_ = joint1_float_rsrc_handles[5];
+  joint1_e_handle_ = joint1_float_rsrc_handles[6];
+  joint1_f_handle_ = joint1_float_rsrc_handles[7];
+
+  // Joint 2
+  std::vector<machinekit_interfaces::HALPinHandle<double>>
+      joint2_float_rsrc_handles;
+  const std::vector<std::string> joint2_float_rsrc_names = {
+    "joint2_start_time", "joint2_duration", "joint2_a", "joint2_b",
+    "joint2_c",          "joint2_d",        "joint2_e", "joint2_f"
+  };
+
+  if (!claim_hardware_resources<hardware_interface::HardwareResourceManager<
+                                    machinekit_interfaces::HALPinHandle<double>,
+                                    hardware_interface::DontClaimResources>,
+                                machinekit_interfaces::HALPinHandle<double>>(
+          robot_hw, claimed_resources, joint2_float_rsrc_handles,
+          joint2_float_rsrc_names))
+    return false;
+
+  joint2_start_time_handle_ = joint2_float_rsrc_handles[0];
+  joint2_duration_handle_ = joint2_float_rsrc_handles[1];
+  joint2_a_handle_ = joint2_float_rsrc_handles[2];
+  joint2_b_handle_ = joint2_float_rsrc_handles[3];
+  joint2_c_handle_ = joint2_float_rsrc_handles[4];
+  joint2_d_handle_ = joint2_float_rsrc_handles[5];
+  joint2_e_handle_ = joint2_float_rsrc_handles[6];
+  joint2_f_handle_ = joint2_float_rsrc_handles[7];
+
+  // Joint 3
+  std::vector<machinekit_interfaces::HALPinHandle<double>>
+      joint3_float_rsrc_handles;
+  const std::vector<std::string> joint3_float_rsrc_names = {
+    "joint3_start_time", "joint3_duration", "joint3_a", "joint3_b",
+    "joint3_c",          "joint3_d",        "joint3_e", "joint3_f"
+  };
+
+  if (!claim_hardware_resources<hardware_interface::HardwareResourceManager<
+                                    machinekit_interfaces::HALPinHandle<double>,
+                                    hardware_interface::DontClaimResources>,
+                                machinekit_interfaces::HALPinHandle<double>>(
+          robot_hw, claimed_resources, joint3_float_rsrc_handles,
+          joint3_float_rsrc_names))
+    return false;
+
+  joint3_start_time_handle_ = joint3_float_rsrc_handles[0];
+  joint3_duration_handle_ = joint3_float_rsrc_handles[1];
+  joint3_a_handle_ = joint3_float_rsrc_handles[2];
+  joint3_b_handle_ = joint3_float_rsrc_handles[3];
+  joint3_c_handle_ = joint3_float_rsrc_handles[4];
+  joint3_d_handle_ = joint3_float_rsrc_handles[5];
+  joint3_e_handle_ = joint3_float_rsrc_handles[6];
+  joint3_f_handle_ = joint3_float_rsrc_handles[7];
+
+  // Joint 4
+  std::vector<machinekit_interfaces::HALPinHandle<double>>
+      joint4_float_rsrc_handles;
+  const std::vector<std::string> joint4_float_rsrc_names = {
+    "joint4_start_time", "joint4_duration", "joint4_a", "joint4_b",
+    "joint4_c",          "joint4_d",        "joint4_e", "joint4_f"
+  };
+
+  if (!claim_hardware_resources<hardware_interface::HardwareResourceManager<
+                                    machinekit_interfaces::HALPinHandle<double>,
+                                    hardware_interface::DontClaimResources>,
+                                machinekit_interfaces::HALPinHandle<double>>(
+          robot_hw, claimed_resources, joint4_float_rsrc_handles,
+          joint4_float_rsrc_names))
+    return false;
+
+  joint4_start_time_handle_ = joint4_float_rsrc_handles[0];
+  joint4_duration_handle_ = joint4_float_rsrc_handles[1];
+  joint4_a_handle_ = joint4_float_rsrc_handles[2];
+  joint4_b_handle_ = joint4_float_rsrc_handles[3];
+  joint4_c_handle_ = joint4_float_rsrc_handles[4];
+  joint4_d_handle_ = joint4_float_rsrc_handles[5];
+  joint4_e_handle_ = joint4_float_rsrc_handles[6];
+  joint4_f_handle_ = joint4_float_rsrc_handles[7];
+
+  // Joint 5
+  std::vector<machinekit_interfaces::HALPinHandle<double>>
+      joint5_float_rsrc_handles;
+  const std::vector<std::string> joint5_float_rsrc_names = {
+    "joint5_start_time", "joint5_duration", "joint5_a", "joint5_b",
+    "joint5_c",          "joint5_d",        "joint5_e", "joint5_f"
+  };
+
+  if (!claim_hardware_resources<hardware_interface::HardwareResourceManager<
+                                    machinekit_interfaces::HALPinHandle<double>,
+                                    hardware_interface::DontClaimResources>,
+                                machinekit_interfaces::HALPinHandle<double>>(
+          robot_hw, claimed_resources, joint5_float_rsrc_handles,
+          joint5_float_rsrc_names))
+    return false;
+
+  joint5_start_time_handle_ = joint5_float_rsrc_handles[0];
+  joint5_duration_handle_ = joint5_float_rsrc_handles[1];
+  joint5_a_handle_ = joint5_float_rsrc_handles[2];
+  joint5_b_handle_ = joint5_float_rsrc_handles[3];
+  joint5_c_handle_ = joint5_float_rsrc_handles[4];
+  joint5_d_handle_ = joint5_float_rsrc_handles[5];
+  joint5_e_handle_ = joint5_float_rsrc_handles[6];
+  joint5_f_handle_ = joint5_float_rsrc_handles[7];
+
+  // Joint 6
+  std::vector<machinekit_interfaces::HALPinHandle<double>>
+      joint6_float_rsrc_handles;
+  const std::vector<std::string> joint6_float_rsrc_names = {
+    "joint6_start_time", "joint6_duration", "joint6_a", "joint6_b",
+    "joint6_c",          "joint6_d",        "joint6_e", "joint6_f"
+  };
+
+  if (!claim_hardware_resources<hardware_interface::HardwareResourceManager<
+                                    machinekit_interfaces::HALPinHandle<double>,
+                                    hardware_interface::DontClaimResources>,
+                                machinekit_interfaces::HALPinHandle<double>>(
+          robot_hw, claimed_resources, joint6_float_rsrc_handles,
+          joint6_float_rsrc_names))
+    return false;
+
+  joint6_start_time_handle_ = joint6_float_rsrc_handles[0];
+  joint6_duration_handle_ = joint6_float_rsrc_handles[1];
+  joint6_a_handle_ = joint6_float_rsrc_handles[2];
+  joint6_b_handle_ = joint6_float_rsrc_handles[3];
+  joint6_c_handle_ = joint6_float_rsrc_handles[4];
+  joint6_d_handle_ = joint6_float_rsrc_handles[5];
+  joint6_e_handle_ = joint6_float_rsrc_handles[6];
+  joint6_f_handle_ = joint6_float_rsrc_handles[7];
+
+  // TODO: Common Extra float pins
+
+  std::vector<machinekit_interfaces::HALPinHandle<double>>
+      common_extra_float_rsrc_handles;
+  const std::vector<std::string> common_extra_float_rsrc_names = {
+    "velocity_scale", "elapsed_trajectory_time", "absolute_time"
+  };
+
+  if (!claim_hardware_resources<hardware_interface::HardwareResourceManager<
+                                    machinekit_interfaces::HALPinHandle<double>,
+                                    hardware_interface::DontClaimResources>,
+                                machinekit_interfaces::HALPinHandle<double>>(
+          robot_hw, claimed_resources, common_extra_float_rsrc_handles,
+          common_extra_float_rsrc_names))
+    return false;
+
+  velocity_scale_handle_ = common_extra_float_rsrc_handles[0];
+  elapsed_trajectory_time_handle_ = common_extra_float_rsrc_handles[1];
+  absolute_time_handle_ = common_extra_float_rsrc_handles[2];
+
 
   ROS_INFO_STREAM_NAMED(this->name_, "Claimed " << claimed_resources.size()
                                                 << " hardware interface types");
@@ -414,8 +675,6 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
 
   safety_input_previous_state_ = true;
 
-  // safety_input_reduced_velocity_pub_ = nh.advertise<redis_store_msgs::ParamUpdate>("/config_manager/update", 1000);
-
   // KLUDGE soft error threshold so jogging with probe active doesn't spam the
   // console
   jog_err_threshold_ = 32;
@@ -424,6 +683,36 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
   // success
   this->state_ = controller_interface::Controller<
       HardwareInterface>::ControllerState::INITIALIZED;
+
+  // Get the HALS32PinInterface
+  auto* s32_pin_interface = robot_hw->get<machinekit_interfaces::HALS32PinInterface>();
+  if (!s32_pin_interface) {
+      ROS_ERROR("Failed to get HALS32PinInterface");
+      return false;
+  }
+
+  // Set up the vector of pin handles and names
+  std::vector<machinekit_interfaces::HALS32PinHandle> s32_rsrc_handles;
+  const std::vector<std::string> s32_rsrc_names = {
+      "move_id", 
+      "feedhold_state",
+      "total_segments_in_traj",
+      "current_segment_in_traj"
+  };
+
+  // Claim all S32 pins at once
+  if (!claim_hardware_resources<machinekit_interfaces::HALS32PinInterface,
+                              machinekit_interfaces::HALS32PinHandle>(
+          robot_hw, claimed_resources, s32_rsrc_handles, s32_rsrc_names))
+      return false;
+
+  // Assign the handles and their pointers
+  move_id_handle_ = s32_rsrc_handles[0];
+  velocity_scale_manager_->active_move_handler_->setMoveIdHandle(move_id_handle_);
+  feedhold_state_handle_ = s32_rsrc_handles[1];
+  total_segments_in_traj_handle_ = s32_rsrc_handles[2];
+  current_segment_in_traj_handle_ = s32_rsrc_handles[3];
+
   return true;
 }
 
@@ -444,49 +733,61 @@ void InterruptibleJointTrajectoryController<
   double current_scaling_factor =
       velocity_scale_manager_->getCurrentScalingFactor();
 
-  double target_max_vel_scale_goal = velocity_scale_manager_->maxvel_scale_->getTargetScalingFactor();
+  velocity_scale_handle_.set(current_scaling_factor);
 
-  std::string scale_factor_name = velocity_scale_manager_->maxvel_scale_->SCALE_FACTOR_PARAM_NAME;
+  this->velocity_scale_ = current_scaling_factor;
+
+  // Update feedhold state
+  bool feedhold_active = velocity_scale_manager_->feedhold_handler_->getFeedholdStatus();
+
+  feedhold_state_handle_.set(feedhold_active ? 1 : 0);
+
+  double target_max_vel_scale_goal =
+      velocity_scale_manager_->maxvel_scale_->getTargetScalingFactor();
+
+  std::string scale_factor_name =
+      velocity_scale_manager_->maxvel_scale_->SCALE_FACTOR_PARAM_NAME;
   double velocity_scale_limit_on_safety_input = 0.1;
 
   if (!safety_input_handle_.get() && safety_input_previous_state_ == true)
   {
-    // ROS_INFO_STREAM_NAMED(this->name_, "*** SAFETY INPUT INACTIVE ***");
     scale_factor_before_safety_trip_ = target_max_vel_scale_goal;
 
-    if(scale_factor_before_safety_trip_ > velocity_scale_limit_on_safety_input)
+    if (scale_factor_before_safety_trip_ > velocity_scale_limit_on_safety_input)
     {
-      velocity_scale_manager_->maxvel_scale_->updateTargetScalingFactor(velocity_scale_limit_on_safety_input);
+      velocity_scale_manager_->maxvel_scale_->updateTargetScalingFactor(
+          velocity_scale_limit_on_safety_input);
 
       redis_store_msgs::ParamUpdate msg;
       msg.param_name = scale_factor_name;
 
       std::stringstream stream;
-      stream << std::fixed << std::setprecision(2) << velocity_scale_limit_on_safety_input;
+      stream << std::fixed << std::setprecision(2)
+             << velocity_scale_limit_on_safety_input;
       msg.param_value = stream.str();
-
-      //comm_thread_->send(msg);
     }
   }
   else if (!safety_input_handle_.get() && safety_input_previous_state_ == false)
   {
-    if(target_max_vel_scale_goal != velocity_scale_limit_on_safety_input)
+    if (target_max_vel_scale_goal != velocity_scale_limit_on_safety_input)
     {
-    scale_factor_before_safety_trip_ = target_max_vel_scale_goal;
+      scale_factor_before_safety_trip_ = target_max_vel_scale_goal;
     }
   }
 
   else if (safety_input_handle_.get() && safety_input_previous_state_ == false)
   {
-    if(scale_factor_before_safety_trip_ > velocity_scale_limit_on_safety_input)
+    if (scale_factor_before_safety_trip_ > velocity_scale_limit_on_safety_input)
     {
-      velocity_scale_manager_->maxvel_scale_->updateTargetScalingFactor(scale_factor_before_safety_trip_);
+      velocity_scale_manager_->maxvel_scale_->updateTargetScalingFactor(
+          scale_factor_before_safety_trip_);
 
       redis_store_msgs::ParamUpdate msg;
       msg.param_name = scale_factor_name;
 
       std::stringstream stream;
-      stream << std::fixed << std::setprecision(2) << scale_factor_before_safety_trip_;
+      stream << std::fixed << std::setprecision(2)
+             << scale_factor_before_safety_trip_;
       msg.param_value = stream.str();
 
       comm_thread_->send(msg);
@@ -500,22 +801,158 @@ void InterruptibleJointTrajectoryController<
   JointTrajectoryControllerType::prepare_for_update(time, period_now,
                                                     curr_traj_ptr, time_data);
 
-  // JointTrajectoryControllerType::prepare_for_update(time, period,
-  // curr_traj_ptr,
-  //                                                   time_data);
+  double elapsed_time_within_current_traj = time_data.uptime.toSec();
+  elapsed_trajectory_time_handle_.set(elapsed_time_within_current_traj);
+
+  double absolute_time_now = time.toSec();  // Current time, e.g. 1738434042.016589
+
+  // choose different time reference
+  // double time_since_jan1_2025 = absolute_time_now - 1735689600.0;  // Time since Jan 1st 2025
+  double time_since_feb1_2025 = absolute_time_now - 1738368000.0;  // Time since Feb 1st 2025
+
+  absolute_time_handle_.set(time_since_feb1_2025);
+
+  if (!curr_traj_ptr->started)
+  {
+    curr_traj_ptr->started = true;
+    this->rt_stop_event_triggered_ = false;
+
+    int total_segments = -1;
+    for (const auto& joint_traj : curr_traj_ptr->trajectory) {
+      total_segments = std::max(total_segments, static_cast<int>(joint_traj.size()));
+    }
+    total_segments_in_traj_handle_.set(total_segments);
+  }
+
+  current_segments_.clear();
+
+  int current_segment_idx = -1;
+
+  // For each joint, find and store the current segment
+  for (size_t i = 0; i < this->getNumberOfJoints(); ++i)
+  {
+    auto& joint_trajectory = curr_traj_ptr->trajectory[i];
+    auto segment_it = trajectory_interface::findSegment(
+        joint_trajectory, time_data.uptime.toSec());
+
+    if (segment_it != joint_trajectory.end())
+    {
+      current_segments_.push_back(&(*segment_it));
+
+      // Get the segment index (distance from beginning)
+      int idx = std::distance(joint_trajectory.begin(), segment_it);
+      current_segment_idx = std::max(current_segment_idx, idx);
+    }
+  }
+
+  current_segment_in_traj_handle_.set(current_segment_idx);
+
+  int joint_idx = 0;
+
+  // capture quintic trajectory segment coefficients for each joint
+  if (!current_segments_.empty() && current_segments_[joint_idx] != nullptr)
+  {
+    // Use the first position value as an example
+    joint1_start_time_handle_.set(current_segments_[joint_idx]->start_time_);
+    joint1_duration_handle_.set(current_segments_[joint_idx]->duration_);
+    joint1_a_handle_.set(current_segments_[joint_idx]->coefs_[0][5]);
+    joint1_b_handle_.set(current_segments_[joint_idx]->coefs_[0][4]);
+    joint1_c_handle_.set(current_segments_[joint_idx]->coefs_[0][3]);
+    joint1_d_handle_.set(current_segments_[joint_idx]->coefs_[0][2]);
+    joint1_e_handle_.set(current_segments_[joint_idx]->coefs_[0][1]);
+    joint1_f_handle_.set(current_segments_[joint_idx]->coefs_[0][0]);
+  }
+
+  joint_idx = 1;
+
+  if (!current_segments_.empty() && current_segments_[joint_idx] != nullptr)
+  {
+    // Use the first position value as an example
+    joint2_start_time_handle_.set(current_segments_[joint_idx]->start_time_);
+    joint2_duration_handle_.set(current_segments_[joint_idx]->duration_);
+    joint2_a_handle_.set(current_segments_[joint_idx]->coefs_[0][5]);
+    joint2_b_handle_.set(current_segments_[joint_idx]->coefs_[0][4]);
+    joint2_c_handle_.set(current_segments_[joint_idx]->coefs_[0][3]);
+    joint2_d_handle_.set(current_segments_[joint_idx]->coefs_[0][2]);
+    joint2_e_handle_.set(current_segments_[joint_idx]->coefs_[0][1]);
+    joint2_f_handle_.set(current_segments_[joint_idx]->coefs_[0][0]);
+  }
+
+  joint_idx = 2;
+
+  if (!current_segments_.empty() && current_segments_[joint_idx] != nullptr)
+  {
+    // Use the first position value as an example
+    joint3_start_time_handle_.set(current_segments_[joint_idx]->start_time_);
+    joint3_duration_handle_.set(current_segments_[joint_idx]->duration_);
+    joint3_a_handle_.set(current_segments_[joint_idx]->coefs_[0][5]);
+    joint3_b_handle_.set(current_segments_[joint_idx]->coefs_[0][4]);
+    joint3_c_handle_.set(current_segments_[joint_idx]->coefs_[0][3]);
+    joint3_d_handle_.set(current_segments_[joint_idx]->coefs_[0][2]);
+    joint3_e_handle_.set(current_segments_[joint_idx]->coefs_[0][1]);
+    joint3_f_handle_.set(current_segments_[joint_idx]->coefs_[0][0]);
+  }
+
+  joint_idx = 3;
+
+  if (!current_segments_.empty() && current_segments_[joint_idx] != nullptr)
+  {
+    // Use the first position value as an example
+    joint4_start_time_handle_.set(current_segments_[joint_idx]->start_time_);
+    joint4_duration_handle_.set(current_segments_[joint_idx]->duration_);
+    joint4_a_handle_.set(current_segments_[joint_idx]->coefs_[0][5]);
+    joint4_b_handle_.set(current_segments_[joint_idx]->coefs_[0][4]);
+    joint4_c_handle_.set(current_segments_[joint_idx]->coefs_[0][3]);
+    joint4_d_handle_.set(current_segments_[joint_idx]->coefs_[0][2]);
+    joint4_e_handle_.set(current_segments_[joint_idx]->coefs_[0][1]);
+    joint4_f_handle_.set(current_segments_[joint_idx]->coefs_[0][0]);
+  }
+
+  joint_idx = 4;
+
+  if (!current_segments_.empty() && current_segments_[joint_idx] != nullptr)
+  {
+    // Use the first position value as an example
+    joint5_start_time_handle_.set(current_segments_[joint_idx]->start_time_);
+    joint5_duration_handle_.set(current_segments_[joint_idx]->duration_);
+    joint5_a_handle_.set(current_segments_[joint_idx]->coefs_[0][5]);
+    joint5_b_handle_.set(current_segments_[joint_idx]->coefs_[0][4]);
+    joint5_c_handle_.set(current_segments_[joint_idx]->coefs_[0][3]);
+    joint5_d_handle_.set(current_segments_[joint_idx]->coefs_[0][2]);
+    joint5_e_handle_.set(current_segments_[joint_idx]->coefs_[0][1]);
+    joint5_f_handle_.set(current_segments_[joint_idx]->coefs_[0][0]);
+  }
+
+  joint_idx = 5;
+
+  if (!current_segments_.empty() && current_segments_[joint_idx] != nullptr)
+  {
+    // Use the first position value as an example
+    joint6_start_time_handle_.set(current_segments_[joint_idx]->start_time_);
+    joint6_duration_handle_.set(current_segments_[joint_idx]->duration_);
+    joint6_a_handle_.set(current_segments_[joint_idx]->coefs_[0][5]);
+    joint6_b_handle_.set(current_segments_[joint_idx]->coefs_[0][4]);
+    joint6_c_handle_.set(current_segments_[joint_idx]->coefs_[0][3]);
+    joint6_d_handle_.set(current_segments_[joint_idx]->coefs_[0][2]);
+    joint6_e_handle_.set(current_segments_[joint_idx]->coefs_[0][1]);
+    joint6_f_handle_.set(current_segments_[joint_idx]->coefs_[0][0]);
+  }
 
   typename JointTrajectoryControllerType::RealtimeGoalHandlePtr
       current_active_goal(this->rt_active_goal_);
 
   // React to estop and stop events
+
   handle_estop_event(curr_traj_ptr, time_data, current_active_goal);
   handle_stop_event(curr_traj_ptr, time_data, current_active_goal);
 
   // React to probe transitions
   handle_probe_transitions(curr_traj_ptr, time_data, current_active_goal);
 
+  const double const_current_scaling_factor = current_scaling_factor;
+
   JointTrajectoryControllerType::update_joint_trajectory(
-      curr_traj_ptr->trajectory, time_data, period);
+      curr_traj_ptr->trajectory, time_data, period_now, const_current_scaling_factor);
 }
 
 template <class SegmentImpl, class HardwareInterface>
@@ -546,6 +983,8 @@ void InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
   if (!stop_handle_.get())
     return;  // No event
 
+  this->setHoldPosition(time_data.uptime, current_active_goal);
+
   error_code_.set(GetJointTrajectoryErrorContextResponse::HARDWARE_STOP_EVENT);
   this->cancelActiveGoalWithError(
       current_active_goal, time_data.uptime,
@@ -553,6 +992,7 @@ void InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
   // This is a request to the controller; mark request completed
   stop_handle_.set(0);
 }
+
 
 template <class SegmentImpl, class HardwareInterface>
 void InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
@@ -833,5 +1273,6 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
   }
   return res;
 }
+
 
 }  // namespace interruptible_joint_trajectory_controller

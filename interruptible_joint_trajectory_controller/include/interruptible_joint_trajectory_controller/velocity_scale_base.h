@@ -2,48 +2,44 @@
 #define VELOCITY_SCALE_BASE_H
 
 #include <atomic>
-#include <cmath>
-#include <algorithm>
+#include <cmath>  // for std::abs
 
 class VelocityScaleBase
 {
 public:
-    static constexpr double TRANSITION_TIME_INTERPOLATION_TRESH = 0.010;
-    static constexpr double DEFAULT_TRANSITION_TIME = 0.2;  // in seconds
-    static constexpr double CONTROL_CYCLE_TIME = 0.001;     // in seconds
-    static constexpr double STOP_DECEL_TIME = 0.05;        // 50ms for emergency stop
-    static constexpr double NORMAL_TRANSITION_RATE = CONTROL_CYCLE_TIME / DEFAULT_TRANSITION_TIME;
-    static constexpr double STOP_DECEL_RATE = CONTROL_CYCLE_TIME / STOP_DECEL_TIME;  // Much faster deceleration for stop
+  static constexpr double TRANSITION_TIME_INTERPOLATION_TRESH = 0.0015;
+  static constexpr double DEFAULT_TRANSITION_TIME = 0.2;  // in seconds
+  static constexpr double CONTROL_CYCLE_TIME = 0.001;     // in seconds
 
-    VelocityScaleBase()
-    {
-        rt_transition_time_.store(DEFAULT_TRANSITION_TIME);
-        scaling_factor_increment_ = NORMAL_TRANSITION_RATE;
-        is_stop_active_ = false;
-    }
+  VelocityScaleBase()
+  {
+    rt_transition_time_.store(DEFAULT_TRANSITION_TIME);
+    scaling_factor_increment_ = CONTROL_CYCLE_TIME / DEFAULT_TRANSITION_TIME;
+  }
 
-    void update(double period);
-    void updateTargetScalingFactor(double target_factor);
-    void updateTransitionTime(double transition_time);
-    void triggerStop();  // New method to activate emergency stop
-    void clearStop();    // New method to clear stop state
+  void update(double period);  // Update scaling factor
+  void updateTargetScalingFactor(double target_factor);  // Update scaling
+                                                         // factor
+  void updateTransitionTime(double transition_time);
+  double getCurrentScalingFactor() const
+  {
+    return rt_current_scaling_factor_.load();
+  }
 
-    double getCurrentScalingFactor() const
-    {
-        return rt_current_scaling_factor_.load();
-    }
-
-    double getTargetScalingFactor() const
-    {
-        return rt_target_scaling_factor_.load();
-    }
+  double getTargetScalingFactor() const
+  {
+    return rt_target_scaling_factor_.load();
+  }
 
 protected:
-    std::atomic<double> rt_target_scaling_factor_{ 1.0 };
-    std::atomic<double> rt_current_scaling_factor_{ 1.0 };
-    std::atomic<double> rt_transition_time_;
-    std::atomic<bool> is_stop_active_{ false };
-    double scaling_factor_increment_;
+  // scalling factor that is commanded by slider or safety input
+  // its value will be reached by the `rt_current_scaling_factor_` in the time defined by the `rt_transition_time_`
+  std::atomic<double> rt_target_scaling_factor_{ 1.0 };   // overwritten by
+                                                          // derived class
+  std::atomic<double> rt_current_scaling_factor_{ 1.0 };  // overwritten by
+                                                          // derived class
+  std::atomic<double> rt_transition_time_;
+  double scaling_factor_increment_;
 };
 
-#endif // VELOCITY_SCALE_BASE_H
+#endif  // VELOCITY_SCALE_BASE_H

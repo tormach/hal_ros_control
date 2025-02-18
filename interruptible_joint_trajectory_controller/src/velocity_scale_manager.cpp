@@ -1,10 +1,8 @@
 #include "interruptible_joint_trajectory_controller/velocity_scale_manager.h"
 
-// Constructor
-// VelocityScaleManager::VelocityScaleManager(ros::NodeHandle& controller_nh) {
 VelocityScaleManager::VelocityScaleManager(
     boost::shared_ptr<ros::NodeHandle> controller_nh)
-  : nh_ptr_(controller_nh)  // Store the shared_ptr for later use
+  : nh_ptr_(controller_nh)
 {
   maxvel_scale_ =
       std::make_shared<VelocityScale>(controller_nh, MAXVEL_SCALE_PARAMETER);
@@ -12,11 +10,7 @@ VelocityScaleManager::VelocityScaleManager(
       controller_nh, UNIFORM_VEL_SCALE_PARAMETER);
   feedhold_handler_ = std::make_shared<FeedholdHandler>(controller_nh);
   active_move_handler_ = std::make_shared<ActiveMoveHandler>(controller_nh);
-  // safety_pin_interface_ = machinekit_interfaces::HALBitPinInterface();
 
-  // safety_pin_interface_.registerHandle();
-
-  // Subscribe to ROS topics
   velocity_transition_time_subscriber_ = controller_nh->subscribe(
       VEL_TRANSITION_TIME_TOPIC_NAME, 10,
       &VelocityScaleManager::transitionTimeUpdateCallback, this);
@@ -24,15 +18,7 @@ VelocityScaleManager::VelocityScaleManager(
 
 void VelocityScaleManager::updateVelocityScales(double period) const
 {
-  // speed-up velocity scale transition for slow moves
-  // expected value from range [1.0, 10.0]
   double velocity_scale_compensation_factor = 1.0;
-  //double velocity_scale_compensation_factor =
-      //1.0 / active_move_handler_->getVelocityScale();
-  //if (velocity_scale_compensation_factor > 10.0)
-  //{
-    //velocity_scale_compensation_factor = 10.0;
-  //}
   maxvel_scale_->update(period * velocity_scale_compensation_factor);
   uniform_velocity_scale_->update(period * velocity_scale_compensation_factor);
   feedhold_handler_->update(period * velocity_scale_compensation_factor);
@@ -60,8 +46,6 @@ double VelocityScaleManager::getCurrentScalingFactor() const
 {
   int current_move_type = active_move_handler_->getMoveType();
 
-  // if(current_move_type == velocity_override_msgs::MoveTypes::PROGRAM_MOVE ||
-  // true)
   if (current_move_type == velocity_override_msgs::MoveTypes::PROGRAM_MOVE)
   {
     double move_velocity_scale = active_move_handler_->getVelocityScale();
@@ -71,7 +55,7 @@ double VelocityScaleManager::getCurrentScalingFactor() const
         uniform_velocity_scale_->getCurrentScalingFactor() *
         feedhold_handler_->getCurrentScalingFactor();
 
-    // flatten the scaling factor if it is above the maxvel limit
+    // flatten the scaling factor if it is above the maxvel limit defined by the move
     if (move_velocity_scale > current_maxvel_limit)
     {
       scale_factor_candiate *= current_maxvel_limit / move_velocity_scale;

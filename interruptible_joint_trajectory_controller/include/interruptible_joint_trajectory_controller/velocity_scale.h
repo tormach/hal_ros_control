@@ -12,17 +12,15 @@
 class VelocityScale : public VelocityScaleBase
 {
 public:
-  static constexpr double TRANSITION_TIME_INTERPOLATION_TRESH = 0.010;
-  // TODO: make this const
+  static constexpr double TRANSITION_TIME_INTERPOLATION_TRESH = 0.0015;
   const std::string CONFIG_MANAGER_TOPIC_NAME{ "/config_manager/update" };
 
   explicit VelocityScale(
       boost::shared_ptr<ros::NodeHandle> controller_nh,
-      const std::string& scale_factor_param_name);  // constructor
+      const std::string& scale_factor_param_name);
 
   ~VelocityScale()
   {
-    // ROS_WARN("VelocityScale DESTRUCTOR");
   }
 
   void paramUpdateCallback(const redis_store_msgs::ParamUpdate::ConstPtr& msg);
