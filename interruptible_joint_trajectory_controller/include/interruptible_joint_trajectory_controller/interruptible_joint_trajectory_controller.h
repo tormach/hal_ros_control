@@ -694,7 +694,7 @@ bool InterruptibleJointTrajectoryController<SegmentImpl, HardwareInterface>::
   // Set up the vector of pin handles and names
   std::vector<machinekit_interfaces::HALS32PinHandle> s32_rsrc_handles;
   const std::vector<std::string> s32_rsrc_names = {
-      "move_id", 
+      "move_id",
       "feedhold_state",
       "total_segments_in_traj",
       "current_segment_in_traj"
@@ -751,43 +751,42 @@ void InterruptibleJointTrajectoryController<
 
   if (!safety_input_handle_.get() && safety_input_previous_state_ == true)
   {
+    // ROS_INFO_STREAM_NAMED(this->name_, "*** SAFETY INPUT INACTIVE ***");
     scale_factor_before_safety_trip_ = target_max_vel_scale_goal;
 
-    if (scale_factor_before_safety_trip_ > velocity_scale_limit_on_safety_input)
+    if(scale_factor_before_safety_trip_ > velocity_scale_limit_on_safety_input)
     {
-      velocity_scale_manager_->maxvel_scale_->updateTargetScalingFactor(
-          velocity_scale_limit_on_safety_input);
+      velocity_scale_manager_->maxvel_scale_->updateTargetScalingFactor(velocity_scale_limit_on_safety_input);
 
       redis_store_msgs::ParamUpdate msg;
       msg.param_name = scale_factor_name;
 
       std::stringstream stream;
-      stream << std::fixed << std::setprecision(2)
-             << velocity_scale_limit_on_safety_input;
+      stream << std::fixed << std::setprecision(2) << velocity_scale_limit_on_safety_input;
       msg.param_value = stream.str();
+
+      //comm_thread_->send(msg);
     }
   }
   else if (!safety_input_handle_.get() && safety_input_previous_state_ == false)
   {
-    if (target_max_vel_scale_goal != velocity_scale_limit_on_safety_input)
+    if(target_max_vel_scale_goal < velocity_scale_limit_on_safety_input)
     {
-      scale_factor_before_safety_trip_ = target_max_vel_scale_goal;
+    scale_factor_before_safety_trip_ = target_max_vel_scale_goal;
     }
   }
 
   else if (safety_input_handle_.get() && safety_input_previous_state_ == false)
   {
-    if (scale_factor_before_safety_trip_ > velocity_scale_limit_on_safety_input)
+    if(scale_factor_before_safety_trip_ > velocity_scale_limit_on_safety_input)
     {
-      velocity_scale_manager_->maxvel_scale_->updateTargetScalingFactor(
-          scale_factor_before_safety_trip_);
+      velocity_scale_manager_->maxvel_scale_->updateTargetScalingFactor(scale_factor_before_safety_trip_);
 
       redis_store_msgs::ParamUpdate msg;
       msg.param_name = scale_factor_name;
 
       std::stringstream stream;
-      stream << std::fixed << std::setprecision(2)
-             << scale_factor_before_safety_trip_;
+      stream << std::fixed << std::setprecision(2) << scale_factor_before_safety_trip_;
       msg.param_value = stream.str();
 
       comm_thread_->send(msg);

@@ -78,6 +78,7 @@ void CommThread::threadFunction()
 
         message_ready_ = false;
         lock.unlock(); // Unlock during potentially long-running operations
+        //ros::Duration(0.01).sleep();
         publisher.publish(message_);
         lock.lock(); // Re-lock for condition variable waiting
     }
