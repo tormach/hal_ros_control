@@ -813,7 +813,6 @@ void InterruptibleJointTrajectoryController<
 
   if (!curr_traj_ptr->started)
   {
-    curr_traj_ptr->started = true;
     this->rt_stop_event_triggered_ = false;
 
     int total_segments = -1;
